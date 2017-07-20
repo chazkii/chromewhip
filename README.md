@@ -13,6 +13,13 @@ It is currently in early **alpha** and still being heavily developed. Please use
 to track the progress towards **beta**. For now, the required milestone can be summarised as 
 **implementing the entire Splash API**.
 
+### Python 3.6 asyncio driver for Chrome devtools protocol
+
+Chromewhip communicates with the Chrome process with our own asyncio driver.
+
+* Typed Python bindings for devtools protocol through templated generation - get autocomplete with your code editor.
+* Can bind events to concurrent commands
+
 ## Deploying with Docker
 
 ```
