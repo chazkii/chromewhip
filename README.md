@@ -12,13 +12,44 @@ It is currently in early **alpha** and still being heavily developed. Please use
 to track the progress towards **beta**. For now, the required milestone can be summarised as 
 **implementing the entire Splash API**.
 
-## Usage with Docker
+## Deploying with Docker
 
 ```
 docker run --init -it --rm --shm-size=1024m -p=127.0.0.1:8080:8080 --cap-add=SYS_ADMIN \
   chuckus/chromewhip
 ```
 
+## Implemented HTTP API
+
+### /render.html
+
+Query params:
+
+* url : string : required
+  * The url to render (required)
+
+* js : string : optional
+  Javascript profile name.
+  
+* js_source : string : optional
+   * JavaScript code to be executed in page context
+
+* viewport : string : optional
+  * View width and height (in pixels) of the browser viewport to render the web
+    page. Format is "<width>x<height>", e.g. 800x600.  Default value is 1024x768.
+
+    'viewport' parameter is more important for PNG and JPEG rendering; it is supported for
+    all rendering endpoints because javascript code execution can depend on
+    viewport size. 
+ 
+### /render.png
+
+Query params (including render.html):
+
+* render_all : int : optional
+  * Possible values are `1` and `0`.  When `render_all=1`, extend the
+    viewport to include the whole webpage (possibly very tall) before rendering.
+   
 ### Why not just use Selenium?
 * chromewhip uses the devtools protocol instead of the json wire protocol, where the devtools protocol has 
 greater flexibility, especially when it comes to subscribing to granular events from the browser.
