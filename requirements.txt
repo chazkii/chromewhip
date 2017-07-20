@@ -4,3 +4,4 @@ websockets==3.3
 beautifulsoup4==4.6.0
 lxml==3.8.0
 pyyaml==3.12
+Pillow==4.2.1

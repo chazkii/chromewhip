@@ -31,9 +31,6 @@ setup(
 
         'License :: OSI Approved :: MIT License',
 
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
 
@@ -52,15 +49,18 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['aiohttp==2.2.0', 'websockets==3.3', 'beautifulsoup4==4.6.0', 'lxml==3.8.0'],
+    install_requires=[
+        'aiohttp==2.2.0', 'websockets==3.3', 'beautifulsoup4==4.6.0', 'lxml==3.8.0',
+        'pyyaml==3.12', 'Pillow==4.2.1'
+    ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        # 'dev': ['check-manifest'],
-        'test': ['pytest-aiohttp==0.1.3'],
+        'dev': ['Jinja2==2.9.6'],
+        'test': ['pytest-asyncio==0.6.9'],
     },
 
     # To provide executable scripts, use entry points in preference to the

@@ -4,6 +4,7 @@ import logging.config
 import platform
 import signal
 import os
+from collections import namedtuple
 
 from aiohttp import web
 import yaml
@@ -39,39 +40,51 @@ async def on_shutdown(app):
     except asyncio.TimeoutError:
         log.error('Timed out trying to shutdown Chrome gracefully!')
 
+Settings = namedtuple('Settings', [
+    'chrome_fp',
+    'chrome_flags',
+    'should_run_xfvb'
+])
 
-def setup_chrome(env: dict = None, loop: asyncio.AbstractEventLoop = None):
-    # TODO: manage process lifecycle in coro
-    system = platform.system()
-    if system == 'Darwin':
-        chrome_fp = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
-    elif system == 'Linux':
-        # chrome_fp = '/usr/bin/google-chrome-stable'
-        chrome_fp = '/opt/google/chrome/chrome'
-    tab_url = 'about:blank'
-    flags = [
-        # '--disable-gpu',
-        # '--headless',
+def get_settings():
+    chrome_flags = [
         '--window-size=1920,1080',
         '--enable-logging',
         '--hide-scrollbars',
-        # '--no-sandbox',
         '--no-first-run',
         '--remote-debugging-address=%s' % HOST,
         '--remote-debugging-port=%s' % PORT,
         '--user-data-dir=/tmp',
+        'about:blank'  # TODO: multiple tabs
     ]
-    flags.extend([tab_url] * NUM_TABS)
-    args = [chrome_fp] + flags
+    os_type = platform.system()
+    if os_type == 'Linux':
+        chrome_flags.insert(3, '--no-sandbox')
+        chrome_fp = '/opt/google/chrome/chrome'
+        should_run_xfvb = True
+    elif os_type == 'Darwin':
+        chrome_fp = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
+        should_run_xfvb = False
+    else:
+        raise Exception('"%s" system is not supported!' % os_type)
+    return Settings(
+        chrome_fp,
+        chrome_flags,
+        should_run_xfvb
+    )
+
+
+def setup_chrome(settings: Settings, env: dict = None, loop: asyncio.AbstractEventLoop = None):
+    # TODO: manage process lifecycle in coro
+    args = [settings.chrome_fp] + settings.chrome_flags
     chrome = asyncio.subprocess.create_subprocess_exec(*args, env=env, loop=loop)
     return chrome
 
 
-def setup_xvfb(env: dict = None, loop: asyncio.AbstractEventLoop = None):
+def setup_xvfb(settings: Settings, env: dict = None, loop: asyncio.AbstractEventLoop = None):
     # TODO: manage process lifecycle in coro
-    system = platform.system()
-    if system != 'Linux':
-        raise OSError('Only linux supported for running xvfb')
+    if not settings.should_run_xfvb:
+        return
     flags = [
         DISPLAY,
         '-ac',
@@ -122,7 +135,6 @@ if __name__ == '__main__':
     config_f = open(config_fp)
     config = yaml.load(config_f)
     logging.config.dictConfig(config['logging'])
-    # logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('--js-profiles-path',
                         help="path to a folder with javascript profiles")
@@ -137,17 +149,18 @@ if __name__ == '__main__':
        'DISPLAY': DISPLAY
     }
 
+    settings = get_settings()
     app = setup_app(**kwargs, loop=loop)
 
-    system = platform.system()
-    if system == 'Linux':
-        xvfb = setup_xvfb(env=env, loop=loop)
+    if settings.should_run_xfvb:
+        xvfb = setup_xvfb(settings, env=env, loop=loop)
         xvfb_future = loop.run_until_complete(xvfb)
         log.debug('Started xvfb!')
         app['xvfb-process'] = xvfb_future
 
-    chrome = setup_chrome(env=env, loop=loop)
+    chrome = setup_chrome(settings, env=env, loop=loop)
     chrome_future = loop.run_until_complete(chrome)
+
     log.debug('Started Chrome!')
     app['chrome-process'] = chrome_future
 

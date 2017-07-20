@@ -25,19 +25,17 @@ async def _go(request: web.Request):
     width = int(parts[0])
     height = int(parts[1])
 
-
     js_profile_name = request.query.get('js', None)
     if js_profile_name:
         profile = js_profiles.get(js_profile_name)
         if not profile:
             return web.HTTPBadRequest(reason='profile name is incorrect')  # TODO: match splash
 
-    js_source = request.query.get('js_source', None)
     # TODO: potentially validate and verify js source for errors and security concerrns
+    js_source = request.query.get('js_source', None)
 
     await c.connect()
-    # TODO: use /json/activate/<id> endpoint to put tab into view. workaround to allow screenshot generation to work
-    tab = c.tabs[-1]
+    tab = c.tabs[0]
     cmd = page.Page.setDeviceMetricsOverride(width=width,
                                              height=height,
                                              deviceScaleFactor=0.0,
@@ -62,7 +60,6 @@ async def render_html(request: web.Request):
 
 async def render_png(request: web.Request):
     # https://splash.readthedocs.io/en/stable/api.html#render-png
-    # TODO: return json if error
     tab = await _go(request)
 
     should_render_all = True if request.query.get('render_all', False) == '1' else False
@@ -70,31 +67,6 @@ async def render_png(request: web.Request):
     if not should_render_all:
         data = await tab.screenshot()
         return web.Response(body=data, content_type='image/png')
-
-    # if should_render_all:
-    #     raw_viewport = request.query.get('viewport', '1024x768')
-    #     parts = raw_viewport.split('x')
-    #     width = int(parts[0])
-    #     height = int(parts[1])
-    #     res = await tab.send_command(dom.DOM.getDocument())
-    #     doc_node_id = res['ack']['result']['root'].nodeId
-    #     res = await tab.send_command(dom.DOM.querySelector(selector='body', nodeId=doc_node_id))
-    #     body_node_id = res['ack']['result']['nodeId']
-    #     res = await tab.send_command(dom.DOM.getBoxModel(nodeId=body_node_id))
-    #     full_height = res['ack']['result']['model'].height
-    #     log.debug('full_height = %s' % full_height)
-    #     cmd = page.Page.setDeviceMetricsOverride(width=int(width),
-    #                                              height=int(full_height),
-    #                                              deviceScaleFactor=0.0,
-    #                                              mobile=False,
-    #                                              fitWindow=False)
-    #     await tab.send_command(cmd)
-    #     desired_viewport = page.Viewport(x=height, y=-height*3, width=width, height=height, scale=1.0)
-    #     result = await tab.send_command(page.Page.captureScreenshot(format='png', clip=desired_viewport, fromSurface=False))
-    #     import base64
-    #     base64_data = result['ack']['result']['data']
-    #     data = base64.b64decode(base64_data)
-    #     return web.Response(body=data, content_type='image/png')
 
     if should_render_all:
         raw_viewport = request.query.get('viewport', '1024x768')

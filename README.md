@@ -20,12 +20,18 @@ Chromewhip communicates with the Chrome process with our own asyncio driver.
 * Typed Python bindings for devtools protocol through templated generation - get autocomplete with your code editor.
 * Can bind events to concurrent commands
 
-## Deploying with Docker
+## Running
+
+### Deploying with Docker
 
 ```
 docker run --init -it --rm --shm-size=1024m -p=127.0.0.1:8080:8080 --cap-add=SYS_ADMIN \
   chuckus/chromewhip
 ```
+
+### Requirements for MacOS 10.12+
+
+* Google Chrome Canary
 
 ## Implemented HTTP API
 

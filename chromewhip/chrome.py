@@ -12,7 +12,7 @@ from chromewhip import helpers
 from chromewhip.base import SyncAdder
 from chromewhip.protocol import page, runtime, target, input, inspector, browser, accessibility
 
-TIMEOUT_S = 5
+TIMEOUT_S = 20
 MAX_PAYLOAD_SIZE_BYTES = 2 ** 23
 MAX_PAYLOAD_SIZE_MB = MAX_PAYLOAD_SIZE_BYTES / 1024 ** 2
 
