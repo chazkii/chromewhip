@@ -12,7 +12,7 @@ from chromewhip import helpers
 from chromewhip.base import SyncAdder
 from chromewhip.protocol import page, runtime, target, input, inspector, browser, accessibility
 
-TIMEOUT_S = 20
+TIMEOUT_S = 30
 MAX_PAYLOAD_SIZE_BYTES = 2 ** 23
 MAX_PAYLOAD_SIZE_MB = MAX_PAYLOAD_SIZE_BYTES / 1024 ** 2
 
@@ -70,9 +70,9 @@ class ChromeTab(metaclass=SyncAdder):
     async def recv_handler(self):
         try:
             while True:
-                # self._recv_log.debug('Waiting for message...')
+                self._recv_log.debug('Waiting for message...')
                 result = await self._ws.recv()
-                # self._recv_log.debug('Received message, processing...')
+                self._recv_log.debug('Received message, processing...')
 
                 if not result:
                     self._recv_log.error('Missing message, may have been a connection timeout...')
@@ -89,10 +89,10 @@ class ChromeTab(metaclass=SyncAdder):
                     ack_event.set()
 
                 elif 'method' in result:
-                    # self._recv_log.debug('Received event message!')
+                    self._recv_log.debug('Received event message!')
                     event = helpers.json_to_event(result)
                     hash_ = event.hash()
-                    # self._recv_log.debug('Received event with hash "%s", storing...' % hash)
+                    self._recv_log.debug('Received event with hash "%s", storing...' % hash)
                     # first, check if any requests are waiting upon it
                     self._event_payloads[hash_] = event
                     trigger_event = self._trigger_events.get(hash_)
@@ -166,19 +166,17 @@ class ChromeTab(metaclass=SyncAdder):
                 # check if we've already received it
                 # TODO: how to i match ack payload to event cls init params
                 # - make a huge assumption that the ack payload are the hashable parts of event cls
-                # ack_result['result']
-                hash = event_cls.build_hash(**ack_result)
-                self._send_log.debug('yayo')
-                event = self._event_payloads.get(hash)
+                hash_ = event_cls.build_hash(**ack_result)
+                event = self._event_payloads.get(hash_)
                 if event:
-                    self._send_log.debug('Fetching stored event with hash "%s"...' % hash)
+                    self._send_log.debug('Fetching stored event with hash "%s"...' % hash_)
                     result['event'] = event
                 else:
-                    self._send_log.debug('Waiting for event with hash "%s"...' % hash)
+                    self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
                     trigger_event = asyncio.Event()
-                    self._trigger_events[hash] = trigger_event
+                    self._trigger_events[hash_] = trigger_event
                     await asyncio.wait_for(trigger_event.wait(), timeout=TIMEOUT_S)  # recv
-                    event = self._event_payloads.get(hash)
+                    event = self._event_payloads.get(hash_)
                     if event:
                         result['event'] = event
 

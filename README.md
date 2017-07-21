@@ -18,7 +18,69 @@ to track the progress towards **beta**. For now, the required milestone can be s
 Chromewhip communicates with the Chrome process with our own asyncio driver.
 
 * Typed Python bindings for devtools protocol through templated generation - get autocomplete with your code editor.
-* Can bind events to concurrent commands
+* Can bind events to concurrent commands, which is required for providing a robust HTTP service.
+
+Some example code on how to use it:
+
+```python
+import asyncio
+import logging
+
+from chromewhip import Chrome
+from chromewhip.protocol import page, dom
+
+# see logging from chromewhip
+logging.basicConfig(level=logging.DEBUG)
+
+HOST = '127.0.0.1'
+PORT = 9222
+
+loop = asyncio.get_event_loop()
+c = Chrome(host=HOST, port=PORT)
+
+loop.run_until_complete(c.connect())
+
+tab = c.tabs[0]
+
+loop.run_until_complete(tab.enable_page_events())
+
+cmd = page.Page.navigate(url='http://nzherald.co.nz')
+
+# send_command will return once the frameStoppedLoading event is received THAT matches
+# the frameId that it is in the returned command payload.
+await_on_event_type = page.FrameStoppedLoadingEvent
+
+# bug with devtools protocol means the returned command payload for `navigate`
+# has the incorrect frameId on first run. running twice is the current workaround.
+result = loop.run_until_complete(tab.send_command(cmd, await_on_event_type))
+result = loop.run_until_complete(tab.send_command(cmd, await_on_event_type))
+
+# send_command always returns a dict with keys `ack` and `event`
+# `ack` contains the payload on response of a command
+# `event` contains the payload of the awaited event if `await_on_event_type` is provided
+ack = result['ack']['result']
+event = result['event']
+assert ack['frameId'] == event.frameId
+
+cmd = page.Page.setDeviceMetricsOverride(width=800,
+                                         height=600,
+                                         deviceScaleFactor=0.0,
+                                         mobile=False,
+                                         fitWindow=False)
+
+loop.run_until_complete(tab.send_command(cmd))
+
+result = loop.run_until_complete(tab.send_command(dom.DOM.getDocument()))
+
+dom_obj = result['ack']['result']['root']
+
+# Python types are determined by the `types` fields in the JSON reference for the
+# devtools protocol, and `send_command` will convert if possible.
+assert isinstance(dom_obj, dom.Node)
+
+print(dom_obj.nodeId)
+print(dom_obj.nodeName)
+```
 
 ## Running
 
