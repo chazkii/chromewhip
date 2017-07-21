@@ -8,9 +8,9 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='chromewhip',
 
-    version='0.0.1',
+    version='v0.1.0-alpha',
 
-    description='',
+    description='asyncio driver + HTTP server for Chrome devtools protocol',
 
     # The project's main homepage.
     url='https://github.com/chuckus/chromewhip',
