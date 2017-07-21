@@ -14,6 +14,7 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/chuckus/chromewhip',
+    download_url='https://github.com/chuckus/chromewhip/archive/v0.1.0-alpha.tar.gz',
 
     # Author details
     author='Charlie Smith',
