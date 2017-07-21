@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/chuckus/chromewhip.svg?branch=master)](https://travis-ci.org/chuckus/chromewhip)
 [![Docker Hub Status](https://img.shields.io/docker/build/chuckus/chromewhip.svg)](https://img.shields.io/docker/build/chuckus/chromewhip.svg)
+[![PyPi version](https://img.shields.io/pypi/v/chromewhip.svg)](https://img.shields.io/pypi/v/chromewhip.svg)
+
 
 ### Chrome browser as an HTTP service with an splash compatible HTTP API
 
