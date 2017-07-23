@@ -25,7 +25,7 @@ def test_invalid_method_json_to_event():
 
 
 def test_json_encoder_event():
-    f = page.Frame(1, 'test','http://example.com', 'test', 'text/html')
+    f = page.Frame(1, 'test', 'http://example.com', 'test', 'text/html')
     fe = page.FrameNavigatedEvent(f)
     payload = json.dumps(fe, cls=helpers.ChromewhipJSONEncoder)
     assert payload.count('"method":') == 1
@@ -33,16 +33,16 @@ def test_json_encoder_event():
 
 
 def test_json_encoder_type():
-    f = page.Frame(1, 'test','http://example.com', 'test', 'text/html')
+    f = page.Frame(1, 'test', 'http://example.com', 'test', 'text/html')
     payload = json.dumps(f, cls=helpers.ChromewhipJSONEncoder)
     assert payload.count('"id": 1') == 1
     assert payload.count('"url": "http://example.com"') == 1
 
 
 def test_hash_from_concrete_event():
-    f = page.Frame(3, 'test','http://example.com', 'test', 'text/html')
+    f = page.Frame(3, 'test', 'http://example.com', 'test', 'text/html')
     fe = page.FrameNavigatedEvent(f)
-    assert fe.hash() == "Page.frameNavigated:frameId=3"
+    assert fe.hash_() == "Page.frameNavigated:frameId=3"
 
 
 def test_build_hash_from_event_cls():

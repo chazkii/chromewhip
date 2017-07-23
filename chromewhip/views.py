@@ -18,7 +18,9 @@ async def _go(request: web.Request):
 
     url = request.query.get('url')
     if not url:
-        return web.HTTPBadRequest(reason='no url query param provided')  # TODO: match splash
+        return web.HTTPBadRequest(reason='no url query param provided')  # TODO: match splash reply
+
+    wait_s = float(request.query.get('wait', 0))
 
     raw_viewport = request.query.get('viewport', '1024x768')
     parts = raw_viewport.split('x')
@@ -44,7 +46,7 @@ async def _go(request: web.Request):
     await tab.send_command(cmd)
     await tab.enable_page_events()
     await tab.go(url)
-
+    await asyncio.sleep(wait_s)
     if js_profile_name:
         await tab.evaluate(js_profiles[js_profile_name])
 

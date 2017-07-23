@@ -9,7 +9,8 @@ import websockets
 from websockets.exceptions import ConnectionClosed
 
 
-from chromewhip import chrome, protocol, helpers
+from chromewhip import chrome, helpers
+from chromewhip.protocol import page
 
 TEST_HOST = 'localhost'
 TEST_PORT = 32322
@@ -108,16 +109,16 @@ def init_test_server(triggers: dict, initial_msgs: [dict] = None, expected: queu
 
 
 @pytest.mark.asyncio
-async def test_can_successfully_trigger_on_event_prior_to_commmand_containing_event_id(event_loop, chrome_tab):
+async def test_send_command_can_trigger_on_event_prior_to_commmand_containing_event_id(event_loop, chrome_tab):
 
     msg_id = 4
     frame_id = '3228.1'
     url = 'http://example.com'
 
     chrome_tab._message_id = msg_id - 1
-    f = protocol.page.Frame(frame_id, 'test', url, 'test', 'text/html')
-    p = protocol.page.Page.navigate(url)
-    fe = protocol.page.FrameNavigatedEvent(f)
+    f = page.Frame(frame_id, 'test', url, 'test', 'text/html')
+    p = page.Page.navigate(url)
+    fe = page.FrameNavigatedEvent(f)
 
     ack = {'id': msg_id, 'result': {'frameId': frame_id}}
     triggers = {
@@ -137,11 +138,11 @@ async def test_can_successfully_trigger_on_event_prior_to_commmand_containing_ev
     await chrome_tab.connect()
 
     log.info('Sending command and awaiting...')
-    result = await chrome_tab.send_command(p, protocol.page.FrameNavigatedEvent)
+    result = await chrome_tab.send_command(p, await_on_event_type=page.FrameNavigatedEvent)
     assert result.get('ack') is not None
     assert result.get('event') is not None
     event = result.get('event')
-    assert isinstance(event, protocol.page.FrameNavigatedEvent)
+    assert isinstance(event, page.FrameNavigatedEvent)
     assert event.frame.id == f.id
     assert event.frame.url == f.url
 
@@ -149,15 +150,15 @@ async def test_can_successfully_trigger_on_event_prior_to_commmand_containing_ev
     await server.wait_closed()
 
 @pytest.mark.asyncio
-async def test_can_successfully_trigger_on_event_after_commmand_containing_event_id(event_loop, chrome_tab):
+async def test_send_command_can_trigger_on_event_after_commmand_containing_event_id(event_loop, chrome_tab):
     msg_id = 4
     frame_id = '3228.1'
     url = 'http://example.com'
 
     chrome_tab._message_id = msg_id - 1
-    f = protocol.page.Frame(frame_id, 'test', url, 'test', 'text/html')
-    p = protocol.page.Page.navigate(url)
-    fe = protocol.page.FrameNavigatedEvent(f)
+    f = page.Frame(frame_id, 'test', url, 'test', 'text/html')
+    p = page.Page.navigate(url)
+    fe = page.FrameNavigatedEvent(f)
 
     ack = {'id': msg_id, 'result': {'frameId': frame_id}}
     triggers = {
@@ -175,14 +176,59 @@ async def test_can_successfully_trigger_on_event_after_commmand_containing_event
     await chrome_tab.connect()
 
     log.info('Sending command and awaiting...')
-    result = await chrome_tab.send_command(p, protocol.page.FrameNavigatedEvent)
+    result = await chrome_tab.send_command(p, await_on_event_type=page.FrameNavigatedEvent)
     assert result.get('ack') is not None
     assert result.get('event') is not None
     event = result.get('event')
-    assert isinstance(event, protocol.page.FrameNavigatedEvent)
+    assert isinstance(event, page.FrameNavigatedEvent)
     assert event.frame.id == f.id
     assert event.frame.url == f.url
 
     server.close()
     await server.wait_closed()
 
+@pytest.mark.asyncio
+async def test_send_command_can_trigger_on_event_with_input_event(event_loop, chrome_tab):
+    """test_send_command_can_trigger_on_event_with_input_event
+    Below is test case that will workaround this issue
+    https://github.com/chuckus/chromewhip/issues/2
+    """
+    msg_id = 4
+    old_frame_id = '2000.1'
+    frame_id = '3228.1'
+    url = 'http://example.com'
+
+    chrome_tab._message_id = msg_id - 1
+    f = page.Frame(frame_id, 'test', url, 'test', 'text/html')
+    p = page.Page.navigate(url)
+    fe = page.FrameNavigatedEvent(f)
+    fsle = page.FrameStoppedLoadingEvent(frame_id)
+
+    # command ack is not related to proceeding events
+    ack = {'id': msg_id, 'result': {'frameId': old_frame_id}}
+    triggers = {
+        msg_id: [ack, delay_s(1), fe, fsle]
+    }
+
+    end_msg = copy.copy(p[0])
+    end_msg['id'] = msg_id
+    q = queue.Queue()
+    q.put(end_msg)
+
+    test_server = init_test_server(triggers, expected=q)
+    start_server = websockets.serve(test_server, TEST_HOST, TEST_PORT)
+    server = await start_server
+    await chrome_tab.connect()
+
+    log.info('Sending command and awaiting...')
+    result = await chrome_tab.send_command(p,
+                                           input_event_type=page.FrameNavigatedEvent,
+                                           await_on_event_type=page.FrameStoppedLoadingEvent)
+    assert result.get('ack') is not None
+    assert result.get('event') is not None
+    event = result.get('event')
+    assert isinstance(event, page.FrameStoppedLoadingEvent)
+    assert event.frameId == f.id
+
+    server.close()
+    await server.wait_closed()

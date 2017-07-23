@@ -21,6 +21,19 @@ Arguments:
 url : string : required
   The url to render (required)
 
+.. _arg-wait:
+
+wait : float : optional
+  Time (in seconds) to wait for updates after page is loaded i.e. the
+  relevant ``Page.frameStoppedLoading`` event is received.
+  (defaults to 0). Increase this value if you expect pages to contain
+  setInterval/setTimeout javascript calls, because with wait=0
+  callbacks of setInterval/setTimeout won't be executed. Non-zero
+  :ref:`wait <arg-wait>` is also required for PNG and JPEG rendering when
+  doing full-page rendering (see :ref:`render_all <arg-render-all>`).
+
+  Wait time must be less than :ref:`timeout <arg-timeout>`.
+
 .. TODO: implement
    .. _arg-baseurl:
 
@@ -51,18 +64,6 @@ url : string : required
      See also: :ref:`splash-on-request` and its
      ``request:set_timeout(timeout)`` method; :ref:`splash-resource-timeout`
      attribute.
-
-   .. _arg-wait:
-
-   wait : float : optional
-     Time (in seconds) to wait for updates after page is loaded
-     (defaults to 0). Increase this value if you expect pages to contain
-     setInterval/setTimeout javascript calls, because with wait=0
-     callbacks of setInterval/setTimeout won't be executed. Non-zero
-     :ref:`wait <arg-wait>` is also required for PNG and JPEG rendering when
-     doing full-page rendering (see :ref:`render_all <arg-render-all>`).
-
-     Wait time must be less than :ref:`timeout <arg-timeout>`.
 
    .. _arg-proxy:
 

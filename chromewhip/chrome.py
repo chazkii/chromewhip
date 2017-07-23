@@ -12,7 +12,7 @@ from chromewhip import helpers
 from chromewhip.base import SyncAdder
 from chromewhip.protocol import page, runtime, target, input, inspector, browser, accessibility
 
-TIMEOUT_S = 30
+TIMEOUT_S = 25
 MAX_PAYLOAD_SIZE_BYTES = 2 ** 23
 MAX_PAYLOAD_SIZE_MB = MAX_PAYLOAD_SIZE_BYTES / 1024 ** 2
 
@@ -45,6 +45,7 @@ class ChromeTab(metaclass=SyncAdder):
         self._current_task: Optional[asyncio.Task] = None
         self._ack_events = {}
         self._ack_payloads = {}
+        self._input_events = {}
         self._trigger_events = {}
         self._event_payloads = {}
         self._recv_task = None
@@ -91,15 +92,23 @@ class ChromeTab(metaclass=SyncAdder):
                 elif 'method' in result:
                     self._recv_log.debug('Received event message!')
                     event = helpers.json_to_event(result)
-                    hash_ = event.hash()
-                    self._recv_log.debug('Received event with hash "%s", storing...' % hash)
-                    # first, check if any requests are waiting upon it
+                    self._recv_log.debug('Received a "%s" event , storing against hash and name...' % event.js_name)
+                    hash_ = event.hash_()
                     self._event_payloads[hash_] = event
+                    self._event_payloads[event.js_name] = event
+
+                    # first, check if any requests are waiting upon it
+                    input_event = self._input_events.get(event.js_name)
+                    if input_event:
+                        self._recv_log.debug('input exists for event name "%s", alerting...' % event.js_name)
+                        input_event.set()
+
                     trigger_event = self._trigger_events.get(hash_)
                     if trigger_event:
                         self._recv_log.debug('trigger exists for hash "%s", alerting...' % hash_)
                         trigger_event.set()
                 else:
+                    # TODO: deal with invalid state
                     self._recv_log.info('Invalid message %s, what do i do now?' % result)
 
         except asyncio.CancelledError:
@@ -114,19 +123,34 @@ class ChromeTab(metaclass=SyncAdder):
                 raise KeyError('%s not in expected payload of %s' % (k, types))
             if not isinstance(v, type_):
                 raise ValueError('%s is not expected type %s, instead is %s' % (v, type_, type(v)))
-        # await result
         return result
 
-    async def _send(self, request, recv_validator=None, event_cls=None):
+    async def _send(self, request, recv_validator=None, input_event_cls=None, trigger_event_cls=None):
+        """
+        TODO:
+        * clean up of stale events in payloads and asyncio event stores
+        :param request:
+        :param recv_validator:
+        :param input_event_cls:
+        :param trigger_event_cls:
+        :return:
+        """
         self._message_id += 1
         request['id'] = self._message_id
 
         ack_event = asyncio.Event()
         self._ack_events[self._message_id] = ack_event
 
-        if event_cls:
-            if not event_cls.is_hashable:
-                raise ValueError('Cannot trigger of event type "%s" as not hashable' % event_cls.__name__)
+        if input_event_cls:
+            if not input_event_cls.is_hashable:
+                raise ValueError('Input event class "%s" as not hashable' % input_event_cls.__name__)
+            # we can already register the input event before sending command
+            input_event = asyncio.Event()
+            self._input_events[input_event_cls.js_name] = input_event
+
+        if trigger_event_cls:
+            if not trigger_event_cls.is_hashable:
+                raise ValueError('Trigger event type "%s" as not hashable' % trigger_event_cls.__name__)
 
         result = {'ack': None, 'event': None}
 
@@ -140,8 +164,8 @@ class ChromeTab(metaclass=SyncAdder):
             await asyncio.wait_for(ack_event.wait(), timeout=TIMEOUT_S)  # recv
             self._send_log.debug('Received ack event set for id=%s' % request['id'])
 
-            # ack_payload = self._ack_payloads[request['id']]
             ack_payload = self._ack_payloads.get(request['id'])
+
             if not ack_payload:
                 self._send_log.error('Notified but no payload available for id=%s!' % request['id'])
                 return result
@@ -159,26 +183,41 @@ class ChromeTab(metaclass=SyncAdder):
                 ack_result = recv_validator(ack_payload['result'])
                 self._send_log.debug('Successful recv validation for id=%s...' % request['id'])
                 ack_payload['result'] = ack_result
+            else:
+                ack_result = ack_payload['result']
 
             result['ack'] = ack_payload
 
-            if event_cls:
-                # check if we've already received it
-                # TODO: how to i match ack payload to event cls init params
-                # - make a huge assumption that the ack payload are the hashable parts of event cls
-                hash_ = event_cls.build_hash(**ack_result)
+            if input_event_cls:
+                hash_ = input_event_cls.js_name
+                # use latest payload as key is not unique within a single session
                 event = self._event_payloads.get(hash_)
-                if event:
-                    self._send_log.debug('Fetching stored event with hash "%s"...' % hash_)
-                    result['event'] = event
-                else:
+                hash_input_dict = {}
+                if not event:
+                    self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
+                    await asyncio.wait_for(input_event.wait(), timeout=TIMEOUT_S)  # recv
+                    event = self._event_payloads.get(hash_)
+
+                params = event.hash_().split(':')[-1].split(',')
+                for p in params:
+                    kv = p.split('=')
+                    hash_input_dict[kv[0]] = kv[1]
+            else:
+                hash_input_dict = ack_result
+
+            if trigger_event_cls:
+                try:
+                    hash_ = trigger_event_cls.build_hash(**hash_input_dict)
+                except TypeError:
+                    raise TypeError('Event "%s" hash cannot be built with "%s"' % trigger_event_cls.js_name, hash_input_dict)
+                event = self._event_payloads.get(hash_)
+                if not event:
                     self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
                     trigger_event = asyncio.Event()
                     self._trigger_events[hash_] = trigger_event
                     await asyncio.wait_for(trigger_event.wait(), timeout=TIMEOUT_S)  # recv
                     event = self._event_payloads.get(hash_)
-                    if event:
-                        result['event'] = event
+                result['event'] = event
 
             self._send_log.info('Successfully sent command = %s' % msg)
             return result
@@ -218,8 +257,8 @@ class ChromeTab(metaclass=SyncAdder):
     async def enable_page_events(self):
         return await self._send(*page.Page.enable())
 
-    async def send_command(self, command, await_on_event_type=None):
-        return await self._send(*command, event_cls=await_on_event_type)
+    async def send_command(self, command, input_event_type=None, await_on_event_type=None):
+        return await self._send(*command, input_event_cls=input_event_type, trigger_event_cls=await_on_event_type)
 
     async def html(self):
         result = await self.evaluate('document.documentElement.outerHTML')
@@ -235,9 +274,10 @@ class ChromeTab(metaclass=SyncAdder):
         """
         Navigate the tab to the URL
         """
-        # event = page.FrameNavigatedEvent
-        event = page.FrameStoppedLoadingEvent
-        return await self.send_command(page.Page.navigate(url), event)
+        # workaround for bug
+        return await self.send_command(page.Page.navigate(url),
+                                       input_event_type=page.FrameNavigatedEvent,
+                                       await_on_event_type=page.FrameStoppedLoadingEvent)
 
     async def evaluate(self, javascript):
         """

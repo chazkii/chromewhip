@@ -49,11 +49,7 @@ class BaseEvent:
     hashable = []
     is_hashable = False
 
-    def hash(self):
-        """
-        TODO: deal with event with no root key hashables. must match build_hash
-        """
-        # hashable_params = {k:v for k, v in cls.__dict__.items() if k in cls.hashable}
+    def hash_(self):
         hashable_params = {}
         for k, v in self.__dict__.items():
             if k in self.hashable:
@@ -72,6 +68,7 @@ class BaseEvent:
         return h
 
 
+# TODO: how do
 def json_to_event(payload) -> BaseEvent:
     try:
         prot_name, js_event = payload['method'].split('.')
