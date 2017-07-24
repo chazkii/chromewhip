@@ -5,16 +5,24 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
+
+def readme():
+    try:
+        with open('README.rst') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+
 setup(
     name='chromewhip',
 
-    version='v0.1.0-alpha',
+    version='v0.2.0-alpha',
 
     description='asyncio driver + HTTP server for Chrome devtools protocol',
-
+    long_description=readme(),
     # The project's main homepage.
     url='https://github.com/chuckus/chromewhip',
-    download_url='https://github.com/chuckus/chromewhip/archive/v0.1.0-alpha.tar.gz',
+    download_url='https://github.com/chuckus/chromewhip/archive/v0.2.0-alpha.tar.gz',
 
     # Author details
     author='Charlie Smith',

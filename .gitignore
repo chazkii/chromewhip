@@ -82,3 +82,4 @@ staticfiles/
 /docs/_build/
 dist
 chromewhip.egg-info
+README.rst
