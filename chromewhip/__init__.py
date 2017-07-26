@@ -5,6 +5,7 @@ import platform
 import signal
 import os
 from collections import namedtuple
+import time
 
 from aiohttp import web
 import yaml
@@ -160,6 +161,7 @@ if __name__ == '__main__':
 
     chrome = setup_chrome(settings, env=env, loop=loop)
     chrome_future = loop.run_until_complete(chrome)
+    time.sleep(3)  # TODO: use event for continuing as opposed to sleep
 
     log.debug('Started Chrome!')
     app['chrome-process'] = chrome_future
