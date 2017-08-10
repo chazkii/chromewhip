@@ -51,12 +51,8 @@ cmd = page.Page.navigate(url='http://nzherald.co.nz')
 # send_command will return once the frameStoppedLoading event is received THAT matches
 # the frameId that it is in the returned command payload.
 await_on_event_type = page.FrameStoppedLoadingEvent
-input_event_type = page.FrameNavigatedEvent
 
-# bug with devtools protocol means the returned command payload for `navigate`
-# has the incorrect frameId on first run but the low level api is flexible enough 
-# to deal with this
-result = loop.run_until_complete(tab.send_command(cmd, input_event_type, await_on_event_type))
+result = loop.run_until_complete(tab.send_command(cmd, await_on_event_type=await_on_event_type))
 
 # send_command always returns a dict with keys `ack` and `event`
 # `ack` contains the payload on response of a command

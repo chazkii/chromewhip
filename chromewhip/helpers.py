@@ -87,7 +87,11 @@ def json_to_event(payload) -> BaseEvent:
         raise KeyError(msg)
     py_event_name = '{}{}Event'.format(js_event[0].upper(), js_event[1:])
     event_cls = getattr(prot_module, py_event_name)
-    return event_cls(**payload['params'])
+    try:
+        result = event_cls(**payload['params'])
+    except TypeError as e:
+        raise TypeError('%s unable to deserialise: %s' % (event_cls.__name__, e))
+    return result
 
 
 class ChromeTypeBase:

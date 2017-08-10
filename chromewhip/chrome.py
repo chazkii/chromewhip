@@ -274,9 +274,7 @@ class ChromeTab(metaclass=SyncAdder):
         """
         Navigate the tab to the URL
         """
-        # workaround for bug
         return await self.send_command(page.Page.navigate(url),
-                                       input_event_type=page.FrameNavigatedEvent,
                                        await_on_event_type=page.FrameStoppedLoadingEvent)
 
     async def evaluate(self, javascript):

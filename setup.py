@@ -16,7 +16,7 @@ def readme():
 setup(
     name='chromewhip',
 
-    version='v0.2.0-alpha',
+    version='v0.2.1-alpha',
 
     description='asyncio driver + HTTP server for Chrome devtools protocol',
     long_description=readme(),
