@@ -10,7 +10,7 @@ from websockets.exceptions import ConnectionClosed
 
 
 from chromewhip import chrome, helpers
-from chromewhip.protocol import page
+from chromewhip.protocol import page, network
 
 TEST_HOST = 'localhost'
 TEST_PORT = 32322
@@ -47,16 +47,20 @@ async def chrome_tab():
     except ConnectionClosed:
         pass
 
-delay_s = int
+delay_s = float
+
 
 def init_test_server(triggers: dict, initial_msgs: [dict] = None, expected: queue.Queue = None):
+    """
+    :param initial_msgs:
+    :param triggers:
+    :param expected: ordered sequence of messages expected to be sent by chromewhip
+    :return:
+    """
     async def test_server(websocket, path):
         """
-
         :param websocket:
-        :param initial_msgs:
-        :param triggers:
-        :param expected: ordered sequence of messages expected to be sent by chromewhip
+        :param path:
         :return:
         """
         log.info('Client connected! Starting handler!')
@@ -66,45 +70,52 @@ def init_test_server(triggers: dict, initial_msgs: [dict] = None, expected: queu
 
         c = 0
 
-        while True:
-            msg = await websocket.recv()
-            log.info('Test server received message!')
-            c += 1
-            obj = json.loads(msg)
+        try:
+            while True:
+                msg = await websocket.recv()
+                log.info('Test server received message!')
+                c += 1
+                obj = json.loads(msg)
 
-            if expected:
-                try:
-                    exp = expected.get(block=False)
-                except queue.Empty:
-                    pytest.fail('more messages received that expected')
+                if expected:
+                    try:
+                        exp = expected.get(block=False)
+                    except queue.Empty:
+                        pytest.fail('more messages received that expected')
 
-                assert exp == obj, 'message number %s does not match, exp %s != recv %s' % (c, exp, obj)
+                    assert exp == obj, 'message number %s does not match, exp %s != recv %s' % (c, exp, obj)
 
-            # either id or method
-            is_method = False
-            id_ = obj.get('id')
+                # either id or method
+                is_method = False
+                id_ = obj.get('id')
 
-            if not id_:
-                id_ = obj.get('method')
                 if not id_:
-                    pytest.fail('received invalid message, no id or method - %s ' % msg)
-                is_method = True
+                    id_ = obj.get('method')
+                    if not id_:
+                        pytest.fail('received invalid message, no id or method - %s ' % msg)
+                    is_method = True
 
-            response_stream = triggers.get(id_)
+                response_stream = triggers.get(id_)
 
-            if not response_stream:
-                pytest.fail('received unexpected message of %s = "%s"'
-                            % ('method' if is_method else 'id', id_))
+                if not response_stream:
+                    pytest.fail('received unexpected message of %s = "%s"'
+                                % ('method' if is_method else 'id', id_))
 
-            if not len(response_stream):
-                log.debug('expected message but no expected response, continue')
+                if not len(response_stream):
+                    log.debug('expected message but no expected response, continue')
 
-            log.debug('replying with payload "%s"' % response_stream)
-            for r in response_stream:
-                if isinstance(r, int):
-                    await asyncio.sleep(r)
-                else:
-                    await websocket.send(json.dumps(r, cls=helpers.ChromewhipJSONEncoder))
+                log.debug('replying with payload "%s"' % response_stream)
+                for r in response_stream:
+                    if isinstance(r, int):
+                        await asyncio.sleep(r)
+                    else:
+                        await websocket.send(json.dumps(r, cls=helpers.ChromewhipJSONEncoder))
+        except asyncio.CancelledError as e:
+            print ('I ran!!!!sdfsdfsdfds')
+            if expected.empty():
+                pytest.fail('less messages received that expected')
+            else:
+                raise e
     return test_server
 
 
@@ -169,6 +180,7 @@ async def test_send_command_can_trigger_on_event_after_commmand_containing_event
     end_msg['id'] = msg_id
     q = queue.Queue()
     q.put(end_msg)
+    q.put(copy.copy(end_msg))
 
     test_server = init_test_server(triggers, expected=q)
     start_server = websockets.serve(test_server, TEST_HOST, TEST_PORT)
@@ -229,6 +241,61 @@ async def test_send_command_can_trigger_on_event_with_input_event(event_loop, ch
     event = result.get('event')
     assert isinstance(event, page.FrameStoppedLoadingEvent)
     assert event.frameId == f.id
+
+    server.close()
+    await server.wait_closed()
+
+@pytest.mark.asyncio
+async def xtest_can_register_callback_on_devtools_event(event_loop, chrome_tab):
+    # TODO: double check this part of the api is implemented
+    interception_id = '3424.1'
+    msg_id = 7
+    chrome_tab._message_id = msg_id - 1
+    fake_request = network.Request(url='http://httplib.org',
+                                   method='POST',
+                                   headers={},
+                                   initialPriority='superlow',
+                                   referrerPolicy='origin')
+    msgs = [
+        network.RequestInterceptedEvent(interceptionId=interception_id,
+                                        request=fake_request,
+                                        resourceType="Document",
+                                        isNavigationRequest=False)
+
+    ]
+
+    enable = network.Network.setRequestInterceptionEnabled(enabled=True)
+
+    # once emable command comes, send flurry in intercept events
+    triggers = {
+        msg_id: msgs
+    }
+
+    expected = queue.Queue()
+    e0 = copy.copy(enable[0])
+    e0['id'] = msg_id
+    expected.put(e0)
+    e1 = network.Network.continueInterceptedRequest(interceptionId=interception_id)
+    expected.put(e1)
+
+    test_server = init_test_server(triggers, expected=expected)
+    start_server = websockets.serve(test_server, TEST_HOST, TEST_PORT)
+    server = await start_server
+    await chrome_tab.connect()
+
+    log.info('Sending command and awaiting...')
+    # TODO: registration api
+
+    # no point returning data as nothing to do with it.
+    # but how would i go about storing all the events being collected?
+    #   - this is not the api for it, just add an api for storing events in a queue
+    # TODO: how do declare return type of method?
+    async def cb_coro(event: network.RequestInterceptedEvent):
+        return network.Network.continueInterceptedRequest(interceptionId=event.interceptionId)
+
+    with chrome_tab.schedule_coro_on_event(coro=cb_coro,
+                                           event=network.RequestInterceptedEvent):
+        await chrome_tab.send_command(enable)
 
     server.close()
     await server.wait_closed()

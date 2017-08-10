@@ -80,6 +80,9 @@ class ChromeTab(metaclass=SyncAdder):
                     continue
                 result = json.loads(result)
 
+                if not isinstance(result, dict):
+                    self._recv_log.error('decoded messages is of type "%s" and = "%s"' % (type(result), result))
+                    continue
                 if 'id' in result:
                     self._ack_payloads[result['id']] = result
                     ack_event = self._ack_events.get(result['id'])

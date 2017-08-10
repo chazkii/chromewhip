@@ -49,6 +49,5 @@ RUN pip3.6 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
 COPY scripts/run_chromewhip_linux.sh .
 ENTRYPOINT [ "bash", "run_chromewhip_linux.sh" ]
