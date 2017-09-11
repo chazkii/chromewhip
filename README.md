@@ -64,8 +64,7 @@ assert ack['frameId'] == event.frameId
 cmd = page.Page.setDeviceMetricsOverride(width=800,
                                          height=600,
                                          deviceScaleFactor=0.0,
-                                         mobile=False,
-                                         fitWindow=False)
+                                         mobile=False)
 
 loop.run_until_complete(tab.send_command(cmd))
 
