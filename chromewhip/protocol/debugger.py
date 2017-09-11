@@ -50,6 +50,7 @@ class CallFrame(ChromeTypeBase):
                  callFrameId: Union['CallFrameId'],
                  functionName: Union['str'],
                  location: Union['Location'],
+                 url: Union['str'],
                  scopeChain: Union['[Scope]'],
                  this: Union['Runtime.RemoteObject'],
                  functionLocation: Optional['Location'] = None,
@@ -60,6 +61,7 @@ class CallFrame(ChromeTypeBase):
         self.functionName = functionName
         self.functionLocation = functionLocation
         self.location = location
+        self.url = url
         self.scopeChain = scopeChain
         self.this = this
         self.returnValue = returnValue
@@ -615,7 +617,7 @@ class Debugger(PayloadMixin):
 class ScriptParsedEvent(BaseEvent):
 
     js_name = 'Debugger.scriptParsed'
-    hashable = ['executionContextId', 'scriptId']
+    hashable = ['scriptId', 'executionContextId']
     is_hashable = True
 
     def __init__(self,
@@ -682,7 +684,7 @@ class ScriptParsedEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, executionContextId, scriptId):
+    def build_hash(cls, scriptId, executionContextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -694,7 +696,7 @@ class ScriptParsedEvent(BaseEvent):
 class ScriptFailedToParseEvent(BaseEvent):
 
     js_name = 'Debugger.scriptFailedToParse'
-    hashable = ['executionContextId', 'scriptId']
+    hashable = ['scriptId', 'executionContextId']
     is_hashable = True
 
     def __init__(self,
@@ -757,7 +759,7 @@ class ScriptFailedToParseEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, executionContextId, scriptId):
+    def build_hash(cls, scriptId, executionContextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

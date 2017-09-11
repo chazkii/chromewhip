@@ -37,7 +37,7 @@ MonotonicTime = float
 # Headers: Request / response headers as keys / values of JSON object.
 Headers = dict
 
-# ConnectionType: Loading priority of a resource request.
+# ConnectionType: The underlying connection technology that the browser is supposedly using.
 ConnectionType = str
 
 # CookieSameSite: Represents the cookie's 'SameSite' status: https://tools.ietf.org/html/draft-west-first-party-cookies
@@ -308,6 +308,31 @@ class Cookie(ChromeTypeBase):
         self.sameSite = sameSite
 
 
+# CookieParam: Cookie parameter object
+class CookieParam(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['str'],
+                 url: Optional['str'] = None,
+                 domain: Optional['str'] = None,
+                 path: Optional['str'] = None,
+                 secure: Optional['bool'] = None,
+                 httpOnly: Optional['bool'] = None,
+                 sameSite: Optional['CookieSameSite'] = None,
+                 expires: Optional['TimeSinceEpoch'] = None,
+                 ):
+
+        self.name = name
+        self.value = value
+        self.url = url
+        self.domain = domain
+        self.path = path
+        self.secure = secure
+        self.httpOnly = httpOnly
+        self.sameSite = sameSite
+        self.expires = expires
+
+
 # AuthChallenge: Authorization challenge for HTTP status code 401 or 407.
 class AuthChallenge(ChromeTypeBase):
     def __init__(self,
@@ -538,67 +563,75 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def deleteCookie(cls,
-                     cookieName: Union['str'],
-                     url: Union['str'],
-                     ):
-        """Deletes browser cookie with given name, domain and path.
-        :param cookieName: Name of the cookie to remove.
-        :type cookieName: str
-        :param url: URL to match cooke domain and path.
+    def deleteCookies(cls,
+                      name: Union['str'],
+                      url: Optional['str'] = None,
+                      domain: Optional['str'] = None,
+                      path: Optional['str'] = None,
+                      ):
+        """Deletes browser cookies with matching name and url or domain/path pair.
+        :param name: Name of the cookies to remove.
+        :type name: str
+        :param url: If specified, deletes all the cookies with the given name where domain and path match provided URL.
         :type url: str
+        :param domain: If specified, deletes only cookies with the exact domain.
+        :type domain: str
+        :param path: If specified, deletes only cookies with the exact path.
+        :type path: str
         """
         return (
-            cls.build_send_payload("deleteCookie", {
-                "cookieName": cookieName,
+            cls.build_send_payload("deleteCookies", {
+                "name": name,
                 "url": url,
+                "domain": domain,
+                "path": path,
             }),
             None
         )
 
     @classmethod
     def setCookie(cls,
-                  url: Union['str'],
                   name: Union['str'],
                   value: Union['str'],
+                  url: Optional['str'] = None,
                   domain: Optional['str'] = None,
                   path: Optional['str'] = None,
                   secure: Optional['bool'] = None,
                   httpOnly: Optional['bool'] = None,
                   sameSite: Optional['CookieSameSite'] = None,
-                  expirationDate: Optional['TimeSinceEpoch'] = None,
+                  expires: Optional['TimeSinceEpoch'] = None,
                   ):
         """Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
+        :param name: Cookie name.
+        :type name: str
+        :param value: Cookie value.
+        :type value: str
         :param url: The request-URI to associate with the setting of the cookie. This value can affect the default domain and path values of the created cookie.
         :type url: str
-        :param name: The name of the cookie.
-        :type name: str
-        :param value: The value of the cookie.
-        :type value: str
-        :param domain: If omitted, the cookie becomes a host-only cookie.
+        :param domain: Cookie domain.
         :type domain: str
-        :param path: Defaults to the path portion of the url parameter.
+        :param path: Cookie path.
         :type path: str
-        :param secure: Defaults ot false.
+        :param secure: True if cookie is secure.
         :type secure: bool
-        :param httpOnly: Defaults to false.
+        :param httpOnly: True if cookie is http-only.
         :type httpOnly: bool
-        :param sameSite: Defaults to browser default behavior.
+        :param sameSite: Cookie SameSite type.
         :type sameSite: CookieSameSite
-        :param expirationDate: If omitted, the cookie becomes a session cookie.
-        :type expirationDate: TimeSinceEpoch
+        :param expires: Cookie expiration date, session cookie if not set
+        :type expires: TimeSinceEpoch
         """
         return (
             cls.build_send_payload("setCookie", {
-                "url": url,
                 "name": name,
                 "value": value,
+                "url": url,
                 "domain": domain,
                 "path": path,
                 "secure": secure,
                 "httpOnly": httpOnly,
                 "sameSite": sameSite,
-                "expirationDate": expirationDate,
+                "expires": expires,
             }),
             cls.convert_payload({
                 "success": {
@@ -606,6 +639,21 @@ class Network(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def setCookies(cls,
+                   cookies: Union['[CookieParam]'],
+                   ):
+        """Sets given cookies.
+        :param cookies: Cookies to be set.
+        :type cookies: [CookieParam]
+        """
+        return (
+            cls.build_send_payload("setCookies", {
+                "cookies": cookies,
+            }),
+            None
         )
 
     @classmethod
@@ -634,11 +682,11 @@ class Network(PayloadMixin):
         """Activates emulation of network conditions.
         :param offline: True to emulate internet disconnection.
         :type offline: bool
-        :param latency: Additional latency (ms).
+        :param latency: Minimum latency from request sent to response headers received (ms).
         :type latency: float
-        :param downloadThroughput: Maximal aggregated download throughput.
+        :param downloadThroughput: Maximal aggregated download throughput (bytes/sec). -1 disables download throttling.
         :type downloadThroughput: float
-        :param uploadThroughput: Maximal aggregated upload throughput.
+        :param uploadThroughput: Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
         :type uploadThroughput: float
         :param connectionType: Connection type if known.
         :type connectionType: ConnectionType
@@ -726,14 +774,18 @@ class Network(PayloadMixin):
     @classmethod
     def setRequestInterceptionEnabled(cls,
                                       enabled: Union['bool'],
+                                      patterns: Optional['[]'] = None,
                                       ):
-        """
-        :param enabled: Whether or not HTTP requests should be intercepted and Network.requestIntercepted events sent.
+        """Sets the requests to intercept that match a the provided patterns.
+        :param enabled: Whether requests should be intercepted. If patterns is not set, matches all and resets any previously set patterns. Other parameters are ignored if false.
         :type enabled: bool
+        :param patterns: URLs matching any of these patterns will be forwarded and wait for the corresponding continueInterceptedRequest call. Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is backslash. If omitted equivalent to ['*'] (intercept all).
+        :type patterns: []
         """
         return (
             cls.build_send_payload("setRequestInterceptionEnabled", {
                 "enabled": enabled,
+                "patterns": patterns,
             }),
             None
         )
@@ -817,7 +869,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['frameId', 'loaderId', 'requestId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -864,7 +916,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, frameId, loaderId, requestId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -899,7 +951,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['frameId', 'loaderId', 'requestId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -930,7 +982,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, frameId, loaderId, requestId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1268,7 +1320,7 @@ class WebSocketFrameSentEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1295,7 +1347,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

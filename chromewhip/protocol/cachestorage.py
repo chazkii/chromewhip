@@ -19,14 +19,22 @@ CacheId = str
 # DataEntry: Data entry.
 class DataEntry(ChromeTypeBase):
     def __init__(self,
-                 request: Union['str'],
-                 response: Union['str'],
+                 requestURL: Union['str'],
+                 requestMethod: Union['str'],
+                 requestHeaders: Union['[Header]'],
                  responseTime: Union['float'],
+                 responseStatus: Union['int'],
+                 responseStatusText: Union['str'],
+                 responseHeaders: Union['[Header]'],
                  ):
 
-        self.request = request
-        self.response = response
+        self.requestURL = requestURL
+        self.requestMethod = requestMethod
+        self.requestHeaders = requestHeaders
         self.responseTime = responseTime
+        self.responseStatus = responseStatus
+        self.responseStatusText = responseStatusText
+        self.responseHeaders = responseHeaders
 
 
 # Cache: Cache identifier.
@@ -42,14 +50,23 @@ class Cache(ChromeTypeBase):
         self.cacheName = cacheName
 
 
+# Header: 
+class Header(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['str'],
+                 ):
+
+        self.name = name
+        self.value = value
+
+
 # CachedResponse: Cached response
 class CachedResponse(ChromeTypeBase):
     def __init__(self,
-                 headers: Union['dict'],
                  body: Union['str'],
                  ):
 
-        self.headers = headers
         self.body = body
 
 

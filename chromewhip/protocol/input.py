@@ -16,17 +16,15 @@ log = logging.getLogger(__name__)
 # TouchPoint: 
 class TouchPoint(ChromeTypeBase):
     def __init__(self,
-                 state: Union['str'],
-                 x: Union['int'],
-                 y: Union['int'],
-                 radiusX: Optional['int'] = None,
-                 radiusY: Optional['int'] = None,
+                 x: Union['float'],
+                 y: Union['float'],
+                 radiusX: Optional['float'] = None,
+                 radiusY: Optional['float'] = None,
                  rotationAngle: Optional['float'] = None,
                  force: Optional['float'] = None,
                  id: Optional['float'] = None,
                  ):
 
-        self.state = state
         self.x = x
         self.y = y
         self.radiusX = radiusX
@@ -132,6 +130,8 @@ class Input(PayloadMixin):
                            timestamp: Optional['TimeSinceEpoch'] = None,
                            button: Optional['str'] = None,
                            clickCount: Optional['int'] = None,
+                           deltaX: Optional['float'] = None,
+                           deltaY: Optional['float'] = None,
                            ):
         """Dispatches a mouse event to the page.
         :param type: Type of the mouse event.
@@ -148,6 +148,10 @@ class Input(PayloadMixin):
         :type button: str
         :param clickCount: Number of times the mouse button was clicked (default: 0).
         :type clickCount: int
+        :param deltaX: X delta in CSS pixels for mouse wheel event (default: 0).
+        :type deltaX: float
+        :param deltaY: Y delta in CSS pixels for mouse wheel event (default: 0).
+        :type deltaY: float
         """
         return (
             cls.build_send_payload("dispatchMouseEvent", {
@@ -158,6 +162,8 @@ class Input(PayloadMixin):
                 "timestamp": timestamp,
                 "button": button,
                 "clickCount": clickCount,
+                "deltaX": deltaX,
+                "deltaY": deltaY,
             }),
             None
         )
@@ -170,9 +176,9 @@ class Input(PayloadMixin):
                            timestamp: Optional['TimeSinceEpoch'] = None,
                            ):
         """Dispatches a touch event to the page.
-        :param type: Type of the touch event.
+        :param type: Type of the touch event. TouchEnd and TouchCancel must not contain any touch points, while TouchStart and TouchMove must contains at least one.
         :type type: str
-        :param touchPoints: Touch points.
+        :param touchPoints: Active touch points on the touch device. One event per any changed point (compared to previous touch event in a sequence) is generated, emulating pressing/moving/releasing points one by one.
         :type touchPoints: [TouchPoint]
         :param modifiers: Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
         :type modifiers: int

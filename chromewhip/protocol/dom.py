@@ -456,15 +456,23 @@ class DOM(PayloadMixin):
 
     @classmethod
     def getOuterHTML(cls,
-                     nodeId: Union['NodeId'],
+                     nodeId: Optional['NodeId'] = None,
+                     backendNodeId: Optional['BackendNodeId'] = None,
+                     objectId: Optional['Runtime.RemoteObjectId'] = None,
                      ):
         """Returns node's HTML markup.
-        :param nodeId: Id of the node to get markup for.
+        :param nodeId: Identifier of the node.
         :type nodeId: NodeId
+        :param backendNodeId: Identifier of the backend node.
+        :type backendNodeId: BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
         """
         return (
             cls.build_send_payload("getOuterHTML", {
                 "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
             }),
             cls.convert_payload({
                 "outerHTML": {
@@ -929,6 +937,42 @@ class DOM(PayloadMixin):
             })
         )
 
+    @classmethod
+    def describeNode(cls,
+                     nodeId: Optional['NodeId'] = None,
+                     backendNodeId: Optional['BackendNodeId'] = None,
+                     objectId: Optional['Runtime.RemoteObjectId'] = None,
+                     depth: Optional['int'] = None,
+                     pierce: Optional['bool'] = None,
+                     ):
+        """Describes node given its id, does not require domain to be enabled. Does not start tracking any objects, can be used for automation.
+        :param nodeId: Identifier of the node.
+        :type nodeId: NodeId
+        :param backendNodeId: Identifier of the backend node.
+        :type backendNodeId: BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
+        :param depth: The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the entire subtree or provide an integer larger than 0.
+        :type depth: int
+        :param pierce: Whether or not iframes and shadow roots should be traversed when returning the subtree (default is false).
+        :type pierce: bool
+        """
+        return (
+            cls.build_send_payload("describeNode", {
+                "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
+                "depth": depth,
+                "pierce": pierce,
+            }),
+            cls.convert_payload({
+                "node": {
+                    "class": Node,
+                    "optional": False
+                },
+            })
+        )
+
 
 
 class DocumentUpdatedEvent(BaseEvent):
@@ -1141,7 +1185,7 @@ class ChildNodeInsertedEvent(BaseEvent):
 class ChildNodeRemovedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeRemoved'
-    hashable = ['parentNodeId', 'nodeId']
+    hashable = ['nodeId', 'parentNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1156,7 +1200,7 @@ class ChildNodeRemovedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, parentNodeId, nodeId):
+    def build_hash(cls, nodeId, parentNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1249,7 +1293,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['pseudoElementId', 'parentId']
+    hashable = ['parentId', 'pseudoElementId']
     is_hashable = True
 
     def __init__(self,
@@ -1264,7 +1308,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, pseudoElementId, parentId):
+    def build_hash(cls, parentId, pseudoElementId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

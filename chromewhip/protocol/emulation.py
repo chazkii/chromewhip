@@ -54,15 +54,15 @@ class Emulation(PayloadMixin):
         :type deviceScaleFactor: float
         :param mobile: Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text autosizing and more.
         :type mobile: bool
-        :param scale: Scale to apply to resulting view image. Ignored in |fitWindow| mode.
+        :param scale: Scale to apply to resulting view image.
         :type scale: float
-        :param screenWidth: Overriding screen width value in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param screenWidth: Overriding screen width value in pixels (minimum 0, maximum 10000000).
         :type screenWidth: int
-        :param screenHeight: Overriding screen height value in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param screenHeight: Overriding screen height value in pixels (minimum 0, maximum 10000000).
         :type screenHeight: int
-        :param positionX: Overriding view X position on screen in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param positionX: Overriding view X position on screen in pixels (minimum 0, maximum 10000000).
         :type positionX: int
-        :param positionY: Overriding view Y position on screen in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param positionY: Overriding view Y position on screen in pixels (minimum 0, maximum 10000000).
         :type positionY: int
         :param dontSetVisibleSize: Do not set visible view size, rely upon explicit setVisibleSize call.
         :type dontSetVisibleSize: bool
@@ -191,16 +191,35 @@ class Emulation(PayloadMixin):
     @classmethod
     def setTouchEmulationEnabled(cls,
                                  enabled: Union['bool'],
-                                 configuration: Optional['str'] = None,
+                                 maxTouchPoints: Optional['int'] = None,
                                  ):
-        """Toggles mouse event-based touch event emulation.
+        """Enables touch on platforms which do not support them.
         :param enabled: Whether the touch event emulation should be enabled.
+        :type enabled: bool
+        :param maxTouchPoints: Maximum touch points supported. Defaults to one.
+        :type maxTouchPoints: int
+        """
+        return (
+            cls.build_send_payload("setTouchEmulationEnabled", {
+                "enabled": enabled,
+                "maxTouchPoints": maxTouchPoints,
+            }),
+            None
+        )
+
+    @classmethod
+    def setEmitTouchEventsForMouse(cls,
+                                   enabled: Union['bool'],
+                                   configuration: Optional['str'] = None,
+                                   ):
+        """
+        :param enabled: Whether touch emulation based on mouse input should be enabled.
         :type enabled: bool
         :param configuration: Touch/gesture events configuration. Default: current platform.
         :type configuration: str
         """
         return (
-            cls.build_send_payload("setTouchEmulationEnabled", {
+            cls.build_send_payload("setEmitTouchEventsForMouse", {
                 "enabled": enabled,
                 "configuration": configuration,
             }),
@@ -296,6 +315,24 @@ class VirtualTimeBudgetExpiredEvent(BaseEvent):
 
     def __init__(self):
         pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class VirtualTimePausedEvent(BaseEvent):
+
+    js_name = 'Emulation.virtualTimePaused'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 virtualTimeElapsed: Union['int', dict],
+                 ):
+        if isinstance(virtualTimeElapsed, dict):
+            virtualTimeElapsed = int(**virtualTimeElapsed)
+        self.virtualTimeElapsed = virtualTimeElapsed
 
     @classmethod
     def build_hash(cls):

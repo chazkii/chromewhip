@@ -568,15 +568,15 @@ class Page(PayloadMixin):
         :type deviceScaleFactor: float
         :param mobile: Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text autosizing and more.
         :type mobile: bool
-        :param scale: Scale to apply to resulting view image. Ignored in |fitWindow| mode.
+        :param scale: Scale to apply to resulting view image.
         :type scale: float
-        :param screenWidth: Overriding screen width value in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param screenWidth: Overriding screen width value in pixels (minimum 0, maximum 10000000).
         :type screenWidth: int
-        :param screenHeight: Overriding screen height value in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param screenHeight: Overriding screen height value in pixels (minimum 0, maximum 10000000).
         :type screenHeight: int
-        :param positionX: Overriding view X position on screen in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param positionX: Overriding view X position on screen in pixels (minimum 0, maximum 10000000).
         :type positionX: int
-        :param positionY: Overriding view Y position on screen in pixels (minimum 0, maximum 10000000). Only used for |mobile==true|.
+        :param positionY: Overriding view Y position on screen in pixels (minimum 0, maximum 10000000).
         :type positionY: int
         :param dontSetVisibleSize: Do not set visible view size, rely upon explicit setVisibleSize call.
         :type dontSetVisibleSize: bool
@@ -960,6 +960,25 @@ class Page(PayloadMixin):
             None
         )
 
+    @classmethod
+    def setDownloadBehavior(cls,
+                            behavior: Union['str'],
+                            downloadPath: Optional['str'] = None,
+                            ):
+        """Set the behavior when downloading a file.
+        :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if available (otherwise deny).
+        :type behavior: str
+        :param downloadPath: The default path to save downloaded files to. This is requred if behavior is set to 'allow'
+        :type downloadPath: str
+        """
+        return (
+            cls.build_send_payload("setDownloadBehavior", {
+                "behavior": behavior,
+                "downloadPath": downloadPath,
+            }),
+            None
+        )
+
 
 
 class DomContentEventFiredEvent(BaseEvent):
@@ -989,6 +1008,28 @@ class LoadEventFiredEvent(BaseEvent):
     def __init__(self,
                  timestamp: Union['Network.MonotonicTime', dict],
                  ):
+        if isinstance(timestamp, dict):
+            timestamp = Network.MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class LifecycleEventEvent(BaseEvent):
+
+    js_name = 'Page.lifecycleEvent'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 name: Union['str', dict],
+                 timestamp: Union['Network.MonotonicTime', dict],
+                 ):
+        if isinstance(name, dict):
+            name = str(**name)
+        self.name = name
         if isinstance(timestamp, dict):
             timestamp = Network.MonotonicTime(**timestamp)
         self.timestamp = timestamp

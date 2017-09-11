@@ -101,6 +101,39 @@ class ScriptCoverage(ChromeTypeBase):
         self.functions = functions
 
 
+# TypeObject: Describes a type collected during runtime.
+class TypeObject(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 ):
+
+        self.name = name
+
+
+# TypeProfileEntry: Source offset and types for a parameter or return value.
+class TypeProfileEntry(ChromeTypeBase):
+    def __init__(self,
+                 offset: Union['int'],
+                 types: Union['[TypeObject]'],
+                 ):
+
+        self.offset = offset
+        self.types = types
+
+
+# ScriptTypeProfile: Type profile data collected during runtime for a JavaScript script.
+class ScriptTypeProfile(ChromeTypeBase):
+    def __init__(self,
+                 scriptId: Union['Runtime.ScriptId'],
+                 url: Union['str'],
+                 entries: Union['[TypeProfileEntry]'],
+                 ):
+
+        self.scriptId = scriptId
+        self.url = url
+        self.entries = entries
+
+
 class Profiler(PayloadMixin):
     """ 
     """
@@ -167,14 +200,18 @@ class Profiler(PayloadMixin):
     @classmethod
     def startPreciseCoverage(cls,
                              callCount: Optional['bool'] = None,
+                             detailed: Optional['bool'] = None,
                              ):
         """Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code coverage may be incomplete. Enabling prevents running optimized code and resets execution counters.
         :param callCount: Collect accurate call counts beyond simple 'covered' or 'not covered'.
         :type callCount: bool
+        :param detailed: Collect block-based coverage.
+        :type detailed: bool
         """
         return (
             cls.build_send_payload("startPreciseCoverage", {
                 "callCount": callCount,
+                "detailed": detailed,
             }),
             None
         )
@@ -214,6 +251,41 @@ class Profiler(PayloadMixin):
             cls.convert_payload({
                 "result": {
                     "class": [ScriptCoverage],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def startTypeProfile(cls):
+        """Enable type profile.
+        """
+        return (
+            cls.build_send_payload("startTypeProfile", {
+            }),
+            None
+        )
+
+    @classmethod
+    def stopTypeProfile(cls):
+        """Disable type profile. Disabling releases type profile data collected so far.
+        """
+        return (
+            cls.build_send_payload("stopTypeProfile", {
+            }),
+            None
+        )
+
+    @classmethod
+    def takeTypeProfile(cls):
+        """Collect type profile.
+        """
+        return (
+            cls.build_send_payload("takeTypeProfile", {
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": [ScriptTypeProfile],
                     "optional": False
                 },
             })

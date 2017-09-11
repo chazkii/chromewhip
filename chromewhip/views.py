@@ -41,8 +41,7 @@ async def _go(request: web.Request):
     cmd = page.Page.setDeviceMetricsOverride(width=width,
                                              height=height,
                                              deviceScaleFactor=0.0,
-                                             mobile=False,
-                                             fitWindow=False)
+                                             mobile=False)
     await tab.send_command(cmd)
     await tab.enable_page_events()
     await tab.go(url)
@@ -55,10 +54,12 @@ async def _go(request: web.Request):
 
     return tab
 
+
 async def render_html(request: web.Request):
     # https://splash.readthedocs.io/en/stable/api.html#render-html
     tab = await _go(request)
     return web.Response(text=BS((await tab.html()).decode()).prettify())
+
 
 async def render_png(request: web.Request):
     # https://splash.readthedocs.io/en/stable/api.html#render-png
@@ -78,8 +79,7 @@ async def render_png(request: web.Request):
         cmd = page.Page.setDeviceMetricsOverride(width=int(width),
                                                  height=int(height),
                                                  deviceScaleFactor=0.0,
-                                                 mobile=False,
-                                                 fitWindow=False)
+                                                 mobile=False)
         await tab.send_command(cmd)
 
         # model numbers affected by device metrics, so needs to come after

@@ -140,7 +140,7 @@
                 "type": "object",
                 "description": "Represents function call argument. Either remote object id <code>objectId</code>, primitive <code>value</code>, unserializable primitive value or neither of (for undefined) them should be specified.",
                 "properties": [
-                    { "name": "value", "type": "any", "optional": true, "description": "Primitive value." },
+                    { "name": "value", "type": "any", "optional": true, "description": "Primitive value or serializable javascript object." },
                     { "name": "unserializableValue", "$ref": "UnserializableValue", "optional": true, "description": "Primitive value which can not be JSON-stringified." },
                     { "name": "objectId", "$ref": "RemoteObjectId", "optional": true, "description": "Remote object handle." }
                 ]
@@ -218,7 +218,7 @@
                     { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object that should be sent by value." },
                     { "name": "generatePreview", "type": "boolean", "optional": true, "experimental": true, "description": "Whether preview should be generated for the result." },
                     { "name": "userGesture", "type": "boolean", "optional": true, "experimental": true, "description": "Whether execution should be treated as initiated by user in the UI." },
-                    { "name": "awaitPromise", "type": "boolean", "optional":true, "description": "Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error." }
+                    { "name": "awaitPromise", "type": "boolean", "optional":true, "description": "Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved." }
                 ],
                 "returns": [
                     { "name": "result", "$ref": "RemoteObject", "description": "Evaluation result." },
@@ -242,14 +242,16 @@
             {
                 "name": "callFunctionOn",
                 "parameters": [
-                    { "name": "objectId", "$ref": "RemoteObjectId", "description": "Identifier of the object to call function on." },
                     { "name": "functionDeclaration", "type": "string", "description": "Declaration of the function to call." },
+                    { "name": "objectId", "$ref": "RemoteObjectId", "optional": true, "description": "Identifier of the object to call function on. Either objectId or executionContextId should be specified." },
                     { "name": "arguments", "type": "array", "items": { "$ref": "CallArgument", "description": "Call argument." }, "optional": true, "description": "Call arguments. All call arguments must belong to the same JavaScript world as the target object." },
                     { "name": "silent", "type": "boolean", "optional": true, "description": "In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides <code>setPauseOnException</code> state." },
                     { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object which should be sent by value." },
                     { "name": "generatePreview", "type": "boolean", "optional": true, "experimental": true, "description": "Whether preview should be generated for the result." },
                     { "name": "userGesture", "type": "boolean", "optional": true, "experimental": true, "description": "Whether execution should be treated as initiated by user in the UI." },
-                    { "name": "awaitPromise", "type": "boolean", "optional":true, "description": "Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error." }
+                    { "name": "awaitPromise", "type": "boolean", "optional":true, "description": "Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved." },
+                    { "name": "executionContextId", "$ref": "ExecutionContextId", "optional": true, "description": "Specifies execution context which global object will be used to call function on. Either executionContextId or objectId should be specified." },
+                    { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects. If objectGroup is not specified and objectId is, objectGroup will be inherited from object." }
                 ],
                 "returns": [
                     { "name": "result", "$ref": "RemoteObject", "description": "Call result." },
@@ -336,13 +338,23 @@
                     { "name": "includeCommandLineAPI", "type": "boolean", "optional": true, "description": "Determines whether Command Line API should be available during the evaluation." },
                     { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object which should be sent by value." },
                     { "name": "generatePreview", "type": "boolean", "optional": true, "description": "Whether preview should be generated for the result." },
-                    { "name": "awaitPromise", "type": "boolean", "optional": true, "description": "Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error." }
+                    { "name": "awaitPromise", "type": "boolean", "optional": true, "description": "Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved." }
                 ],
                 "returns": [
                     { "name": "result", "$ref": "RemoteObject", "description": "Run result." },
                     { "name": "exceptionDetails", "$ref": "ExceptionDetails", "optional": true, "description": "Exception details."}
                 ],
                 "description": "Runs script with given id in a given context."
+            },
+            {
+                "name": "queryObjects",
+                "parameters": [
+                    { "name": "prototypeObjectId", "$ref": "RemoteObjectId", "description": "Identifier of the prototype to return objects for." }
+                ],
+                "returns": [
+                    { "name": "objects", "$ref": "RemoteObject", "description": "Array with objects." }
+                ],
+                "experimental": true
             }
         ],
         "events": [
@@ -445,6 +457,7 @@
                     { "name": "functionName", "type": "string", "description": "Name of the JavaScript function called on this call frame." },
                     { "name": "functionLocation", "$ref": "Location", "optional": true, "experimental": true, "description": "Location in the source code." },
                     { "name": "location", "$ref": "Location", "description": "Location in the source code." },
+                    { "name": "url", "type": "string", "description": "JavaScript script name or url." },
                     { "name": "scopeChain", "type": "array", "items": { "$ref": "Scope" }, "description": "Scope chain for this call frame." },
                     { "name": "this", "$ref": "Runtime.RemoteObject", "description": "<code>this</code> object for this call frame." },
                     { "name": "returnValue", "$ref": "Runtime.RemoteObject", "optional": true, "description": "The value being returned, if the function is at return point." }
@@ -878,6 +891,34 @@
                     { "name": "functions", "type": "array", "items": { "$ref": "FunctionCoverage" }, "description": "Functions contained in the script that has coverage data." }
                 ],
                 "experimental": true
+            },
+            {   "id": "TypeObject",
+                "type": "object",
+                "description": "Describes a type collected during runtime.",
+                "properties": [
+                    { "name": "name", "type": "string", "description": "Name of a type collected with type profiling." }
+                ],
+                "experimental": true
+            },
+            {   "id": "TypeProfileEntry",
+                "type": "object",
+                "description": "Source offset and types for a parameter or return value.",
+                "properties": [
+                    { "name": "offset", "type": "integer", "description": "Source offset of the parameter or end of function for return values." },
+                    { "name": "types", "type": "array", "items": {"$ref": "TypeObject"}, "description": "The types for this parameter or return value."}
+                ],
+                "experimental": true
+            },
+            {
+                "id": "ScriptTypeProfile",
+                "type": "object",
+                "description": "Type profile data collected during runtime for a JavaScript script.",
+                "properties": [
+                    { "name": "scriptId", "$ref": "Runtime.ScriptId", "description": "JavaScript script id." },
+                    { "name": "url", "type": "string", "description": "JavaScript script name or url." },
+                    { "name": "entries", "type": "array", "items": { "$ref": "TypeProfileEntry" }, "description": "Type profile entries for parameters and return values of the functions in the script." }
+                ],
+                "experimental": true
             }
         ],
         "commands": [
@@ -906,7 +947,8 @@
             {
                 "name": "startPreciseCoverage",
                 "parameters": [
-                    { "name": "callCount", "type": "boolean", "optional": true, "description": "Collect accurate call counts beyond simple 'covered' or 'not covered'." }
+                    { "name": "callCount", "type": "boolean", "optional": true, "description": "Collect accurate call counts beyond simple 'covered' or 'not covered'." },
+                    { "name": "detailed", "type": "boolean", "optional": true, "description": "Collect block-based coverage." }
                 ],
                 "description": "Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code coverage may be incomplete. Enabling prevents running optimized code and resets execution counters.",
                 "experimental": true
@@ -930,6 +972,24 @@
                     { "name": "result", "type": "array", "items": { "$ref": "ScriptCoverage" }, "description": "Coverage data for the current isolate." }
                 ],
                 "description": "Collect coverage data for the current isolate. The coverage data may be incomplete due to garbage collection.",
+                "experimental": true
+            },
+            {
+                "name": "startTypeProfile",
+                "description": "Enable type profile.",
+                "experimental": true
+            },
+            {
+                "name": "stopTypeProfile",
+                "description": "Disable type profile. Disabling releases type profile data collected so far.",
+                "experimental": true
+            },
+            {
+                "name": "takeTypeProfile",
+                "returns": [
+                    { "name": "result", "type":  "array", "items": { "$ref": "ScriptTypeProfile" }, "description": "Type profile for all scripts since startTypeProfile() was turned on." }
+                ],
+                "description": "Collect type profile.",
                 "experimental": true
             }
         ],

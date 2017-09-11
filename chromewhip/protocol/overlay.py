@@ -31,6 +31,7 @@ class HighlightConfig(ChromeTypeBase):
                  shapeColor: Optional['DOM.RGBA'] = None,
                  shapeMarginColor: Optional['DOM.RGBA'] = None,
                  selectorList: Optional['str'] = None,
+                 cssGridColor: Optional['DOM.RGBA'] = None,
                  ):
 
         self.showInfo = showInfo
@@ -45,6 +46,7 @@ class HighlightConfig(ChromeTypeBase):
         self.shapeColor = shapeColor
         self.shapeMarginColor = shapeMarginColor
         self.selectorList = selectorList
+        self.cssGridColor = cssGridColor
 
 
 # InspectMode: 

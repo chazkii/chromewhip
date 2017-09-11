@@ -272,7 +272,7 @@ class Runtime(PayloadMixin):
         :type generatePreview: bool
         :param userGesture: Whether execution should be treated as initiated by user in the UI.
         :type userGesture: bool
-        :param awaitPromise: Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error.
+        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
         :type awaitPromise: bool
         """
         return (
@@ -333,20 +333,22 @@ class Runtime(PayloadMixin):
 
     @classmethod
     def callFunctionOn(cls,
-                       objectId: Union['RemoteObjectId'],
                        functionDeclaration: Union['str'],
+                       objectId: Optional['RemoteObjectId'] = None,
                        arguments: Optional['[CallArgument]'] = None,
                        silent: Optional['bool'] = None,
                        returnByValue: Optional['bool'] = None,
                        generatePreview: Optional['bool'] = None,
                        userGesture: Optional['bool'] = None,
                        awaitPromise: Optional['bool'] = None,
+                       executionContextId: Optional['ExecutionContextId'] = None,
+                       objectGroup: Optional['str'] = None,
                        ):
         """Calls function with given declaration on the given object. Object group of the result is inherited from the target object.
-        :param objectId: Identifier of the object to call function on.
-        :type objectId: RemoteObjectId
         :param functionDeclaration: Declaration of the function to call.
         :type functionDeclaration: str
+        :param objectId: Identifier of the object to call function on. Either objectId or executionContextId should be specified.
+        :type objectId: RemoteObjectId
         :param arguments: Call arguments. All call arguments must belong to the same JavaScript world as the target object.
         :type arguments: [CallArgument]
         :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides <code>setPauseOnException</code> state.
@@ -357,19 +359,25 @@ class Runtime(PayloadMixin):
         :type generatePreview: bool
         :param userGesture: Whether execution should be treated as initiated by user in the UI.
         :type userGesture: bool
-        :param awaitPromise: Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error.
+        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
         :type awaitPromise: bool
+        :param executionContextId: Specifies execution context which global object will be used to call function on. Either executionContextId or objectId should be specified.
+        :type executionContextId: ExecutionContextId
+        :param objectGroup: Symbolic group name that can be used to release multiple objects. If objectGroup is not specified and objectId is, objectGroup will be inherited from object.
+        :type objectGroup: str
         """
         return (
             cls.build_send_payload("callFunctionOn", {
-                "objectId": objectId,
                 "functionDeclaration": functionDeclaration,
+                "objectId": objectId,
                 "arguments": arguments,
                 "silent": silent,
                 "returnByValue": returnByValue,
                 "generatePreview": generatePreview,
                 "userGesture": userGesture,
                 "awaitPromise": awaitPromise,
+                "executionContextId": executionContextId,
+                "objectGroup": objectGroup,
             }),
             cls.convert_payload({
                 "result": {
@@ -570,7 +578,7 @@ class Runtime(PayloadMixin):
         :type returnByValue: bool
         :param generatePreview: Whether preview should be generated for the result.
         :type generatePreview: bool
-        :param awaitPromise: Whether execution should wait for promise to be resolved. If the result of evaluation is not a Promise, it's considered to be an error.
+        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
         :type awaitPromise: bool
         """
         return (
@@ -592,6 +600,26 @@ class Runtime(PayloadMixin):
                 "exceptionDetails": {
                     "class": ExceptionDetails,
                     "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def queryObjects(cls,
+                     prototypeObjectId: Union['RemoteObjectId'],
+                     ):
+        """
+        :param prototypeObjectId: Identifier of the prototype to return objects for.
+        :type prototypeObjectId: RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("queryObjects", {
+                "prototypeObjectId": prototypeObjectId,
+            }),
+            cls.convert_payload({
+                "objects": {
+                    "class": RemoteObject,
+                    "optional": False
                 },
             })
         )

@@ -28,15 +28,15 @@ class SecurityStateExplanation(ChromeTypeBase):
                  securityState: Union['SecurityState'],
                  summary: Union['str'],
                  description: Union['str'],
-                 hasCertificate: Union['bool'],
                  mixedContentType: Union['MixedContentType'],
+                 certificate: Union['[]'],
                  ):
 
         self.securityState = securityState
         self.summary = summary
         self.description = description
-        self.hasCertificate = hasCertificate
         self.mixedContentType = mixedContentType
+        self.certificate = certificate
 
 
 # InsecureContentStatus: Information about insecure content on the page.
@@ -82,16 +82,6 @@ class Security(PayloadMixin):
         """
         return (
             cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def showCertificateViewer(cls):
-        """Displays native dialog with the certificate details.
-        """
-        return (
-            cls.build_send_payload("showCertificateViewer", {
             }),
             None
         )

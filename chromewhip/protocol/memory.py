@@ -43,6 +43,16 @@ class Memory(PayloadMixin):
         )
 
     @classmethod
+    def prepareForLeakDetection(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("prepareForLeakDetection", {
+            }),
+            None
+        )
+
+    @classmethod
     def setPressureNotificationsSuppressed(cls,
                                            suppressed: Union['bool'],
                                            ):

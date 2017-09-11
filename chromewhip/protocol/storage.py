@@ -77,3 +77,73 @@ class Storage(PayloadMixin):
             })
         )
 
+    @classmethod
+    def trackCacheStorageForOrigin(cls,
+                                   origin: Union['str'],
+                                   ):
+        """Registers origin to be notified when an update occurs to its cache storage list.
+        :param origin: Security origin.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("trackCacheStorageForOrigin", {
+                "origin": origin,
+            }),
+            None
+        )
+
+    @classmethod
+    def untrackCacheStorageForOrigin(cls,
+                                     origin: Union['str'],
+                                     ):
+        """Unregisters origin from receiving notifications for cache storage.
+        :param origin: Security origin.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("untrackCacheStorageForOrigin", {
+                "origin": origin,
+            }),
+            None
+        )
+
+
+
+class CacheStorageListUpdatedEvent(BaseEvent):
+
+    js_name = 'Storage.cacheStorageListUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 origin: Union['str', dict],
+                 ):
+        if isinstance(origin, dict):
+            origin = str(**origin)
+        self.origin = origin
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class CacheStorageContentUpdatedEvent(BaseEvent):
+
+    js_name = 'Storage.cacheStorageContentUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 origin: Union['str', dict],
+                 cacheName: Union['str', dict],
+                 ):
+        if isinstance(origin, dict):
+            origin = str(**origin)
+        self.origin = origin
+        if isinstance(cacheName, dict):
+            cacheName = str(**cacheName)
+        self.cacheName = cacheName
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')

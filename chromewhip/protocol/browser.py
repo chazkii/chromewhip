@@ -65,6 +65,37 @@ class Browser(PayloadMixin):
         )
 
     @classmethod
+    def getVersion(cls):
+        """Returns version information.
+        """
+        return (
+            cls.build_send_payload("getVersion", {
+            }),
+            cls.convert_payload({
+                "protocolVersion": {
+                    "class": str,
+                    "optional": False
+                },
+                "product": {
+                    "class": str,
+                    "optional": False
+                },
+                "revision": {
+                    "class": str,
+                    "optional": False
+                },
+                "userAgent": {
+                    "class": str,
+                    "optional": False
+                },
+                "jsVersion": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setWindowBounds(cls,
                         windowId: Union['WindowID'],
                         bounds: Union['Bounds'],
