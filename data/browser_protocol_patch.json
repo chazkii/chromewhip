@@ -1,0 +1,9 @@
+[
+  { "op": "test", "path": "/domains/3/domain", "value": "Page" },
+  { "op": "add", "path": "/domains/3/dependencies/-", "value": "Runtime" },
+  { "op": "add", "path": "/domains/3/dependencies/-", "value": "Emulation" },
+  { "op": "test", "path": "/domains/8/domain", "value": "Network" },
+  { "op": "add", "path": "/domains/8/dependencies/-", "value": "Page" },
+  { "op": "test", "path": "/domains/31/domain", "value": "Browser" },
+  { "op": "add", "path": "/domains/31/dependencies", "value": ["Target"] }
+]

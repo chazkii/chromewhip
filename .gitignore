@@ -83,3 +83,5 @@ staticfiles/
 dist
 chromewhip.egg-info
 README.rst
+
+scripts/devtools-protocol
