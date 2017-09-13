@@ -29,13 +29,12 @@ template_fp = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/p
 output_dir_fp = os.path.abspath(os.path.join(os.path.dirname(__file__), '../chromewhip/protocol/'))
 browser_json_fp = ('browser', os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/browser_protocol.json')))
 js_json_fp = ('js', os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/js_protocol.json')))
-test_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../test_generation.py'))
+test_script_fp = os.path.abspath(os.path.join(os.path.dirname(__file__), './check_generation.py'))
 
 
 # https://stackoverflow.com/questions/17156078/converting-identifier-naming-between-camelcase-and-underscores-during-json-seria
 
 
-test_f = open(test_script, 'w')
 
 JS_PYTHON_TYPES = {
     'string': 'str',
@@ -92,6 +91,15 @@ for fpd in [js_json_fp, browser_json_fp]:
             if any(filter(lambda p: p['name'] == 'id', type_obj.get('properties', []))):
                 hashable_objs.add(type_obj['id'])
 
+
+        # shorten references to drop domain if part of same module
+        # for command in domain.get('commands', []):
+        #     for parameter in command.get('parameters', []):
+        #         ref = parameter.get('$ref')
+        #         if ref and ref.split('.')[0] == domain['name']:
+        #             print('modifying command "%s"' % '.'.join([domain['name'], command['name']]))
+        #             ref
+
     hashable_objs_per_prot[pname] = hashable_objs
     processed_data[pname] = data
 
@@ -115,6 +123,10 @@ for k, v in processed_data.items():
 
 # finally write to file
 t = Template(open(template_fp).read(), trim_blocks=True, lstrip_blocks=True)
+test_f = open(test_script_fp, 'w')
+test_f.write('''import sys
+sys.path.insert(0, "../")
+''')
 for prot in processed_data.values():
     for domain in prot['domains']:
         name = domain['domain'].lower()

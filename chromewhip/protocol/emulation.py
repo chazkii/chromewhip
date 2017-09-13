@@ -291,6 +291,21 @@ class Emulation(PayloadMixin):
         )
 
     @classmethod
+    def setNavigatorOverrides(cls,
+                              platform: Union['str'],
+                              ):
+        """Overrides value returned by the javascript navigator object.
+        :param platform: The platform navigator.platform should return.
+        :type platform: str
+        """
+        return (
+            cls.build_send_payload("setNavigatorOverrides", {
+                "platform": platform,
+            }),
+            None
+        )
+
+    @classmethod
     def setDefaultBackgroundColorOverride(cls,
                                           color: Optional['DOM.RGBA'] = None,
                                           ):

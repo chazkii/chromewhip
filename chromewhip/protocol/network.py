@@ -869,7 +869,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -916,7 +916,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -951,7 +951,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -982,7 +982,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

@@ -1185,7 +1185,7 @@ class ChildNodeInsertedEvent(BaseEvent):
 class ChildNodeRemovedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeRemoved'
-    hashable = ['nodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'nodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1200,7 +1200,7 @@ class ChildNodeRemovedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, nodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, nodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1293,7 +1293,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['parentId', 'pseudoElementId']
+    hashable = ['pseudoElementId', 'parentId']
     is_hashable = True
 
     def __init__(self,
@@ -1308,7 +1308,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, parentId, pseudoElementId):
+    def build_hash(cls, pseudoElementId, parentId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

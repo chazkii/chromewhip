@@ -11,9 +11,26 @@ if [ "$LATEST_GIT_MSG" != "$CHROMEWHIP_GIT_MSG" ]
 then
   echo "devtools-protocol has been updated. Regenerating chromewhip protocol files."
   cd ../..
-  jsonpatch scripts/devtools-protocol/json/browser_protocol.json data/browser_protocol_patch.json > data/browser_protocol.json
-  jsonpatch scripts/devtools-protocol/json/js_protocol.json data/js_protocol_patch.json > data/js_protocol.json
+  jsonpatch --indent 4 scripts/devtools-protocol/json/browser_protocol.json data/browser_protocol_patch.json > data/browser_protocol.json
+  jsonpatch --indent 4 scripts/devtools-protocol/json/js_protocol.json data/js_protocol_patch.json > data/js_protocol.json
   rm -rf scripts/devtools-protocol
+  echo "$LATEST_GIT_MSG" > data/devtools_protocol_msg
   cd scripts
-  python generate_protocol.py
+  if $(python generate_protocol.py); then
+    echo "Regeneration complete!"
+  else
+    echo "Regeneration failed! Exiting"
+    exit 1
+  fi
+  if $(python check_generation.py); then
+    echo "Sanity check passed!"
+  else
+    echo "Sanity check failed! Please manually check the generated protocol files"
+    exit 1
+  fi
+  git commit -a -m "$LATEST_GIT_MSG"
+  git push https://$CHROMEWHIP_BOT_USERNAME:$CHROMEWHIP_BOT_PASSWORD@github.com/chuckus/chromewhip.git
+else
+  echo "no changes found!"
+  rm -rf scripts/devtools-protocol
 fi
