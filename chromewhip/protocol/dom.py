@@ -535,7 +535,7 @@ class DOM(PayloadMixin):
                          fromIndex: Union['int'],
                          toIndex: Union['int'],
                          ):
-        """Returns search results from given <code>fromIndex</code> to given <code>toIndex</code> from the sarch with the given identifier.
+        """Returns search results from given <code>fromIndex</code> to given <code>toIndex</code> from the search with the given identifier.
         :param searchId: Unique search session identifier.
         :type searchId: str
         :param fromIndex: Start index of the search result to be returned.
@@ -1154,7 +1154,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['parentNodeId', 'previousNodeId']
+    hashable = ['previousNodeId', 'parentNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1173,7 +1173,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, parentNodeId, previousNodeId):
+    def build_hash(cls, previousNodeId, parentNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1185,7 +1185,7 @@ class ChildNodeInsertedEvent(BaseEvent):
 class ChildNodeRemovedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeRemoved'
-    hashable = ['parentNodeId', 'nodeId']
+    hashable = ['nodeId', 'parentNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1200,7 +1200,7 @@ class ChildNodeRemovedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, parentNodeId, nodeId):
+    def build_hash(cls, nodeId, parentNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1293,7 +1293,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['pseudoElementId', 'parentId']
+    hashable = ['parentId', 'pseudoElementId']
     is_hashable = True
 
     def __init__(self,
@@ -1308,7 +1308,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, pseudoElementId, parentId):
+    def build_hash(cls, parentId, pseudoElementId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

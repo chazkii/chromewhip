@@ -1042,7 +1042,7 @@ class LifecycleEventEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1061,7 +1061,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

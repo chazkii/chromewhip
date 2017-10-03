@@ -27,6 +27,7 @@ class LogEntry(ChromeTypeBase):
                  stackTrace: Optional['Runtime.StackTrace'] = None,
                  networkRequestId: Optional['Network.RequestId'] = None,
                  workerId: Optional['str'] = None,
+                 args: Optional['[Runtime.RemoteObject]'] = None,
                  ):
 
         self.source = source
@@ -38,6 +39,7 @@ class LogEntry(ChromeTypeBase):
         self.stackTrace = stackTrace
         self.networkRequestId = networkRequestId
         self.workerId = workerId
+        self.args = args
 
 
 # ViolationSetting: Violation configuration setting.

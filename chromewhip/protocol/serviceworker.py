@@ -175,6 +175,16 @@ class ServiceWorker(PayloadMixin):
         )
 
     @classmethod
+    def stopAllWorkers(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("stopAllWorkers", {
+            }),
+            None
+        )
+
+    @classmethod
     def inspectWorker(cls,
                       versionId: Union['str'],
                       ):

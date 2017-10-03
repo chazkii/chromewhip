@@ -25,8 +25,8 @@ class Animation(ChromeTypeBase):
                  playbackRate: Union['float'],
                  startTime: Union['float'],
                  currentTime: Union['float'],
-                 source: Union['AnimationEffect'],
                  type: Union['str'],
+                 source: Optional['AnimationEffect'] = None,
                  cssId: Optional['str'] = None,
                  ):
 
@@ -37,8 +37,8 @@ class Animation(ChromeTypeBase):
         self.playbackRate = playbackRate
         self.startTime = startTime
         self.currentTime = currentTime
-        self.source = source
         self.type = type
+        self.source = source
         self.cssId = cssId
 
 
@@ -52,8 +52,8 @@ class AnimationEffect(ChromeTypeBase):
                  duration: Union['float'],
                  direction: Union['str'],
                  fill: Union['str'],
-                 backendNodeId: Union['DOM.BackendNodeId'],
                  easing: Union['str'],
+                 backendNodeId: Optional['DOM.BackendNodeId'] = None,
                  keyframesRule: Optional['KeyframesRule'] = None,
                  ):
 

@@ -107,6 +107,36 @@ class Storage(PayloadMixin):
             None
         )
 
+    @classmethod
+    def trackIndexedDBForOrigin(cls,
+                                origin: Union['str'],
+                                ):
+        """Registers origin to be notified when an update occurs to its IndexedDB.
+        :param origin: Security origin.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("trackIndexedDBForOrigin", {
+                "origin": origin,
+            }),
+            None
+        )
+
+    @classmethod
+    def untrackIndexedDBForOrigin(cls,
+                                  origin: Union['str'],
+                                  ):
+        """Unregisters origin from receiving notifications for IndexedDB.
+        :param origin: Security origin.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("untrackIndexedDBForOrigin", {
+                "origin": origin,
+            }),
+            None
+        )
+
 
 
 class CacheStorageListUpdatedEvent(BaseEvent):
@@ -143,6 +173,50 @@ class CacheStorageContentUpdatedEvent(BaseEvent):
         if isinstance(cacheName, dict):
             cacheName = str(**cacheName)
         self.cacheName = cacheName
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class IndexedDBListUpdatedEvent(BaseEvent):
+
+    js_name = 'Storage.indexedDBListUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 origin: Union['str', dict],
+                 ):
+        if isinstance(origin, dict):
+            origin = str(**origin)
+        self.origin = origin
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class IndexedDBContentUpdatedEvent(BaseEvent):
+
+    js_name = 'Storage.indexedDBContentUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 origin: Union['str', dict],
+                 databaseName: Union['str', dict],
+                 objectStoreName: Union['str', dict],
+                 ):
+        if isinstance(origin, dict):
+            origin = str(**origin)
+        self.origin = origin
+        if isinstance(databaseName, dict):
+            databaseName = str(**databaseName)
+        self.databaseName = databaseName
+        if isinstance(objectStoreName, dict):
+            objectStoreName = str(**objectStoreName)
+        self.objectStoreName = objectStoreName
 
     @classmethod
     def build_hash(cls):

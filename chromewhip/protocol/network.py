@@ -169,7 +169,7 @@ BlockedReason = str
 class Response(ChromeTypeBase):
     def __init__(self,
                  url: Union['str'],
-                 status: Union['float'],
+                 status: Union['int'],
                  statusText: Union['str'],
                  headers: Union['Headers'],
                  mimeType: Union['str'],
@@ -222,7 +222,7 @@ class WebSocketRequest(ChromeTypeBase):
 # WebSocketResponse: WebSocket response data.
 class WebSocketResponse(ChromeTypeBase):
     def __init__(self,
-                 status: Union['float'],
+                 status: Union['int'],
                  statusText: Union['str'],
                  headers: Union['Headers'],
                  headersText: Optional['str'] = None,
@@ -869,7 +869,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -916,7 +916,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -951,7 +951,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -982,7 +982,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
