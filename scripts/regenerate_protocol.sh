@@ -28,6 +28,8 @@ then
     echo "Sanity check failed! Please manually check the generated protocol files"
     exit 1
   fi
+  # add all newly generated modules
+  git add ../chromewhip/protocol
   git commit -a -m "$LATEST_GIT_MSG"
   git push https://$CHROMEWHIP_BOT_USERNAME:$CHROMEWHIP_BOT_PASSWORD@github.com/chuckus/chromewhip.git
 else

@@ -26,6 +26,7 @@ import chromewhip.protocol.domsnapshot
 import chromewhip.protocol.io
 import chromewhip.protocol.domdebugger
 import chromewhip.protocol.target
+import chromewhip.protocol.headlessexperimental
 import chromewhip.protocol.serviceworker
 import chromewhip.protocol.input
 import chromewhip.protocol.layertree

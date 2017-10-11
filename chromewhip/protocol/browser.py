@@ -12,7 +12,6 @@ from typing import Any, Optional, Union
 from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
-from chromewhip.protocol import target as Target
 
 # WindowID: 
 WindowID = int

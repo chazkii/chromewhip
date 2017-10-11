@@ -13,6 +13,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 from chromewhip.protocol import dom as DOM
+from chromewhip.protocol import page as Page
 
 # ScreenOrientation: Screen orientation.
 class ScreenOrientation(ChromeTypeBase):
@@ -44,6 +45,7 @@ class Emulation(PayloadMixin):
                                  positionY: Optional['int'] = None,
                                  dontSetVisibleSize: Optional['bool'] = None,
                                  screenOrientation: Optional['ScreenOrientation'] = None,
+                                 viewport: Optional['Page.Viewport'] = None,
                                  ):
         """Overrides the values of device screen dimensions (window.screen.width, window.screen.height, window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media query results).
         :param width: Overriding width value in pixels (minimum 0, maximum 10000000). 0 disables the override.
@@ -68,6 +70,8 @@ class Emulation(PayloadMixin):
         :type dontSetVisibleSize: bool
         :param screenOrientation: Screen orientation override.
         :type screenOrientation: ScreenOrientation
+        :param viewport: If set, the visible area of the page will be overridden to this viewport. This viewport change is not observed by the page, e.g. viewport-relative elements do not change positions.
+        :type viewport: Page.Viewport
         """
         return (
             cls.build_send_payload("setDeviceMetricsOverride", {
@@ -82,6 +86,7 @@ class Emulation(PayloadMixin):
                 "positionY": positionY,
                 "dontSetVisibleSize": dontSetVisibleSize,
                 "screenOrientation": screenOrientation,
+                "viewport": viewport,
             }),
             None
         )
@@ -330,6 +335,24 @@ class VirtualTimeBudgetExpiredEvent(BaseEvent):
 
     def __init__(self):
         pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class VirtualTimeAdvancedEvent(BaseEvent):
+
+    js_name = 'Emulation.virtualTimeAdvanced'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 virtualTimeElapsed: Union['int', dict],
+                 ):
+        if isinstance(virtualTimeElapsed, dict):
+            virtualTimeElapsed = int(**virtualTimeElapsed)
+        self.virtualTimeElapsed = virtualTimeElapsed
 
     @classmethod
     def build_hash(cls):

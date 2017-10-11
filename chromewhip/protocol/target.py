@@ -275,6 +275,7 @@ class Target(PayloadMixin):
                      width: Optional['int'] = None,
                      height: Optional['int'] = None,
                      browserContextId: Optional['BrowserContextID'] = None,
+                     enableBeginFrameControl: Optional['bool'] = None,
                      ):
         """Creates a new page.
         :param url: The initial URL the page will be navigated to.
@@ -285,6 +286,8 @@ class Target(PayloadMixin):
         :type height: int
         :param browserContextId: The browser context to create the page in (headless chrome only).
         :type browserContextId: BrowserContextID
+        :param enableBeginFrameControl: Whether BeginFrames for this target will be controlled via DevTools (headless chrome only, not supported on MacOS yet, false by default).
+        :type enableBeginFrameControl: bool
         """
         return (
             cls.build_send_payload("createTarget", {
@@ -292,6 +295,7 @@ class Target(PayloadMixin):
                 "width": width,
                 "height": height,
                 "browserContextId": browserContextId,
+                "enableBeginFrameControl": enableBeginFrameControl,
             }),
             cls.convert_payload({
                 "targetId": {

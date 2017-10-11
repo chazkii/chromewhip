@@ -558,6 +558,7 @@ class Page(PayloadMixin):
                                  positionY: Optional['int'] = None,
                                  dontSetVisibleSize: Optional['bool'] = None,
                                  screenOrientation: Optional['Emulation.ScreenOrientation'] = None,
+                                 viewport: Optional['Viewport'] = None,
                                  ):
         """Overrides the values of device screen dimensions (window.screen.width, window.screen.height, window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media query results).
         :param width: Overriding width value in pixels (minimum 0, maximum 10000000). 0 disables the override.
@@ -582,6 +583,8 @@ class Page(PayloadMixin):
         :type dontSetVisibleSize: bool
         :param screenOrientation: Screen orientation override.
         :type screenOrientation: Emulation.ScreenOrientation
+        :param viewport: The viewport dimensions and scale. If not set, the override is cleared.
+        :type viewport: Viewport
         """
         return (
             cls.build_send_payload("setDeviceMetricsOverride", {
@@ -596,6 +599,7 @@ class Page(PayloadMixin):
                 "positionY": positionY,
                 "dontSetVisibleSize": dontSetVisibleSize,
                 "screenOrientation": screenOrientation,
+                "viewport": viewport,
             }),
             None
         )
@@ -1020,13 +1024,17 @@ class LoadEventFiredEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = []
-    is_hashable = False
+    hashable = ['frameId']
+    is_hashable = True
 
     def __init__(self,
+                 frameId: Union['FrameId', dict],
                  name: Union['str', dict],
                  timestamp: Union['Network.MonotonicTime', dict],
                  ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
         if isinstance(name, dict):
             name = str(**name)
         self.name = name
@@ -1035,8 +1043,13 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class FrameAttachedEvent(BaseEvent):
@@ -1357,6 +1370,36 @@ class InterstitialHiddenEvent(BaseEvent):
 
     def __init__(self):
         pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class WindowOpenEvent(BaseEvent):
+
+    js_name = 'Page.windowOpen'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 url: Union['str', dict],
+                 windowName: Union['str', dict],
+                 windowFeatures: Union['str', dict],
+                 userGesture: Union['bool', dict],
+                 ):
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+        if isinstance(windowName, dict):
+            windowName = str(**windowName)
+        self.windowName = windowName
+        if isinstance(windowFeatures, dict):
+            windowFeatures = str(**windowFeatures)
+        self.windowFeatures = windowFeatures
+        if isinstance(userGesture, dict):
+            userGesture = bool(**userGesture)
+        self.userGesture = userGesture
 
     @classmethod
     def build_hash(cls):

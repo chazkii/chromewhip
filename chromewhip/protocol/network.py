@@ -775,17 +775,21 @@ class Network(PayloadMixin):
     def setRequestInterceptionEnabled(cls,
                                       enabled: Union['bool'],
                                       patterns: Optional['[]'] = None,
+                                      resourceTypes: Optional['[Page.ResourceType]'] = None,
                                       ):
-        """Sets the requests to intercept that match a the provided patterns.
+        """Sets the requests to intercept that match a the provided patterns and optionally resource types.
         :param enabled: Whether requests should be intercepted. If patterns is not set, matches all and resets any previously set patterns. Other parameters are ignored if false.
         :type enabled: bool
         :param patterns: URLs matching any of these patterns will be forwarded and wait for the corresponding continueInterceptedRequest call. Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is backslash. If omitted equivalent to ['*'] (intercept all).
         :type patterns: []
+        :param resourceTypes: If set, only requests for matching resource types will be intercepted.
+        :type resourceTypes: [Page.ResourceType]
         """
         return (
             cls.build_send_payload("setRequestInterceptionEnabled", {
                 "enabled": enabled,
                 "patterns": patterns,
+                "resourceTypes": resourceTypes,
             }),
             None
         )

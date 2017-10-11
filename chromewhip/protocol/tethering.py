@@ -12,6 +12,7 @@ from typing import Any, Optional, Union
 from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
+from chromewhip.protocol import target as Target
 
 class Tethering(PayloadMixin):
     """ The Tethering domain defines methods and events for browser port binding.

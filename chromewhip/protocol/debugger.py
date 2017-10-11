@@ -168,6 +168,7 @@ class Debugger(PayloadMixin):
                            lineNumber: Union['int'],
                            url: Optional['str'] = None,
                            urlRegex: Optional['str'] = None,
+                           scriptHash: Optional['str'] = None,
                            columnNumber: Optional['int'] = None,
                            condition: Optional['str'] = None,
                            ):
@@ -178,6 +179,8 @@ class Debugger(PayloadMixin):
         :type url: str
         :param urlRegex: Regex pattern for the URLs of the resources to set breakpoints on. Either <code>url</code> or <code>urlRegex</code> must be specified.
         :type urlRegex: str
+        :param scriptHash: Script hash of the resources to set breakpoint on.
+        :type scriptHash: str
         :param columnNumber: Offset in the line to set breakpoint at.
         :type columnNumber: int
         :param condition: Expression to use as a breakpoint condition. When specified, debugger will only stop on the breakpoint if this expression evaluates to true.
@@ -188,6 +191,7 @@ class Debugger(PayloadMixin):
                 "lineNumber": lineNumber,
                 "url": url,
                 "urlRegex": urlRegex,
+                "scriptHash": scriptHash,
                 "columnNumber": columnNumber,
                 "condition": condition,
             }),
