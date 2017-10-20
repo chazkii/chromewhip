@@ -111,11 +111,10 @@ def init_test_server(triggers: dict, initial_msgs: [dict] = None, expected: queu
                     else:
                         await websocket.send(json.dumps(r, cls=helpers.ChromewhipJSONEncoder))
         except asyncio.CancelledError as e:
-            print ('I ran!!!!sdfsdfsdfds')
-            if expected.empty():
-                pytest.fail('less messages received that expected')
-            else:
-                raise e
+            # TODO: look at failure logic here, why cancelled error? why empty? empty could mean it is working properly
+            # if expected.empty():
+            #     pytest.fail('less messages received that expected')
+            raise e
     return test_server
 
 
