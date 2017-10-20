@@ -624,6 +624,26 @@ class Runtime(PayloadMixin):
             })
         )
 
+    @classmethod
+    def globalLexicalScopeNames(cls,
+                                executionContextId: Optional['ExecutionContextId'] = None,
+                                ):
+        """Returns all let, const and class variables from global scope.
+        :param executionContextId: Specifies in which execution context to lookup global scope variables.
+        :type executionContextId: ExecutionContextId
+        """
+        return (
+            cls.build_send_payload("globalLexicalScopeNames", {
+                "executionContextId": executionContextId,
+            }),
+            cls.convert_payload({
+                "names": {
+                    "class": [],
+                    "optional": False
+                },
+            })
+        )
+
 
 
 class ExecutionContextCreatedEvent(BaseEvent):

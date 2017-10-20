@@ -2331,6 +2331,12 @@
                             "type": "integer",
                             "optional": true,
                             "description": "If set, after this many virtual milliseconds have elapsed virtual time will be paused and a virtualTimeBudgetExpired event is sent."
+                        },
+                        {
+                            "name": "maxVirtualTimeTaskStarvationCount",
+                            "type": "integer",
+                            "optional": true,
+                            "description": "If set this specifies the maximum number of tasks that can be run before virtual is forced forwards to prevent deadlock."
                         }
                     ],
                     "experimental": true
@@ -8703,6 +8709,12 @@
                             "name": "attached",
                             "type": "boolean",
                             "description": "Whether the target has an attached client."
+                        },
+                        {
+                            "name": "openerId",
+                            "optional": true,
+                            "$ref": "TargetID",
+                            "description": "Opener target Id"
                         }
                     ]
                 },
@@ -9595,6 +9607,13 @@
                             "type": "boolean",
                             "optional": true,
                             "description": "Whether the event was a system key event (default: false)."
+                        },
+                        {
+                            "name": "location",
+                            "type": "integer",
+                            "optional": true,
+                            "experimental": true,
+                            "description": "Whether the event was from the left or right side of the keyboard. 1=Left, 2=Right (default: 0)."
                         }
                     ],
                     "description": "Dispatches a key event to the page."
@@ -11884,6 +11903,10 @@
                 }
             ],
             "commands": [
+                {
+                    "name": "close",
+                    "description": "Close browser gracefully."
+                },
                 {
                     "name": "getWindowForTarget",
                     "description": "Get the browser window that contains the devtools target.",

@@ -73,6 +73,7 @@ class Input(PayloadMixin):
                          autoRepeat: Optional['bool'] = None,
                          isKeypad: Optional['bool'] = None,
                          isSystemKey: Optional['bool'] = None,
+                         location: Optional['int'] = None,
                          ):
         """Dispatches a key event to the page.
         :param type: Type of the key event.
@@ -101,6 +102,8 @@ class Input(PayloadMixin):
         :type isKeypad: bool
         :param isSystemKey: Whether the event was a system key event (default: false).
         :type isSystemKey: bool
+        :param location: Whether the event was from the left or right side of the keyboard. 1=Left, 2=Right (default: 0).
+        :type location: int
         """
         return (
             cls.build_send_payload("dispatchKeyEvent", {
@@ -117,6 +120,7 @@ class Input(PayloadMixin):
                 "autoRepeat": autoRepeat,
                 "isKeypad": isKeypad,
                 "isSystemKey": isSystemKey,
+                "location": location,
             }),
             None
         )

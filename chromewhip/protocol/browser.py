@@ -40,6 +40,16 @@ class Browser(PayloadMixin):
     """ The Browser domain defines methods and events for browser managing.
     """
     @classmethod
+    def close(cls):
+        """Close browser gracefully.
+        """
+        return (
+            cls.build_send_payload("close", {
+            }),
+            None
+        )
+
+    @classmethod
     def getWindowForTarget(cls,
                            targetId: Union['Target.TargetID'],
                            ):

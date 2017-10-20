@@ -280,17 +280,21 @@ class Emulation(PayloadMixin):
     def setVirtualTimePolicy(cls,
                              policy: Union['VirtualTimePolicy'],
                              budget: Optional['int'] = None,
+                             maxVirtualTimeTaskStarvationCount: Optional['int'] = None,
                              ):
         """Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets the current virtual time policy.  Note this supersedes any previous time budget.
         :param policy: 
         :type policy: VirtualTimePolicy
         :param budget: If set, after this many virtual milliseconds have elapsed virtual time will be paused and a virtualTimeBudgetExpired event is sent.
         :type budget: int
+        :param maxVirtualTimeTaskStarvationCount: If set this specifies the maximum number of tasks that can be run before virtual is forced forwards to prevent deadlock.
+        :type maxVirtualTimeTaskStarvationCount: int
         """
         return (
             cls.build_send_payload("setVirtualTimePolicy", {
                 "policy": policy,
                 "budget": budget,
+                "maxVirtualTimeTaskStarvationCount": maxVirtualTimeTaskStarvationCount,
             }),
             None
         )
