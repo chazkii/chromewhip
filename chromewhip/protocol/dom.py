@@ -1154,7 +1154,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['previousNodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'previousNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1173,7 +1173,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, previousNodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, previousNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

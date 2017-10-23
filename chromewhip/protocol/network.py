@@ -361,6 +361,17 @@ class AuthChallengeResponse(ChromeTypeBase):
         self.password = password
 
 
+# RequestPattern: Request pattern for interception.
+class RequestPattern(ChromeTypeBase):
+    def __init__(self,
+                 urlPattern: Optional['str'] = None,
+                 resourceType: Optional['Page.ResourceType'] = None,
+                 ):
+
+        self.urlPattern = urlPattern
+        self.resourceType = resourceType
+
+
 class Network(PayloadMixin):
     """ Network domain allows tracking network activities of the page. It exposes information about http, file, data and other requests and responses, their headers, bodies, timing, etc.
     """
@@ -772,24 +783,16 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def setRequestInterceptionEnabled(cls,
-                                      enabled: Union['bool'],
-                                      patterns: Optional['[]'] = None,
-                                      resourceTypes: Optional['[Page.ResourceType]'] = None,
-                                      ):
+    def setRequestInterception(cls,
+                               patterns: Union['[RequestPattern]'],
+                               ):
         """Sets the requests to intercept that match a the provided patterns and optionally resource types.
-        :param enabled: Whether requests should be intercepted. If patterns is not set, matches all and resets any previously set patterns. Other parameters are ignored if false.
-        :type enabled: bool
-        :param patterns: URLs matching any of these patterns will be forwarded and wait for the corresponding continueInterceptedRequest call. Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is backslash. If omitted equivalent to ['*'] (intercept all).
-        :type patterns: []
-        :param resourceTypes: If set, only requests for matching resource types will be intercepted.
-        :type resourceTypes: [Page.ResourceType]
+        :param patterns: Requests matching any of these patterns will be forwarded and wait for the corresponding continueInterceptedRequest call.
+        :type patterns: [RequestPattern]
         """
         return (
-            cls.build_send_payload("setRequestInterceptionEnabled", {
-                "enabled": enabled,
+            cls.build_send_payload("setRequestInterception", {
                 "patterns": patterns,
-                "resourceTypes": resourceTypes,
             }),
             None
         )
@@ -873,7 +876,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['requestId', 'loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -920,7 +923,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, requestId, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -955,7 +958,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['requestId', 'loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -986,7 +989,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, requestId, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1324,7 +1327,7 @@ class WebSocketFrameSentEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['eventId', 'requestId']
+    hashable = ['requestId', 'eventId']
     is_hashable = True
 
     def __init__(self,
@@ -1351,7 +1354,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, eventId, requestId):
+    def build_hash(cls, requestId, eventId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
