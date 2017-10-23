@@ -15,14 +15,33 @@ It is currently in early **alpha** and still being heavily developed. Please use
 to track the progress towards **beta**. For now, the required milestone can be summarised as 
 **implementing the entire Splash API**.
 
-### Python 3.6 asyncio driver for Chrome devtools protocol
+## How to use as a service
 
-Chromewhip communicates with the Chrome process with our own asyncio driver.
+One can simply deploy as a Docker container and use the API that is served on port `8080`.
+
+```
+docker run --init -it --rm --shm-size=1024m -p=127.0.0.1:8080:8080 --cap-add=SYS_ADMIN \
+  chuckus/chromewhip
+```
+
+Refer to the HTTP API reference at the bottom of the README for what features are available.
+
+## How to use the driver
+
+As part of the Chromewhip service, a Python 3.6 asyncio compatible driver for Chrome devtools protocol was 
+developed and can be leveraged without having to run the HTTP server. The advantages of 
+our devtools driver are:
 
 * Typed Python bindings for devtools protocol through templated generation - get autocomplete with your code editor.
 * Can bind events to concurrent commands, which is required for providing a robust HTTP service.
 
-Some example code on how to use it:
+### Prerequisites
+
+Before executing the code below, please have the following:
+
+* Google Chrome Canary running with flag `--remote-debugging-port=9222`
+
+### Example driver code
 
 ```python
 import asyncio
@@ -80,18 +99,7 @@ print(dom_obj.nodeId)
 print(dom_obj.nodeName)
 ```
 
-## Running
 
-### Deploying with Docker
-
-```
-docker run --init -it --rm --shm-size=1024m -p=127.0.0.1:8080:8080 --cap-add=SYS_ADMIN \
-  chuckus/chromewhip
-```
-
-### Requirements for MacOS 10.12+
-
-* Google Chrome Canary
 
 ## Implemented HTTP API
 
