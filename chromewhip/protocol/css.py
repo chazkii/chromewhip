@@ -318,19 +318,6 @@ class StyleDeclarationEdit(ChromeTypeBase):
         self.text = text
 
 
-# InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded as stable and may change between versions.
-class InlineTextBox(ChromeTypeBase):
-    def __init__(self,
-                 boundingBox: Union['DOM.Rect'],
-                 startCharacterIndex: Union['int'],
-                 numCharacters: Union['int'],
-                 ):
-
-        self.boundingBox = boundingBox
-        self.startCharacterIndex = startCharacterIndex
-        self.numCharacters = numCharacters
-
-
 class CSS(PayloadMixin):
     """ This domain exposes CSS read/write operations. All CSS objects (stylesheets, rules, and styles) have an associated <code>id</code> used in subsequent operations on the related object. Each object type has a specific <code>id</code> structure, and those are not interchangeable between objects of different kinds. CSS objects can be loaded using the <code>get*ForNode()</code> calls (which accept a DOM node id). A client can also keep track of stylesheets via the <code>styleSheetAdded</code>/<code>styleSheetRemoved</code> events and subsequently load the required stylesheet contents using the <code>getStyleSheet[Text]()</code> methods.
     """

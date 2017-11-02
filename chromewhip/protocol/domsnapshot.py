@@ -71,13 +71,26 @@ class DOMNode(ChromeTypeBase):
         self.isClickable = isClickable
 
 
+# InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded as stable and may change between versions.
+class InlineTextBox(ChromeTypeBase):
+    def __init__(self,
+                 boundingBox: Union['DOM.Rect'],
+                 startCharacterIndex: Union['int'],
+                 numCharacters: Union['int'],
+                 ):
+
+        self.boundingBox = boundingBox
+        self.startCharacterIndex = startCharacterIndex
+        self.numCharacters = numCharacters
+
+
 # LayoutTreeNode: Details of an element in the DOM tree with a LayoutObject.
 class LayoutTreeNode(ChromeTypeBase):
     def __init__(self,
                  domNodeIndex: Union['int'],
                  boundingBox: Union['DOM.Rect'],
                  layoutText: Optional['str'] = None,
-                 inlineTextNodes: Optional['[CSS.InlineTextBox]'] = None,
+                 inlineTextNodes: Optional['[InlineTextBox]'] = None,
                  styleIndex: Optional['int'] = None,
                  ):
 

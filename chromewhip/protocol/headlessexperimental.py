@@ -78,6 +78,10 @@ class HeadlessExperimental(PayloadMixin):
                     "class": bool,
                     "optional": False
                 },
+                "mainFrameContentUpdated": {
+                    "class": bool,
+                    "optional": False
+                },
                 "screenshotData": {
                     "class": str,
                     "optional": True

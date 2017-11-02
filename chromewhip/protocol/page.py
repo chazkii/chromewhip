@@ -81,6 +81,17 @@ class FrameResourceTree(ChromeTypeBase):
         self.resources = resources
 
 
+# FrameTree: Information about the Frame hierarchy.
+class FrameTree(ChromeTypeBase):
+    def __init__(self,
+                 frame: Union['Frame'],
+                 childFrames: Optional['[FrameTree]'] = None,
+                 ):
+
+        self.frame = frame
+        self.childFrames = childFrames
+
+
 # ScriptIdentifier: Unique script identifier.
 ScriptIdentifier = str
 
@@ -142,9 +153,6 @@ class AppManifestError(ChromeTypeBase):
         self.line = line
         self.column = column
 
-
-# NavigationResponse: Proceed: allow the navigation; Cancel: cancel the navigation; CancelAndIgnore: cancels the navigation and makes the requester of the navigation acts like the request was never made.
-NavigationResponse = str
 
 # LayoutViewport: Layout viewport position and dimensions.
 class LayoutViewport(ChromeTypeBase):
@@ -308,6 +316,21 @@ class Page(PayloadMixin):
         )
 
     @classmethod
+    def setLifecycleEventsEnabled(cls,
+                                  enabled: Union['bool'],
+                                  ):
+        """Controls whether page will emit lifecycle events.
+        :param enabled: If true, starts emitting lifecycle events.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setLifecycleEventsEnabled", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
     def reload(cls,
                ignoreCache: Optional['bool'] = None,
                scriptToEvaluateOnLoad: Optional['str'] = None,
@@ -364,6 +387,10 @@ class Page(PayloadMixin):
             cls.convert_payload({
                 "frameId": {
                     "class": FrameId,
+                    "optional": False
+                },
+                "loaderId": {
+                    "class": Network.LoaderId,
                     "optional": False
                 },
             })
@@ -457,6 +484,21 @@ class Page(PayloadMixin):
             cls.convert_payload({
                 "frameTree": {
                     "class": FrameResourceTree,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getFrameTree(cls):
+        """Returns present frame tree structure.
+        """
+        return (
+            cls.build_send_payload("getFrameTree", {
+            }),
+            cls.convert_payload({
+                "frameTree": {
+                    "class": FrameTree,
                     "optional": False
                 },
             })
@@ -1024,17 +1066,21 @@ class LoadEventFiredEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId']
+    hashable = ['frameId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
                  frameId: Union['FrameId', dict],
+                 loaderId: Union['Network.LoaderId', dict],
                  name: Union['str', dict],
                  timestamp: Union['Network.MonotonicTime', dict],
                  ):
         if isinstance(frameId, dict):
             frameId = FrameId(**frameId)
         self.frameId = frameId
+        if isinstance(loaderId, dict):
+            loaderId = Network.LoaderId(**loaderId)
+        self.loaderId = loaderId
         if isinstance(name, dict):
             name = str(**name)
         self.name = name
@@ -1043,7 +1089,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, frameId):
+    def build_hash(cls, frameId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1055,7 +1101,7 @@ class LifecycleEventEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1074,7 +1120,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1385,7 +1431,7 @@ class WindowOpenEvent(BaseEvent):
     def __init__(self,
                  url: Union['str', dict],
                  windowName: Union['str', dict],
-                 windowFeatures: Union['str', dict],
+                 windowFeatures: Union['[]', dict],
                  userGesture: Union['bool', dict],
                  ):
         if isinstance(url, dict):
@@ -1395,7 +1441,7 @@ class WindowOpenEvent(BaseEvent):
             windowName = str(**windowName)
         self.windowName = windowName
         if isinstance(windowFeatures, dict):
-            windowFeatures = str(**windowFeatures)
+            windowFeatures = [](**windowFeatures)
         self.windowFeatures = windowFeatures
         if isinstance(userGesture, dict):
             userGesture = bool(**userGesture)

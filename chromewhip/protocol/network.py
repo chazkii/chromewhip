@@ -876,7 +876,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -923,7 +923,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -958,7 +958,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -989,7 +989,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1327,7 +1327,7 @@ class WebSocketFrameSentEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1354,7 +1354,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1366,12 +1366,13 @@ class EventSourceMessageReceivedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['interceptionId']
+    hashable = ['frameId', 'interceptionId']
     is_hashable = True
 
     def __init__(self,
                  interceptionId: Union['InterceptionId', dict],
                  request: Union['Request', dict],
+                 frameId: Union['Page.FrameId', dict],
                  resourceType: Union['Page.ResourceType', dict],
                  isNavigationRequest: Union['bool', dict],
                  redirectHeaders: Union['Headers', dict, None] = None,
@@ -1385,6 +1386,9 @@ class RequestInterceptedEvent(BaseEvent):
         if isinstance(request, dict):
             request = Request(**request)
         self.request = request
+        if isinstance(frameId, dict):
+            frameId = Page.FrameId(**frameId)
+        self.frameId = frameId
         if isinstance(resourceType, dict):
             resourceType = Page.ResourceType(**resourceType)
         self.resourceType = resourceType
@@ -1405,7 +1409,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.authChallenge = authChallenge
 
     @classmethod
-    def build_hash(cls, interceptionId):
+    def build_hash(cls, frameId, interceptionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
