@@ -68,7 +68,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['Jinja2==2.9.6'],
+        'dev': ['Jinja2==2.9.6', 'jsonpatch==1.16'],
         'test': ['pytest-asyncio==0.6.9'],
     },
 

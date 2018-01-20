@@ -31,7 +31,8 @@ then
   # add all newly generated modules
   git add ../chromewhip/protocol
   git commit -a -m "$LATEST_GIT_MSG"
-  git push https://$CHROMEWHIP_BOT_USERNAME:$CHROMEWHIP_BOT_PASSWORD@github.com/chuckus/chromewhip.git
+  # TODO: fix me so i don't push if the the variables below are not set
+  # git push https://$CHROMEWHIP_BOT_USERNAME:$CHROMEWHIP_BOT_PASSWORD@github.com/chuckus/chromewhip.git
 else
   echo "no changes found!"
   rm -rf scripts/devtools-protocol
