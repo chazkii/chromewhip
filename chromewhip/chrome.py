@@ -210,9 +210,12 @@ class ChromeTab(metaclass=SyncAdder):
 
             if trigger_event_cls:
                 try:
-                    hash_ = trigger_event_cls.build_hash(**hash_input_dict)
+                    # TODO: put in a `strict` flag so that we can catch differences between the protocol spec and the
+                    # underlying implementation.
+                    cleaned_hash_input_dict = {k: v for k, v in hash_input_dict.items() if k in trigger_event_cls.hashable}
+                    hash_ = trigger_event_cls.build_hash(**cleaned_hash_input_dict)
                 except TypeError:
-                    raise TypeError('Event "%s" hash cannot be built with "%s"' % trigger_event_cls.js_name, hash_input_dict)
+                    raise TypeError(f'Event "{trigger_event_cls.js_name}" hash cannot be built with "{hash_input_dict}"')
                 event = self._event_payloads.get(hash_)
                 if not event:
                     self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
