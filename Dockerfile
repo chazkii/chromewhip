@@ -13,7 +13,7 @@ RUN  echo "deb http://archive.ubuntu.com/ubuntu xenial main universe\n" > /etc/a
 RUN apt-get update -qqy
 RUN apt-get install -y software-properties-common python-software-properties tzdata
 
-RUN add-apt-repository ppa:fkrull/deadsnakes
+RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update -qqy
 
 ENV TZ "UTC"
