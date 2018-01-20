@@ -30,40 +30,31 @@ class HeadlessExperimental(PayloadMixin):
     """ This domain provides experimental commands only supported in headless mode.
     """
     @classmethod
-    def enable(cls):
-        """Enables headless events for the target.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def disable(cls):
-        """Disables headless events for the target.
-        """
-        return (
-            cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
     def beginFrame(cls,
                    frameTime: Optional['Runtime.Timestamp'] = None,
                    deadline: Optional['Runtime.Timestamp'] = None,
                    interval: Optional['float'] = None,
+                   noDisplayUpdates: Optional['bool'] = None,
                    screenshot: Optional['ScreenshotParams'] = None,
                    ):
-        """Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a screenshot from the resulting frame. Requires that the target was created with enabled BeginFrameControl.
-        :param frameTime: Timestamp of this BeginFrame (milliseconds since epoch). If not set, the current time will be used.
+        """Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
+screenshot from the resulting frame. Requires that the target was created with enabled
+BeginFrameControl.
+        :param frameTime: Timestamp of this BeginFrame (milliseconds since epoch). If not set, the current time will
+be used.
         :type frameTime: Runtime.Timestamp
-        :param deadline: Deadline of this BeginFrame (milliseconds since epoch). If not set, the deadline will be calculated from the frameTime and interval.
+        :param deadline: Deadline of this BeginFrame (milliseconds since epoch). If not set, the deadline will be
+calculated from the frameTime and interval.
         :type deadline: Runtime.Timestamp
-        :param interval: The interval between BeginFrames that is reported to the compositor, in milliseconds. Defaults to a 60 frames/second interval, i.e. about 16.666 milliseconds.
+        :param interval: The interval between BeginFrames that is reported to the compositor, in milliseconds.
+Defaults to a 60 frames/second interval, i.e. about 16.666 milliseconds.
         :type interval: float
-        :param screenshot: If set, a screenshot of the frame will be captured and returned in the response. Otherwise, no screenshot will be captured.
+        :param noDisplayUpdates: Whether updates should not be committed and drawn onto the display. False by default. If
+true, only side effects of the BeginFrame will be run, such as layout and animations, but
+any visual updates may not be visible on the display or in screenshots.
+        :type noDisplayUpdates: bool
+        :param screenshot: If set, a screenshot of the frame will be captured and returned in the response. Otherwise,
+no screenshot will be captured.
         :type screenshot: ScreenshotParams
         """
         return (
@@ -71,6 +62,7 @@ class HeadlessExperimental(PayloadMixin):
                 "frameTime": frameTime,
                 "deadline": deadline,
                 "interval": interval,
+                "noDisplayUpdates": noDisplayUpdates,
                 "screenshot": screenshot,
             }),
             cls.convert_payload({
@@ -89,6 +81,40 @@ class HeadlessExperimental(PayloadMixin):
             })
         )
 
+    @classmethod
+    def disable(cls):
+        """Disables headless events for the target.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables headless events for the target.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+
+
+class MainFrameReadyForScreenshotsEvent(BaseEvent):
+
+    js_name = 'Headlessexperimental.mainFrameReadyForScreenshots'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class NeedsBeginFramesChangedEvent(BaseEvent):
@@ -103,20 +129,6 @@ class NeedsBeginFramesChangedEvent(BaseEvent):
         if isinstance(needsBeginFrames, dict):
             needsBeginFrames = bool(**needsBeginFrames)
         self.needsBeginFrames = needsBeginFrames
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class MainFrameReadyForScreenshotsEvent(BaseEvent):
-
-    js_name = 'Headlessexperimental.mainFrameReadyForScreenshots'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self):
-        pass
 
     @classmethod
     def build_hash(cls):

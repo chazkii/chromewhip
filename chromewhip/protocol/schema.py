@@ -25,7 +25,7 @@ class Domain(ChromeTypeBase):
 
 
 class Schema(PayloadMixin):
-    """ Provides information about the protocol schema.
+    """ This domain is deprecated.
     """
     @classmethod
     def getDomains(cls):

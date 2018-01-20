@@ -43,11 +43,27 @@ class HeapProfiler(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
+    def addInspectedHeapObject(cls,
+                               heapObjectId: Union['HeapSnapshotObjectId'],
+                               ):
+        """Enables console to refer to the node with given id via $x (see Command Line API for more details
+$x functions).
+        :param heapObjectId: Heap snapshot object id to be accessible by means of $x command line API.
+        :type heapObjectId: HeapSnapshotObjectId
+        """
+        return (
+            cls.build_send_payload("addInspectedHeapObject", {
+                "heapObjectId": heapObjectId,
+            }),
+            None
+        )
+
+    @classmethod
+    def collectGarbage(cls):
         """
         """
         return (
-            cls.build_send_payload("enable", {
+            cls.build_send_payload("collectGarbage", {
             }),
             None
         )
@@ -63,58 +79,33 @@ class HeapProfiler(PayloadMixin):
         )
 
     @classmethod
-    def startTrackingHeapObjects(cls,
-                                 trackAllocations: Optional['bool'] = None,
-                                 ):
+    def enable(cls):
         """
-        :param trackAllocations: 
-        :type trackAllocations: bool
         """
         return (
-            cls.build_send_payload("startTrackingHeapObjects", {
-                "trackAllocations": trackAllocations,
+            cls.build_send_payload("enable", {
             }),
             None
         )
 
     @classmethod
-    def stopTrackingHeapObjects(cls,
-                                reportProgress: Optional['bool'] = None,
-                                ):
+    def getHeapObjectId(cls,
+                        objectId: Union['Runtime.RemoteObjectId'],
+                        ):
         """
-        :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken when the tracking is stopped.
-        :type reportProgress: bool
-        """
-        return (
-            cls.build_send_payload("stopTrackingHeapObjects", {
-                "reportProgress": reportProgress,
-            }),
-            None
-        )
-
-    @classmethod
-    def takeHeapSnapshot(cls,
-                         reportProgress: Optional['bool'] = None,
-                         ):
-        """
-        :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
-        :type reportProgress: bool
+        :param objectId: Identifier of the object to get heap object id for.
+        :type objectId: Runtime.RemoteObjectId
         """
         return (
-            cls.build_send_payload("takeHeapSnapshot", {
-                "reportProgress": reportProgress,
+            cls.build_send_payload("getHeapObjectId", {
+                "objectId": objectId,
             }),
-            None
-        )
-
-    @classmethod
-    def collectGarbage(cls):
-        """
-        """
-        return (
-            cls.build_send_payload("collectGarbage", {
-            }),
-            None
+            cls.convert_payload({
+                "heapSnapshotObjectId": {
+                    "class": HeapSnapshotObjectId,
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -142,35 +133,15 @@ class HeapProfiler(PayloadMixin):
         )
 
     @classmethod
-    def addInspectedHeapObject(cls,
-                               heapObjectId: Union['HeapSnapshotObjectId'],
-                               ):
-        """Enables console to refer to the node with given id via $x (see Command Line API for more details $x functions).
-        :param heapObjectId: Heap snapshot object id to be accessible by means of $x command line API.
-        :type heapObjectId: HeapSnapshotObjectId
+    def getSamplingProfile(cls):
+        """
         """
         return (
-            cls.build_send_payload("addInspectedHeapObject", {
-                "heapObjectId": heapObjectId,
-            }),
-            None
-        )
-
-    @classmethod
-    def getHeapObjectId(cls,
-                        objectId: Union['Runtime.RemoteObjectId'],
-                        ):
-        """
-        :param objectId: Identifier of the object to get heap object id for.
-        :type objectId: Runtime.RemoteObjectId
-        """
-        return (
-            cls.build_send_payload("getHeapObjectId", {
-                "objectId": objectId,
+            cls.build_send_payload("getSamplingProfile", {
             }),
             cls.convert_payload({
-                "heapSnapshotObjectId": {
-                    "class": HeapSnapshotObjectId,
+                "profile": {
+                    "class": SamplingHeapProfile,
                     "optional": False
                 },
             })
@@ -181,12 +152,28 @@ class HeapProfiler(PayloadMixin):
                       samplingInterval: Optional['float'] = None,
                       ):
         """
-        :param samplingInterval: Average sample interval in bytes. Poisson distribution is used for the intervals. The default value is 32768 bytes.
+        :param samplingInterval: Average sample interval in bytes. Poisson distribution is used for the intervals. The
+default value is 32768 bytes.
         :type samplingInterval: float
         """
         return (
             cls.build_send_payload("startSampling", {
                 "samplingInterval": samplingInterval,
+            }),
+            None
+        )
+
+    @classmethod
+    def startTrackingHeapObjects(cls,
+                                 trackAllocations: Optional['bool'] = None,
+                                 ):
+        """
+        :param trackAllocations: 
+        :type trackAllocations: bool
+        """
+        return (
+            cls.build_send_payload("startTrackingHeapObjects", {
+                "trackAllocations": trackAllocations,
             }),
             None
         )
@@ -204,6 +191,37 @@ class HeapProfiler(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def stopTrackingHeapObjects(cls,
+                                reportProgress: Optional['bool'] = None,
+                                ):
+        """
+        :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken
+when the tracking is stopped.
+        :type reportProgress: bool
+        """
+        return (
+            cls.build_send_payload("stopTrackingHeapObjects", {
+                "reportProgress": reportProgress,
+            }),
+            None
+        )
+
+    @classmethod
+    def takeHeapSnapshot(cls,
+                         reportProgress: Optional['bool'] = None,
+                         ):
+        """
+        :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
+        :type reportProgress: bool
+        """
+        return (
+            cls.build_send_payload("takeHeapSnapshot", {
+                "reportProgress": reportProgress,
+            }),
+            None
         )
 
 
@@ -226,40 +244,18 @@ class AddHeapSnapshotChunkEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
-class ResetProfilesEvent(BaseEvent):
+class HeapStatsUpdateEvent(BaseEvent):
 
-    js_name = 'Heapprofiler.resetProfiles'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class ReportHeapSnapshotProgressEvent(BaseEvent):
-
-    js_name = 'Heapprofiler.reportHeapSnapshotProgress'
+    js_name = 'Heapprofiler.heapStatsUpdate'
     hashable = []
     is_hashable = False
 
     def __init__(self,
-                 done: Union['int', dict],
-                 total: Union['int', dict],
-                 finished: Union['bool', dict, None] = None,
+                 statsUpdate: Union['[]', dict],
                  ):
-        if isinstance(done, dict):
-            done = int(**done)
-        self.done = done
-        if isinstance(total, dict):
-            total = int(**total)
-        self.total = total
-        if isinstance(finished, dict):
-            finished = bool(**finished)
-        self.finished = finished
+        if isinstance(statsUpdate, dict):
+            statsUpdate = [](**statsUpdate)
+        self.statsUpdate = statsUpdate
 
     @classmethod
     def build_hash(cls):
@@ -293,18 +289,40 @@ class LastSeenObjectIdEvent(BaseEvent):
         return h
 
 
-class HeapStatsUpdateEvent(BaseEvent):
+class ReportHeapSnapshotProgressEvent(BaseEvent):
 
-    js_name = 'Heapprofiler.heapStatsUpdate'
+    js_name = 'Heapprofiler.reportHeapSnapshotProgress'
     hashable = []
     is_hashable = False
 
     def __init__(self,
-                 statsUpdate: Union['[]', dict],
+                 done: Union['int', dict],
+                 total: Union['int', dict],
+                 finished: Union['bool', dict, None] = None,
                  ):
-        if isinstance(statsUpdate, dict):
-            statsUpdate = [](**statsUpdate)
-        self.statsUpdate = statsUpdate
+        if isinstance(done, dict):
+            done = int(**done)
+        self.done = done
+        if isinstance(total, dict):
+            total = int(**total)
+        self.total = total
+        if isinstance(finished, dict):
+            finished = bool(**finished)
+        self.finished = finished
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class ResetProfilesEvent(BaseEvent):
+
+    js_name = 'Heapprofiler.resetProfiles'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
 
     @classmethod
     def build_hash(cls):

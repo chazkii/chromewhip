@@ -138,6 +138,16 @@ class Profiler(PayloadMixin):
     """ 
     """
     @classmethod
+    def disable(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
     def enable(cls):
         """
         """
@@ -148,13 +158,19 @@ class Profiler(PayloadMixin):
         )
 
     @classmethod
-    def disable(cls):
-        """
+    def getBestEffortCoverage(cls):
+        """Collect coverage data for the current isolate. The coverage data may be incomplete due to
+garbage collection.
         """
         return (
-            cls.build_send_payload("disable", {
+            cls.build_send_payload("getBestEffortCoverage", {
             }),
-            None
+            cls.convert_payload({
+                "result": {
+                    "class": [ScriptCoverage],
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -183,6 +199,37 @@ class Profiler(PayloadMixin):
         )
 
     @classmethod
+    def startPreciseCoverage(cls,
+                             callCount: Optional['bool'] = None,
+                             detailed: Optional['bool'] = None,
+                             ):
+        """Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
+coverage may be incomplete. Enabling prevents running optimized code and resets execution
+counters.
+        :param callCount: Collect accurate call counts beyond simple 'covered' or 'not covered'.
+        :type callCount: bool
+        :param detailed: Collect block-based coverage.
+        :type detailed: bool
+        """
+        return (
+            cls.build_send_payload("startPreciseCoverage", {
+                "callCount": callCount,
+                "detailed": detailed,
+            }),
+            None
+        )
+
+    @classmethod
+    def startTypeProfile(cls):
+        """Enable type profile.
+        """
+        return (
+            cls.build_send_payload("startTypeProfile", {
+            }),
+            None
+        )
+
+    @classmethod
     def stop(cls):
         """
         """
@@ -198,70 +245,12 @@ class Profiler(PayloadMixin):
         )
 
     @classmethod
-    def startPreciseCoverage(cls,
-                             callCount: Optional['bool'] = None,
-                             detailed: Optional['bool'] = None,
-                             ):
-        """Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code coverage may be incomplete. Enabling prevents running optimized code and resets execution counters.
-        :param callCount: Collect accurate call counts beyond simple 'covered' or 'not covered'.
-        :type callCount: bool
-        :param detailed: Collect block-based coverage.
-        :type detailed: bool
-        """
-        return (
-            cls.build_send_payload("startPreciseCoverage", {
-                "callCount": callCount,
-                "detailed": detailed,
-            }),
-            None
-        )
-
-    @classmethod
     def stopPreciseCoverage(cls):
-        """Disable precise code coverage. Disabling releases unnecessary execution count records and allows executing optimized code.
+        """Disable precise code coverage. Disabling releases unnecessary execution count records and allows
+executing optimized code.
         """
         return (
             cls.build_send_payload("stopPreciseCoverage", {
-            }),
-            None
-        )
-
-    @classmethod
-    def takePreciseCoverage(cls):
-        """Collect coverage data for the current isolate, and resets execution counters. Precise code coverage needs to have started.
-        """
-        return (
-            cls.build_send_payload("takePreciseCoverage", {
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": [ScriptCoverage],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def getBestEffortCoverage(cls):
-        """Collect coverage data for the current isolate. The coverage data may be incomplete due to garbage collection.
-        """
-        return (
-            cls.build_send_payload("getBestEffortCoverage", {
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": [ScriptCoverage],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def startTypeProfile(cls):
-        """Enable type profile.
-        """
-        return (
-            cls.build_send_payload("startTypeProfile", {
             }),
             None
         )
@@ -274,6 +263,22 @@ class Profiler(PayloadMixin):
             cls.build_send_payload("stopTypeProfile", {
             }),
             None
+        )
+
+    @classmethod
+    def takePreciseCoverage(cls):
+        """Collect coverage data for the current isolate, and resets execution counters. Precise code
+coverage needs to have started.
+        """
+        return (
+            cls.build_send_payload("takePreciseCoverage", {
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": [ScriptCoverage],
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -291,37 +296,6 @@ class Profiler(PayloadMixin):
             })
         )
 
-
-
-class ConsoleProfileStartedEvent(BaseEvent):
-
-    js_name = 'Profiler.consoleProfileStarted'
-    hashable = ['id']
-    is_hashable = True
-
-    def __init__(self,
-                 id: Union['str', dict],
-                 location: Union['Debugger.Location', dict],
-                 title: Union['str', dict, None] = None,
-                 ):
-        if isinstance(id, dict):
-            id = str(**id)
-        self.id = id
-        if isinstance(location, dict):
-            location = Debugger.Location(**location)
-        self.location = location
-        if isinstance(title, dict):
-            title = str(**title)
-        self.title = title
-
-    @classmethod
-    def build_hash(cls, id):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
 
 
 class ConsoleProfileFinishedEvent(BaseEvent):
@@ -345,6 +319,37 @@ class ConsoleProfileFinishedEvent(BaseEvent):
         if isinstance(profile, dict):
             profile = Profile(**profile)
         self.profile = profile
+        if isinstance(title, dict):
+            title = str(**title)
+        self.title = title
+
+    @classmethod
+    def build_hash(cls, id):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class ConsoleProfileStartedEvent(BaseEvent):
+
+    js_name = 'Profiler.consoleProfileStarted'
+    hashable = ['id']
+    is_hashable = True
+
+    def __init__(self,
+                 id: Union['str', dict],
+                 location: Union['Debugger.Location', dict],
+                 title: Union['str', dict, None] = None,
+                 ):
+        if isinstance(id, dict):
+            id = str(**id)
+        self.id = id
+        if isinstance(location, dict):
+            location = Debugger.Location(**location)
+        self.location = location
         if isinstance(title, dict):
             title = str(**title)
         self.title = title

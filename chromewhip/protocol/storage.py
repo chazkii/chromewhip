@@ -93,21 +93,6 @@ class Storage(PayloadMixin):
         )
 
     @classmethod
-    def untrackCacheStorageForOrigin(cls,
-                                     origin: Union['str'],
-                                     ):
-        """Unregisters origin from receiving notifications for cache storage.
-        :param origin: Security origin.
-        :type origin: str
-        """
-        return (
-            cls.build_send_payload("untrackCacheStorageForOrigin", {
-                "origin": origin,
-            }),
-            None
-        )
-
-    @classmethod
     def trackIndexedDBForOrigin(cls,
                                 origin: Union['str'],
                                 ):
@@ -117,6 +102,21 @@ class Storage(PayloadMixin):
         """
         return (
             cls.build_send_payload("trackIndexedDBForOrigin", {
+                "origin": origin,
+            }),
+            None
+        )
+
+    @classmethod
+    def untrackCacheStorageForOrigin(cls,
+                                     origin: Union['str'],
+                                     ):
+        """Unregisters origin from receiving notifications for cache storage.
+        :param origin: Security origin.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("untrackCacheStorageForOrigin", {
                 "origin": origin,
             }),
             None
@@ -137,24 +137,6 @@ class Storage(PayloadMixin):
             None
         )
 
-
-
-class CacheStorageListUpdatedEvent(BaseEvent):
-
-    js_name = 'Storage.cacheStorageListUpdated'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 origin: Union['str', dict],
-                 ):
-        if isinstance(origin, dict):
-            origin = str(**origin)
-        self.origin = origin
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class CacheStorageContentUpdatedEvent(BaseEvent):
@@ -179,9 +161,9 @@ class CacheStorageContentUpdatedEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
-class IndexedDBListUpdatedEvent(BaseEvent):
+class CacheStorageListUpdatedEvent(BaseEvent):
 
-    js_name = 'Storage.indexedDBListUpdated'
+    js_name = 'Storage.cacheStorageListUpdated'
     hashable = []
     is_hashable = False
 
@@ -217,6 +199,24 @@ class IndexedDBContentUpdatedEvent(BaseEvent):
         if isinstance(objectStoreName, dict):
             objectStoreName = str(**objectStoreName)
         self.objectStoreName = objectStoreName
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class IndexedDBListUpdatedEvent(BaseEvent):
+
+    js_name = 'Storage.indexedDBListUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 origin: Union['str', dict],
+                 ):
+        if isinstance(origin, dict):
+            origin = str(**origin)
+        self.origin = origin
 
     @classmethod
     def build_hash(cls):

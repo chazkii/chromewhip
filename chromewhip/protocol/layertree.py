@@ -105,26 +105,6 @@ class LayerTree(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enables compositing tree inspection.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def disable(cls):
-        """Disables compositing tree inspection.
-        """
-        return (
-            cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
     def compositingReasons(cls,
                            layerId: Union['LayerId'],
                            ):
@@ -145,23 +125,23 @@ class LayerTree(PayloadMixin):
         )
 
     @classmethod
-    def makeSnapshot(cls,
-                     layerId: Union['LayerId'],
-                     ):
-        """Returns the layer snapshot identifier.
-        :param layerId: The id of the layer.
-        :type layerId: LayerId
+    def disable(cls):
+        """Disables compositing tree inspection.
         """
         return (
-            cls.build_send_payload("makeSnapshot", {
-                "layerId": layerId,
+            cls.build_send_payload("disable", {
             }),
-            cls.convert_payload({
-                "snapshotId": {
-                    "class": SnapshotId,
-                    "optional": False
-                },
-            })
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables compositing tree inspection.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
         )
 
     @classmethod
@@ -185,18 +165,23 @@ class LayerTree(PayloadMixin):
         )
 
     @classmethod
-    def releaseSnapshot(cls,
-                        snapshotId: Union['SnapshotId'],
-                        ):
-        """Releases layer snapshot captured by the back-end.
-        :param snapshotId: The id of the layer snapshot.
-        :type snapshotId: SnapshotId
+    def makeSnapshot(cls,
+                     layerId: Union['LayerId'],
+                     ):
+        """Returns the layer snapshot identifier.
+        :param layerId: The id of the layer.
+        :type layerId: LayerId
         """
         return (
-            cls.build_send_payload("releaseSnapshot", {
-                "snapshotId": snapshotId,
+            cls.build_send_payload("makeSnapshot", {
+                "layerId": layerId,
             }),
-            None
+            cls.convert_payload({
+                "snapshotId": {
+                    "class": SnapshotId,
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -229,6 +214,21 @@ class LayerTree(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def releaseSnapshot(cls,
+                        snapshotId: Union['SnapshotId'],
+                        ):
+        """Releases layer snapshot captured by the back-end.
+        :param snapshotId: The id of the layer snapshot.
+        :type snapshotId: SnapshotId
+        """
+        return (
+            cls.build_send_payload("releaseSnapshot", {
+                "snapshotId": snapshotId,
+            }),
+            None
         )
 
     @classmethod
@@ -285,24 +285,6 @@ class LayerTree(PayloadMixin):
 
 
 
-class LayerTreeDidChangeEvent(BaseEvent):
-
-    js_name = 'Layertree.layerTreeDidChange'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 layers: Union['[Layer]', dict, None] = None,
-                 ):
-        if isinstance(layers, dict):
-            layers = [Layer](**layers)
-        self.layers = layers
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
 class LayerPaintedEvent(BaseEvent):
 
     js_name = 'Layertree.layerPainted'
@@ -328,3 +310,21 @@ class LayerPaintedEvent(BaseEvent):
         h = '{}:{}'.format(cls.js_name, serialized_id_params)
         log.debug('generated hash = %s' % h)
         return h
+
+
+class LayerTreeDidChangeEvent(BaseEvent):
+
+    js_name = 'Layertree.layerTreeDidChange'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 layers: Union['[Layer]', dict, None] = None,
+                 ):
+        if isinstance(layers, dict):
+            layers = [Layer](**layers)
+        self.layers = layers
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')

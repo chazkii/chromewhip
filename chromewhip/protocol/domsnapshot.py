@@ -14,6 +14,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 log = logging.getLogger(__name__)
 from chromewhip.protocol import css as CSS
 from chromewhip.protocol import dom as DOM
+from chromewhip.protocol import domdebugger as DOMDebugger
 from chromewhip.protocol import page as Page
 
 # DOMNode: A Node in the DOM tree.
@@ -43,6 +44,8 @@ class DOMNode(ChromeTypeBase):
                  templateContentIndex: Optional['int'] = None,
                  pseudoType: Optional['DOM.PseudoType'] = None,
                  isClickable: Optional['bool'] = None,
+                 eventListeners: Optional['[DOMDebugger.EventListener]'] = None,
+                 currentSourceURL: Optional['str'] = None,
                  ):
 
         self.nodeType = nodeType
@@ -69,9 +72,11 @@ class DOMNode(ChromeTypeBase):
         self.templateContentIndex = templateContentIndex
         self.pseudoType = pseudoType
         self.isClickable = isClickable
+        self.eventListeners = eventListeners
+        self.currentSourceURL = currentSourceURL
 
 
-# InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded as stable and may change between versions.
+# InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
 class InlineTextBox(ChromeTypeBase):
     def __init__(self,
                  boundingBox: Union['DOM.Rect'],
@@ -127,14 +132,21 @@ class DOMSnapshot(PayloadMixin):
     @classmethod
     def getSnapshot(cls,
                     computedStyleWhitelist: Union['[]'],
+                    includeEventListeners: Optional['bool'] = None,
                     ):
-        """Returns a document snapshot, including the full DOM tree of the root node (including iframes, template contents, and imported documents) in a flattened array, as well as layout and white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is flattened. 
+        """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+template contents, and imported documents) in a flattened array, as well as layout and
+white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+flattened.
         :param computedStyleWhitelist: Whitelist of computed styles to return.
         :type computedStyleWhitelist: []
+        :param includeEventListeners: Whether or not to retrieve details of DOM listeners (default false).
+        :type includeEventListeners: bool
         """
         return (
             cls.build_send_payload("getSnapshot", {
                 "computedStyleWhitelist": computedStyleWhitelist,
+                "includeEventListeners": includeEventListeners,
             }),
             cls.convert_payload({
                 "domNodes": {

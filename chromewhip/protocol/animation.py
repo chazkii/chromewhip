@@ -95,16 +95,6 @@ class Animation(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enables animation domain notifications.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
     def disable(cls):
         """Disables animation domain notifications.
         """
@@ -115,31 +105,11 @@ class Animation(PayloadMixin):
         )
 
     @classmethod
-    def getPlaybackRate(cls):
-        """Gets the playback rate of the document timeline.
+    def enable(cls):
+        """Enables animation domain notifications.
         """
         return (
-            cls.build_send_payload("getPlaybackRate", {
-            }),
-            cls.convert_payload({
-                "playbackRate": {
-                    "class": float,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def setPlaybackRate(cls,
-                        playbackRate: Union['float'],
-                        ):
-        """Sets the playback rate of the document timeline.
-        :param playbackRate: Playback rate for animations on page
-        :type playbackRate: float
-        """
-        return (
-            cls.build_send_payload("setPlaybackRate", {
-                "playbackRate": playbackRate,
+            cls.build_send_payload("enable", {
             }),
             None
         )
@@ -165,64 +135,18 @@ class Animation(PayloadMixin):
         )
 
     @classmethod
-    def setPaused(cls,
-                  animations: Union['[]'],
-                  paused: Union['bool'],
-                  ):
-        """Sets the paused state of a set of animations.
-        :param animations: Animations to set the pause state of.
-        :type animations: []
-        :param paused: Paused state to set to.
-        :type paused: bool
+    def getPlaybackRate(cls):
+        """Gets the playback rate of the document timeline.
         """
         return (
-            cls.build_send_payload("setPaused", {
-                "animations": animations,
-                "paused": paused,
+            cls.build_send_payload("getPlaybackRate", {
             }),
-            None
-        )
-
-    @classmethod
-    def setTiming(cls,
-                  animationId: Union['str'],
-                  duration: Union['float'],
-                  delay: Union['float'],
-                  ):
-        """Sets the timing of an animation node.
-        :param animationId: Animation id.
-        :type animationId: str
-        :param duration: Duration of the animation.
-        :type duration: float
-        :param delay: Delay of the animation.
-        :type delay: float
-        """
-        return (
-            cls.build_send_payload("setTiming", {
-                "animationId": animationId,
-                "duration": duration,
-                "delay": delay,
-            }),
-            None
-        )
-
-    @classmethod
-    def seekAnimations(cls,
-                       animations: Union['[]'],
-                       currentTime: Union['float'],
-                       ):
-        """Seek a set of animations to a particular time within each animation.
-        :param animations: List of animation ids to seek.
-        :type animations: []
-        :param currentTime: Set the current time of each animation.
-        :type currentTime: float
-        """
-        return (
-            cls.build_send_payload("seekAnimations", {
-                "animations": animations,
-                "currentTime": currentTime,
-            }),
-            None
+            cls.convert_payload({
+                "playbackRate": {
+                    "class": float,
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -260,6 +184,105 @@ class Animation(PayloadMixin):
             })
         )
 
+    @classmethod
+    def seekAnimations(cls,
+                       animations: Union['[]'],
+                       currentTime: Union['float'],
+                       ):
+        """Seek a set of animations to a particular time within each animation.
+        :param animations: List of animation ids to seek.
+        :type animations: []
+        :param currentTime: Set the current time of each animation.
+        :type currentTime: float
+        """
+        return (
+            cls.build_send_payload("seekAnimations", {
+                "animations": animations,
+                "currentTime": currentTime,
+            }),
+            None
+        )
+
+    @classmethod
+    def setPaused(cls,
+                  animations: Union['[]'],
+                  paused: Union['bool'],
+                  ):
+        """Sets the paused state of a set of animations.
+        :param animations: Animations to set the pause state of.
+        :type animations: []
+        :param paused: Paused state to set to.
+        :type paused: bool
+        """
+        return (
+            cls.build_send_payload("setPaused", {
+                "animations": animations,
+                "paused": paused,
+            }),
+            None
+        )
+
+    @classmethod
+    def setPlaybackRate(cls,
+                        playbackRate: Union['float'],
+                        ):
+        """Sets the playback rate of the document timeline.
+        :param playbackRate: Playback rate for animations on page
+        :type playbackRate: float
+        """
+        return (
+            cls.build_send_payload("setPlaybackRate", {
+                "playbackRate": playbackRate,
+            }),
+            None
+        )
+
+    @classmethod
+    def setTiming(cls,
+                  animationId: Union['str'],
+                  duration: Union['float'],
+                  delay: Union['float'],
+                  ):
+        """Sets the timing of an animation node.
+        :param animationId: Animation id.
+        :type animationId: str
+        :param duration: Duration of the animation.
+        :type duration: float
+        :param delay: Delay of the animation.
+        :type delay: float
+        """
+        return (
+            cls.build_send_payload("setTiming", {
+                "animationId": animationId,
+                "duration": duration,
+                "delay": delay,
+            }),
+            None
+        )
+
+
+
+class AnimationCanceledEvent(BaseEvent):
+
+    js_name = 'Animation.animationCanceled'
+    hashable = ['id']
+    is_hashable = True
+
+    def __init__(self,
+                 id: Union['str', dict],
+                 ):
+        if isinstance(id, dict):
+            id = str(**id)
+        self.id = id
+
+    @classmethod
+    def build_hash(cls, id):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class AnimationCreatedEvent(BaseEvent):
@@ -300,29 +323,6 @@ class AnimationStartedEvent(BaseEvent):
 
     @classmethod
     def build_hash(cls, animationId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class AnimationCanceledEvent(BaseEvent):
-
-    js_name = 'Animation.animationCanceled'
-    hashable = ['id']
-    is_hashable = True
-
-    def __init__(self,
-                 id: Union['str', dict],
-                 ):
-        if isinstance(id, dict):
-            id = str(**id)
-        self.id = id
-
-    @classmethod
-    def build_hash(cls, id):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

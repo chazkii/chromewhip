@@ -36,6 +36,34 @@ class Bounds(ChromeTypeBase):
         self.windowState = windowState
 
 
+# Bucket: Chrome histogram bucket.
+class Bucket(ChromeTypeBase):
+    def __init__(self,
+                 low: Union['int'],
+                 high: Union['int'],
+                 count: Union['int'],
+                 ):
+
+        self.low = low
+        self.high = high
+        self.count = count
+
+
+# Histogram: Chrome histogram.
+class Histogram(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 sum: Union['int'],
+                 count: Union['int'],
+                 buckets: Union['[Bucket]'],
+                 ):
+
+        self.name = name
+        self.sum = sum
+        self.count = count
+        self.buckets = buckets
+
+
 class Browser(PayloadMixin):
     """ The Browser domain defines methods and events for browser managing.
     """
@@ -47,30 +75,6 @@ class Browser(PayloadMixin):
             cls.build_send_payload("close", {
             }),
             None
-        )
-
-    @classmethod
-    def getWindowForTarget(cls,
-                           targetId: Union['Target.TargetID'],
-                           ):
-        """Get the browser window that contains the devtools target.
-        :param targetId: Devtools agent host id.
-        :type targetId: Target.TargetID
-        """
-        return (
-            cls.build_send_payload("getWindowForTarget", {
-                "targetId": targetId,
-            }),
-            cls.convert_payload({
-                "windowId": {
-                    "class": WindowID,
-                    "optional": False
-                },
-                "bounds": {
-                    "class": Bounds,
-                    "optional": False
-                },
-            })
         )
 
     @classmethod
@@ -105,22 +109,45 @@ class Browser(PayloadMixin):
         )
 
     @classmethod
-    def setWindowBounds(cls,
-                        windowId: Union['WindowID'],
-                        bounds: Union['Bounds'],
-                        ):
-        """Set position and/or size of the browser window.
-        :param windowId: Browser window id.
-        :type windowId: WindowID
-        :param bounds: New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
-        :type bounds: Bounds
+    def getHistograms(cls,
+                      query: Optional['str'] = None,
+                      ):
+        """Get Chrome histograms.
+        :param query: Requested substring in name. Only histograms which have query as a
+substring in their name are extracted. An empty or absent query returns
+all histograms.
+        :type query: str
         """
         return (
-            cls.build_send_payload("setWindowBounds", {
-                "windowId": windowId,
-                "bounds": bounds,
+            cls.build_send_payload("getHistograms", {
+                "query": query,
             }),
-            None
+            cls.convert_payload({
+                "histograms": {
+                    "class": [Histogram],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getHistogram(cls,
+                     name: Union['str'],
+                     ):
+        """Get a Chrome histogram by name.
+        :param name: Requested histogram name.
+        :type name: str
+        """
+        return (
+            cls.build_send_payload("getHistogram", {
+                "name": name,
+            }),
+            cls.convert_payload({
+                "histogram": {
+                    "class": Histogram,
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -141,5 +168,49 @@ class Browser(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def getWindowForTarget(cls,
+                           targetId: Union['Target.TargetID'],
+                           ):
+        """Get the browser window that contains the devtools target.
+        :param targetId: Devtools agent host id.
+        :type targetId: Target.TargetID
+        """
+        return (
+            cls.build_send_payload("getWindowForTarget", {
+                "targetId": targetId,
+            }),
+            cls.convert_payload({
+                "windowId": {
+                    "class": WindowID,
+                    "optional": False
+                },
+                "bounds": {
+                    "class": Bounds,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setWindowBounds(cls,
+                        windowId: Union['WindowID'],
+                        bounds: Union['Bounds'],
+                        ):
+        """Set position and/or size of the browser window.
+        :param windowId: Browser window id.
+        :type windowId: WindowID
+        :param bounds: New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined
+with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
+        :type bounds: Bounds
+        """
+        return (
+            cls.build_send_payload("setWindowBounds", {
+                "windowId": windowId,
+                "bounds": bounds,
+            }),
+            None
         )
 

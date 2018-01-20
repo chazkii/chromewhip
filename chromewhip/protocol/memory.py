@@ -16,6 +16,28 @@ log = logging.getLogger(__name__)
 # PressureLevel: Memory pressure level.
 PressureLevel = str
 
+# SamplingProfileNode: Heap profile sample.
+class SamplingProfileNode(ChromeTypeBase):
+    def __init__(self,
+                 size: Union['float'],
+                 count: Union['float'],
+                 stack: Union['[]'],
+                 ):
+
+        self.size = size
+        self.count = count
+        self.stack = stack
+
+
+# SamplingProfile: Array of heap profile samples.
+class SamplingProfile(ChromeTypeBase):
+    def __init__(self,
+                 samples: Union['[SamplingProfileNode]'],
+                 ):
+
+        self.samples = samples
+
+
 class Memory(PayloadMixin):
     """ 
     """
@@ -80,5 +102,49 @@ class Memory(PayloadMixin):
                 "level": level,
             }),
             None
+        )
+
+    @classmethod
+    def startSampling(cls,
+                      samplingInterval: Optional['int'] = None,
+                      suppressRandomness: Optional['bool'] = None,
+                      ):
+        """Start collecting native memory profile.
+        :param samplingInterval: Average number of bytes between samples.
+        :type samplingInterval: int
+        :param suppressRandomness: Do not randomize intervals between samples.
+        :type suppressRandomness: bool
+        """
+        return (
+            cls.build_send_payload("startSampling", {
+                "samplingInterval": samplingInterval,
+                "suppressRandomness": suppressRandomness,
+            }),
+            None
+        )
+
+    @classmethod
+    def stopSampling(cls):
+        """Stop collecting native memory profile.
+        """
+        return (
+            cls.build_send_payload("stopSampling", {
+            }),
+            None
+        )
+
+    @classmethod
+    def getSamplingProfile(cls):
+        """Retrieve collected native memory profile.
+        """
+        return (
+            cls.build_send_payload("getSamplingProfile", {
+            }),
+            cls.convert_payload({
+                "profile": {
+                    "class": SamplingProfile,
+                    "optional": False
+                },
+            })
         )
 

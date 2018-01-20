@@ -46,16 +46,6 @@ class Database(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enables database tracking, database events will now be delivered to the client.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
     def disable(cls):
         """Disables database tracking, prevents database events from being sent to the client.
         """
@@ -66,23 +56,13 @@ class Database(PayloadMixin):
         )
 
     @classmethod
-    def getDatabaseTableNames(cls,
-                              databaseId: Union['DatabaseId'],
-                              ):
-        """
-        :param databaseId: 
-        :type databaseId: DatabaseId
+    def enable(cls):
+        """Enables database tracking, database events will now be delivered to the client.
         """
         return (
-            cls.build_send_payload("getDatabaseTableNames", {
-                "databaseId": databaseId,
+            cls.build_send_payload("enable", {
             }),
-            cls.convert_payload({
-                "tableNames": {
-                    "class": [],
-                    "optional": False
-                },
-            })
+            None
         )
 
     @classmethod
@@ -113,6 +93,26 @@ class Database(PayloadMixin):
                 "sqlError": {
                     "class": Error,
                     "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getDatabaseTableNames(cls,
+                              databaseId: Union['DatabaseId'],
+                              ):
+        """
+        :param databaseId: 
+        :type databaseId: DatabaseId
+        """
+        return (
+            cls.build_send_payload("getDatabaseTableNames", {
+                "databaseId": databaseId,
+            }),
+            cls.convert_payload({
+                "tableNames": {
+                    "class": [],
+                    "optional": False
                 },
             })
         )

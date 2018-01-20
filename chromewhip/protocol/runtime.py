@@ -149,7 +149,7 @@ class InternalPropertyDescriptor(ChromeTypeBase):
         self.value = value
 
 
-# CallArgument: Represents function call argument. Either remote object id <code>objectId</code>, primitive <code>value</code>, unserializable primitive value or neither of (for undefined) them should be specified.
+# CallArgument: Represents function call argument. Either remote object id `objectId`, primitive `value`,unserializable primitive value or neither of (for undefined) them should be specified.
 class CallArgument(ChromeTypeBase):
     def __init__(self,
                  value: Optional['Any'] = None,
@@ -180,7 +180,7 @@ class ExecutionContextDescription(ChromeTypeBase):
         self.auxData = auxData
 
 
-# ExceptionDetails: Detailed information about exception (or error) that was thrown during script compilation or execution.
+# ExceptionDetails: Detailed information about exception (or error) that was thrown during script compilation orexecution.
 class ExceptionDetails(ChromeTypeBase):
     def __init__(self,
                  exceptionId: Union['int'],
@@ -231,74 +231,36 @@ class StackTrace(ChromeTypeBase):
                  callFrames: Union['[CallFrame]'],
                  description: Optional['str'] = None,
                  parent: Optional['StackTrace'] = None,
-                 promiseCreationFrame: Optional['CallFrame'] = None,
+                 parentId: Optional['StackTraceId'] = None,
                  ):
 
         self.description = description
         self.callFrames = callFrames
         self.parent = parent
-        self.promiseCreationFrame = promiseCreationFrame
+        self.parentId = parentId
+
+
+# UniqueDebuggerId: Unique identifier of current debugger.
+UniqueDebuggerId = str
+
+# StackTraceId: If `debuggerId` is set stack trace comes from another debugger and can be resolved there. Thisallows to track cross-debugger calls. See `Runtime.StackTrace` and `Debugger.paused` for usages.
+class StackTraceId(ChromeTypeBase):
+    def __init__(self,
+                 id: Union['str'],
+                 debuggerId: Optional['UniqueDebuggerId'] = None,
+                 ):
+
+        self.id = id
+        self.debuggerId = debuggerId
 
 
 class Runtime(PayloadMixin):
-    """ Runtime domain exposes JavaScript runtime by means of remote evaluation and mirror objects. Evaluation results are returned as mirror object that expose object type, string representation and unique identifier that can be used for further object reference. Original objects are maintained in memory unless they are either explicitly released or are released along with the other objects in their object group.
+    """ Runtime domain exposes JavaScript runtime by means of remote evaluation and mirror objects.
+Evaluation results are returned as mirror object that expose object type, string representation
+and unique identifier that can be used for further object reference. Original objects are
+maintained in memory unless they are either explicitly released or are released along with the
+other objects in their object group.
     """
-    @classmethod
-    def evaluate(cls,
-                 expression: Union['str'],
-                 objectGroup: Optional['str'] = None,
-                 includeCommandLineAPI: Optional['bool'] = None,
-                 silent: Optional['bool'] = None,
-                 contextId: Optional['ExecutionContextId'] = None,
-                 returnByValue: Optional['bool'] = None,
-                 generatePreview: Optional['bool'] = None,
-                 userGesture: Optional['bool'] = None,
-                 awaitPromise: Optional['bool'] = None,
-                 ):
-        """Evaluates expression on global object.
-        :param expression: Expression to evaluate.
-        :type expression: str
-        :param objectGroup: Symbolic group name that can be used to release multiple objects.
-        :type objectGroup: str
-        :param includeCommandLineAPI: Determines whether Command Line API should be available during the evaluation.
-        :type includeCommandLineAPI: bool
-        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides <code>setPauseOnException</code> state.
-        :type silent: bool
-        :param contextId: Specifies in which execution context to perform evaluation. If the parameter is omitted the evaluation will be performed in the context of the inspected page.
-        :type contextId: ExecutionContextId
-        :param returnByValue: Whether the result is expected to be a JSON object that should be sent by value.
-        :type returnByValue: bool
-        :param generatePreview: Whether preview should be generated for the result.
-        :type generatePreview: bool
-        :param userGesture: Whether execution should be treated as initiated by user in the UI.
-        :type userGesture: bool
-        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
-        :type awaitPromise: bool
-        """
-        return (
-            cls.build_send_payload("evaluate", {
-                "expression": expression,
-                "objectGroup": objectGroup,
-                "includeCommandLineAPI": includeCommandLineAPI,
-                "silent": silent,
-                "contextId": contextId,
-                "returnByValue": returnByValue,
-                "generatePreview": generatePreview,
-                "userGesture": userGesture,
-                "awaitPromise": awaitPromise,
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": RemoteObject,
-                    "optional": False
-                },
-                "exceptionDetails": {
-                    "class": ExceptionDetails,
-                    "optional": True
-                },
-            })
-        )
-
     @classmethod
     def awaitPromise(cls,
                      promiseObjectId: Union['RemoteObjectId'],
@@ -344,14 +306,18 @@ class Runtime(PayloadMixin):
                        executionContextId: Optional['ExecutionContextId'] = None,
                        objectGroup: Optional['str'] = None,
                        ):
-        """Calls function with given declaration on the given object. Object group of the result is inherited from the target object.
+        """Calls function with given declaration on the given object. Object group of the result is
+inherited from the target object.
         :param functionDeclaration: Declaration of the function to call.
         :type functionDeclaration: str
-        :param objectId: Identifier of the object to call function on. Either objectId or executionContextId should be specified.
+        :param objectId: Identifier of the object to call function on. Either objectId or executionContextId should
+be specified.
         :type objectId: RemoteObjectId
-        :param arguments: Call arguments. All call arguments must belong to the same JavaScript world as the target object.
+        :param arguments: Call arguments. All call arguments must belong to the same JavaScript world as the target
+object.
         :type arguments: [CallArgument]
-        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides <code>setPauseOnException</code> state.
+        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause
+execution. Overrides `setPauseOnException` state.
         :type silent: bool
         :param returnByValue: Whether the result is expected to be a JSON object which should be sent by value.
         :type returnByValue: bool
@@ -359,11 +325,14 @@ class Runtime(PayloadMixin):
         :type generatePreview: bool
         :param userGesture: Whether execution should be treated as initiated by user in the UI.
         :type userGesture: bool
-        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
+        :param awaitPromise: Whether execution should `await` for resulting value and return once awaited promise is
+resolved.
         :type awaitPromise: bool
-        :param executionContextId: Specifies execution context which global object will be used to call function on. Either executionContextId or objectId should be specified.
+        :param executionContextId: Specifies execution context which global object will be used to call function on. Either
+executionContextId or objectId should be specified.
         :type executionContextId: ExecutionContextId
-        :param objectGroup: Symbolic group name that can be used to release multiple objects. If objectGroup is not specified and objectId is, objectGroup will be inherited from object.
+        :param objectGroup: Symbolic group name that can be used to release multiple objects. If objectGroup is not
+specified and objectId is, objectGroup will be inherited from object.
         :type objectGroup: str
         """
         return (
@@ -392,18 +361,149 @@ class Runtime(PayloadMixin):
         )
 
     @classmethod
+    def compileScript(cls,
+                      expression: Union['str'],
+                      sourceURL: Union['str'],
+                      persistScript: Union['bool'],
+                      executionContextId: Optional['ExecutionContextId'] = None,
+                      ):
+        """Compiles expression.
+        :param expression: Expression to compile.
+        :type expression: str
+        :param sourceURL: Source url to be set for the script.
+        :type sourceURL: str
+        :param persistScript: Specifies whether the compiled script should be persisted.
+        :type persistScript: bool
+        :param executionContextId: Specifies in which execution context to perform script run. If the parameter is omitted the
+evaluation will be performed in the context of the inspected page.
+        :type executionContextId: ExecutionContextId
+        """
+        return (
+            cls.build_send_payload("compileScript", {
+                "expression": expression,
+                "sourceURL": sourceURL,
+                "persistScript": persistScript,
+                "executionContextId": executionContextId,
+            }),
+            cls.convert_payload({
+                "scriptId": {
+                    "class": ScriptId,
+                    "optional": True
+                },
+                "exceptionDetails": {
+                    "class": ExceptionDetails,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def disable(cls):
+        """Disables reporting of execution contexts creation.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def discardConsoleEntries(cls):
+        """Discards collected exceptions and console API calls.
+        """
+        return (
+            cls.build_send_payload("discardConsoleEntries", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables reporting of execution contexts creation by means of `executionContextCreated` event.
+When the reporting gets enabled the event will be sent immediately for each existing execution
+context.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def evaluate(cls,
+                 expression: Union['str'],
+                 objectGroup: Optional['str'] = None,
+                 includeCommandLineAPI: Optional['bool'] = None,
+                 silent: Optional['bool'] = None,
+                 contextId: Optional['ExecutionContextId'] = None,
+                 returnByValue: Optional['bool'] = None,
+                 generatePreview: Optional['bool'] = None,
+                 userGesture: Optional['bool'] = None,
+                 awaitPromise: Optional['bool'] = None,
+                 ):
+        """Evaluates expression on global object.
+        :param expression: Expression to evaluate.
+        :type expression: str
+        :param objectGroup: Symbolic group name that can be used to release multiple objects.
+        :type objectGroup: str
+        :param includeCommandLineAPI: Determines whether Command Line API should be available during the evaluation.
+        :type includeCommandLineAPI: bool
+        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause
+execution. Overrides `setPauseOnException` state.
+        :type silent: bool
+        :param contextId: Specifies in which execution context to perform evaluation. If the parameter is omitted the
+evaluation will be performed in the context of the inspected page.
+        :type contextId: ExecutionContextId
+        :param returnByValue: Whether the result is expected to be a JSON object that should be sent by value.
+        :type returnByValue: bool
+        :param generatePreview: Whether preview should be generated for the result.
+        :type generatePreview: bool
+        :param userGesture: Whether execution should be treated as initiated by user in the UI.
+        :type userGesture: bool
+        :param awaitPromise: Whether execution should `await` for resulting value and return once awaited promise is
+resolved.
+        :type awaitPromise: bool
+        """
+        return (
+            cls.build_send_payload("evaluate", {
+                "expression": expression,
+                "objectGroup": objectGroup,
+                "includeCommandLineAPI": includeCommandLineAPI,
+                "silent": silent,
+                "contextId": contextId,
+                "returnByValue": returnByValue,
+                "generatePreview": generatePreview,
+                "userGesture": userGesture,
+                "awaitPromise": awaitPromise,
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": RemoteObject,
+                    "optional": False
+                },
+                "exceptionDetails": {
+                    "class": ExceptionDetails,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
     def getProperties(cls,
                       objectId: Union['RemoteObjectId'],
                       ownProperties: Optional['bool'] = None,
                       accessorPropertiesOnly: Optional['bool'] = None,
                       generatePreview: Optional['bool'] = None,
                       ):
-        """Returns properties of a given object. Object group of the result is inherited from the target object.
+        """Returns properties of a given object. Object group of the result is inherited from the target
+object.
         :param objectId: Identifier of the object to return properties for.
         :type objectId: RemoteObjectId
-        :param ownProperties: If true, returns properties belonging only to the element itself, not to its prototype chain.
+        :param ownProperties: If true, returns properties belonging only to the element itself, not to its prototype
+chain.
         :type ownProperties: bool
-        :param accessorPropertiesOnly: If true, returns accessor properties (with getter/setter) only; internal properties are not returned either.
+        :param accessorPropertiesOnly: If true, returns accessor properties (with getter/setter) only; internal properties are not
+returned either.
         :type accessorPropertiesOnly: bool
         :param generatePreview: Whether preview should be generated for the results.
         :type generatePreview: bool
@@ -427,6 +527,46 @@ class Runtime(PayloadMixin):
                 "exceptionDetails": {
                     "class": ExceptionDetails,
                     "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def globalLexicalScopeNames(cls,
+                                executionContextId: Optional['ExecutionContextId'] = None,
+                                ):
+        """Returns all let, const and class variables from global scope.
+        :param executionContextId: Specifies in which execution context to lookup global scope variables.
+        :type executionContextId: ExecutionContextId
+        """
+        return (
+            cls.build_send_payload("globalLexicalScopeNames", {
+                "executionContextId": executionContextId,
+            }),
+            cls.convert_payload({
+                "names": {
+                    "class": [],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def queryObjects(cls,
+                     prototypeObjectId: Union['RemoteObjectId'],
+                     ):
+        """
+        :param prototypeObjectId: Identifier of the prototype to return objects for.
+        :type prototypeObjectId: RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("queryObjects", {
+                "prototypeObjectId": prototypeObjectId,
+            }),
+            cls.convert_payload({
+                "objects": {
+                    "class": RemoteObject,
+                    "optional": False
                 },
             })
         )
@@ -472,87 +612,6 @@ class Runtime(PayloadMixin):
         )
 
     @classmethod
-    def enable(cls):
-        """Enables reporting of execution contexts creation by means of <code>executionContextCreated</code> event. When the reporting gets enabled the event will be sent immediately for each existing execution context.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def disable(cls):
-        """Disables reporting of execution contexts creation.
-        """
-        return (
-            cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def discardConsoleEntries(cls):
-        """Discards collected exceptions and console API calls.
-        """
-        return (
-            cls.build_send_payload("discardConsoleEntries", {
-            }),
-            None
-        )
-
-    @classmethod
-    def setCustomObjectFormatterEnabled(cls,
-                                        enabled: Union['bool'],
-                                        ):
-        """
-        :param enabled: 
-        :type enabled: bool
-        """
-        return (
-            cls.build_send_payload("setCustomObjectFormatterEnabled", {
-                "enabled": enabled,
-            }),
-            None
-        )
-
-    @classmethod
-    def compileScript(cls,
-                      expression: Union['str'],
-                      sourceURL: Union['str'],
-                      persistScript: Union['bool'],
-                      executionContextId: Optional['ExecutionContextId'] = None,
-                      ):
-        """Compiles expression.
-        :param expression: Expression to compile.
-        :type expression: str
-        :param sourceURL: Source url to be set for the script.
-        :type sourceURL: str
-        :param persistScript: Specifies whether the compiled script should be persisted.
-        :type persistScript: bool
-        :param executionContextId: Specifies in which execution context to perform script run. If the parameter is omitted the evaluation will be performed in the context of the inspected page.
-        :type executionContextId: ExecutionContextId
-        """
-        return (
-            cls.build_send_payload("compileScript", {
-                "expression": expression,
-                "sourceURL": sourceURL,
-                "persistScript": persistScript,
-                "executionContextId": executionContextId,
-            }),
-            cls.convert_payload({
-                "scriptId": {
-                    "class": ScriptId,
-                    "optional": True
-                },
-                "exceptionDetails": {
-                    "class": ExceptionDetails,
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
     def runScript(cls,
                   scriptId: Union['ScriptId'],
                   executionContextId: Optional['ExecutionContextId'] = None,
@@ -566,11 +625,13 @@ class Runtime(PayloadMixin):
         """Runs script with given id in a given context.
         :param scriptId: Id of the script to run.
         :type scriptId: ScriptId
-        :param executionContextId: Specifies in which execution context to perform script run. If the parameter is omitted the evaluation will be performed in the context of the inspected page.
+        :param executionContextId: Specifies in which execution context to perform script run. If the parameter is omitted the
+evaluation will be performed in the context of the inspected page.
         :type executionContextId: ExecutionContextId
         :param objectGroup: Symbolic group name that can be used to release multiple objects.
         :type objectGroup: str
-        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides <code>setPauseOnException</code> state.
+        :param silent: In silent mode exceptions thrown during evaluation are not reported and do not pause
+execution. Overrides `setPauseOnException` state.
         :type silent: bool
         :param includeCommandLineAPI: Determines whether Command Line API should be available during the evaluation.
         :type includeCommandLineAPI: bool
@@ -578,7 +639,8 @@ class Runtime(PayloadMixin):
         :type returnByValue: bool
         :param generatePreview: Whether preview should be generated for the result.
         :type generatePreview: bool
-        :param awaitPromise: Whether execution should <code>await</code> for resulting value and return once awaited promise is resolved.
+        :param awaitPromise: Whether execution should `await` for resulting value and return once awaited promise is
+resolved.
         :type awaitPromise: bool
         """
         return (
@@ -605,45 +667,112 @@ class Runtime(PayloadMixin):
         )
 
     @classmethod
-    def queryObjects(cls,
-                     prototypeObjectId: Union['RemoteObjectId'],
-                     ):
+    def setCustomObjectFormatterEnabled(cls,
+                                        enabled: Union['bool'],
+                                        ):
         """
-        :param prototypeObjectId: Identifier of the prototype to return objects for.
-        :type prototypeObjectId: RemoteObjectId
+        :param enabled: 
+        :type enabled: bool
         """
         return (
-            cls.build_send_payload("queryObjects", {
-                "prototypeObjectId": prototypeObjectId,
+            cls.build_send_payload("setCustomObjectFormatterEnabled", {
+                "enabled": enabled,
             }),
-            cls.convert_payload({
-                "objects": {
-                    "class": RemoteObject,
-                    "optional": False
-                },
-            })
+            None
         )
+
+
+
+class ConsoleAPICalledEvent(BaseEvent):
+
+    js_name = 'Runtime.consoleAPICalled'
+    hashable = ['executionContextId']
+    is_hashable = True
+
+    def __init__(self,
+                 type: Union['str', dict],
+                 args: Union['[RemoteObject]', dict],
+                 executionContextId: Union['ExecutionContextId', dict],
+                 timestamp: Union['Timestamp', dict],
+                 stackTrace: Union['StackTrace', dict, None] = None,
+                 context: Union['str', dict, None] = None,
+                 ):
+        if isinstance(type, dict):
+            type = str(**type)
+        self.type = type
+        if isinstance(args, dict):
+            args = [RemoteObject](**args)
+        self.args = args
+        if isinstance(executionContextId, dict):
+            executionContextId = ExecutionContextId(**executionContextId)
+        self.executionContextId = executionContextId
+        if isinstance(timestamp, dict):
+            timestamp = Timestamp(**timestamp)
+        self.timestamp = timestamp
+        if isinstance(stackTrace, dict):
+            stackTrace = StackTrace(**stackTrace)
+        self.stackTrace = stackTrace
+        if isinstance(context, dict):
+            context = str(**context)
+        self.context = context
 
     @classmethod
-    def globalLexicalScopeNames(cls,
-                                executionContextId: Optional['ExecutionContextId'] = None,
-                                ):
-        """Returns all let, const and class variables from global scope.
-        :param executionContextId: Specifies in which execution context to lookup global scope variables.
-        :type executionContextId: ExecutionContextId
-        """
-        return (
-            cls.build_send_payload("globalLexicalScopeNames", {
-                "executionContextId": executionContextId,
-            }),
-            cls.convert_payload({
-                "names": {
-                    "class": [],
-                    "optional": False
-                },
-            })
-        )
+    def build_hash(cls, executionContextId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
+
+class ExceptionRevokedEvent(BaseEvent):
+
+    js_name = 'Runtime.exceptionRevoked'
+    hashable = ['exceptionId']
+    is_hashable = True
+
+    def __init__(self,
+                 reason: Union['str', dict],
+                 exceptionId: Union['int', dict],
+                 ):
+        if isinstance(reason, dict):
+            reason = str(**reason)
+        self.reason = reason
+        if isinstance(exceptionId, dict):
+            exceptionId = int(**exceptionId)
+        self.exceptionId = exceptionId
+
+    @classmethod
+    def build_hash(cls, exceptionId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class ExceptionThrownEvent(BaseEvent):
+
+    js_name = 'Runtime.exceptionThrown'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 timestamp: Union['Timestamp', dict],
+                 exceptionDetails: Union['ExceptionDetails', dict],
+                 ):
+        if isinstance(timestamp, dict):
+            timestamp = Timestamp(**timestamp)
+        self.timestamp = timestamp
+        if isinstance(exceptionDetails, dict):
+            exceptionDetails = ExceptionDetails(**exceptionDetails)
+        self.exceptionDetails = exceptionDetails
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class ExecutionContextCreatedEvent(BaseEvent):
@@ -704,98 +833,6 @@ class ExecutionContextsClearedEvent(BaseEvent):
     @classmethod
     def build_hash(cls):
         raise ValueError('Unable to build hash for non-hashable type')
-
-
-class ExceptionThrownEvent(BaseEvent):
-
-    js_name = 'Runtime.exceptionThrown'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 timestamp: Union['Timestamp', dict],
-                 exceptionDetails: Union['ExceptionDetails', dict],
-                 ):
-        if isinstance(timestamp, dict):
-            timestamp = Timestamp(**timestamp)
-        self.timestamp = timestamp
-        if isinstance(exceptionDetails, dict):
-            exceptionDetails = ExceptionDetails(**exceptionDetails)
-        self.exceptionDetails = exceptionDetails
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class ExceptionRevokedEvent(BaseEvent):
-
-    js_name = 'Runtime.exceptionRevoked'
-    hashable = ['exceptionId']
-    is_hashable = True
-
-    def __init__(self,
-                 reason: Union['str', dict],
-                 exceptionId: Union['int', dict],
-                 ):
-        if isinstance(reason, dict):
-            reason = str(**reason)
-        self.reason = reason
-        if isinstance(exceptionId, dict):
-            exceptionId = int(**exceptionId)
-        self.exceptionId = exceptionId
-
-    @classmethod
-    def build_hash(cls, exceptionId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class ConsoleAPICalledEvent(BaseEvent):
-
-    js_name = 'Runtime.consoleAPICalled'
-    hashable = ['executionContextId']
-    is_hashable = True
-
-    def __init__(self,
-                 type: Union['str', dict],
-                 args: Union['[RemoteObject]', dict],
-                 executionContextId: Union['ExecutionContextId', dict],
-                 timestamp: Union['Timestamp', dict],
-                 stackTrace: Union['StackTrace', dict, None] = None,
-                 context: Union['str', dict, None] = None,
-                 ):
-        if isinstance(type, dict):
-            type = str(**type)
-        self.type = type
-        if isinstance(args, dict):
-            args = [RemoteObject](**args)
-        self.args = args
-        if isinstance(executionContextId, dict):
-            executionContextId = ExecutionContextId(**executionContextId)
-        self.executionContextId = executionContextId
-        if isinstance(timestamp, dict):
-            timestamp = Timestamp(**timestamp)
-        self.timestamp = timestamp
-        if isinstance(stackTrace, dict):
-            stackTrace = StackTrace(**stackTrace)
-        self.stackTrace = stackTrace
-        if isinstance(context, dict):
-            context = str(**context)
-        self.context = context
-
-    @classmethod
-    def build_hash(cls, executionContextId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
 
 
 class InspectRequestedEvent(BaseEvent):

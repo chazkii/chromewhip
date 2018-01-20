@@ -67,7 +67,7 @@ class AXRelatedNode(ChromeTypeBase):
 # AXProperty: 
 class AXProperty(ChromeTypeBase):
     def __init__(self,
-                 name: Union['str'],
+                 name: Union['AXPropertyName'],
                  value: Union['AXValue'],
                  ):
 
@@ -90,20 +90,8 @@ class AXValue(ChromeTypeBase):
         self.sources = sources
 
 
-# AXGlobalStates: States which apply to every AX node.
-AXGlobalStates = str
-
-# AXLiveRegionAttributes: Attributes which apply to nodes in live regions.
-AXLiveRegionAttributes = str
-
-# AXWidgetAttributes: Attributes which apply to widgets.
-AXWidgetAttributes = str
-
-# AXWidgetStates: States which apply to widgets.
-AXWidgetStates = str
-
-# AXRelationshipAttributes: Relationships between elements other than parent/child/sibling.
-AXRelationshipAttributes = str
+# AXPropertyName: Values of AXProperty name: from 'busy' to 'roledescription' - states which apply to every AXnode, from 'live' to 'root' - attributes which apply to nodes in live regions, from'autocomplete' to 'valuetext' - attributes which apply to widgets, from 'checked' to 'selected'- states which apply to widgets, from 'activedescendant' to 'owns' - relationships betweenelements other than parent/child/sibling.
+AXPropertyName = str
 
 # AXNode: A node in the accessibility tree.
 class AXNode(ChromeTypeBase):

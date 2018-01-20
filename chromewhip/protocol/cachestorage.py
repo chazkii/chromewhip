@@ -74,58 +74,6 @@ class CacheStorage(PayloadMixin):
     """ 
     """
     @classmethod
-    def requestCacheNames(cls,
-                          securityOrigin: Union['str'],
-                          ):
-        """Requests cache names.
-        :param securityOrigin: Security origin.
-        :type securityOrigin: str
-        """
-        return (
-            cls.build_send_payload("requestCacheNames", {
-                "securityOrigin": securityOrigin,
-            }),
-            cls.convert_payload({
-                "caches": {
-                    "class": [Cache],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def requestEntries(cls,
-                       cacheId: Union['CacheId'],
-                       skipCount: Union['int'],
-                       pageSize: Union['int'],
-                       ):
-        """Requests data from cache.
-        :param cacheId: ID of cache to get entries from.
-        :type cacheId: CacheId
-        :param skipCount: Number of records to skip.
-        :type skipCount: int
-        :param pageSize: Number of records to fetch.
-        :type pageSize: int
-        """
-        return (
-            cls.build_send_payload("requestEntries", {
-                "cacheId": cacheId,
-                "skipCount": skipCount,
-                "pageSize": pageSize,
-            }),
-            cls.convert_payload({
-                "cacheDataEntries": {
-                    "class": [DataEntry],
-                    "optional": False
-                },
-                "hasMore": {
-                    "class": bool,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
     def deleteCache(cls,
                     cacheId: Union['CacheId'],
                     ):
@@ -160,6 +108,26 @@ class CacheStorage(PayloadMixin):
         )
 
     @classmethod
+    def requestCacheNames(cls,
+                          securityOrigin: Union['str'],
+                          ):
+        """Requests cache names.
+        :param securityOrigin: Security origin.
+        :type securityOrigin: str
+        """
+        return (
+            cls.build_send_payload("requestCacheNames", {
+                "securityOrigin": securityOrigin,
+            }),
+            cls.convert_payload({
+                "caches": {
+                    "class": [Cache],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def requestCachedResponse(cls,
                               cacheId: Union['CacheId'],
                               requestURL: Union['str'],
@@ -178,6 +146,38 @@ class CacheStorage(PayloadMixin):
             cls.convert_payload({
                 "response": {
                     "class": CachedResponse,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def requestEntries(cls,
+                       cacheId: Union['CacheId'],
+                       skipCount: Union['int'],
+                       pageSize: Union['int'],
+                       ):
+        """Requests data from cache.
+        :param cacheId: ID of cache to get entries from.
+        :type cacheId: CacheId
+        :param skipCount: Number of records to skip.
+        :type skipCount: int
+        :param pageSize: Number of records to fetch.
+        :type pageSize: int
+        """
+        return (
+            cls.build_send_payload("requestEntries", {
+                "cacheId": cacheId,
+                "skipCount": skipCount,
+                "pageSize": pageSize,
+            }),
+            cls.convert_payload({
+                "cacheDataEntries": {
+                    "class": [DataEntry],
+                    "optional": False
+                },
+                "hasMore": {
+                    "class": bool,
                     "optional": False
                 },
             })

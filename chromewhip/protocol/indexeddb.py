@@ -119,11 +119,70 @@ class IndexedDB(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enables events from backend.
+    def clearObjectStore(cls,
+                         securityOrigin: Union['str'],
+                         databaseName: Union['str'],
+                         objectStoreName: Union['str'],
+                         ):
+        """Clears all entries from an object store.
+        :param securityOrigin: Security origin.
+        :type securityOrigin: str
+        :param databaseName: Database name.
+        :type databaseName: str
+        :param objectStoreName: Object store name.
+        :type objectStoreName: str
         """
         return (
-            cls.build_send_payload("enable", {
+            cls.build_send_payload("clearObjectStore", {
+                "securityOrigin": securityOrigin,
+                "databaseName": databaseName,
+                "objectStoreName": objectStoreName,
+            }),
+            None
+        )
+
+    @classmethod
+    def deleteDatabase(cls,
+                       securityOrigin: Union['str'],
+                       databaseName: Union['str'],
+                       ):
+        """Deletes a database.
+        :param securityOrigin: Security origin.
+        :type securityOrigin: str
+        :param databaseName: Database name.
+        :type databaseName: str
+        """
+        return (
+            cls.build_send_payload("deleteDatabase", {
+                "securityOrigin": securityOrigin,
+                "databaseName": databaseName,
+            }),
+            None
+        )
+
+    @classmethod
+    def deleteObjectStoreEntries(cls,
+                                 securityOrigin: Union['str'],
+                                 databaseName: Union['str'],
+                                 objectStoreName: Union['str'],
+                                 keyRange: Union['KeyRange'],
+                                 ):
+        """Delete a range of entries from an object store
+        :param securityOrigin: 
+        :type securityOrigin: str
+        :param databaseName: 
+        :type databaseName: str
+        :param objectStoreName: 
+        :type objectStoreName: str
+        :param keyRange: Range of entry keys to delete
+        :type keyRange: KeyRange
+        """
+        return (
+            cls.build_send_payload("deleteObjectStoreEntries", {
+                "securityOrigin": securityOrigin,
+                "databaseName": databaseName,
+                "objectStoreName": objectStoreName,
+                "keyRange": keyRange,
             }),
             None
         )
@@ -139,47 +198,13 @@ class IndexedDB(PayloadMixin):
         )
 
     @classmethod
-    def requestDatabaseNames(cls,
-                             securityOrigin: Union['str'],
-                             ):
-        """Requests database names for given security origin.
-        :param securityOrigin: Security origin.
-        :type securityOrigin: str
+    def enable(cls):
+        """Enables events from backend.
         """
         return (
-            cls.build_send_payload("requestDatabaseNames", {
-                "securityOrigin": securityOrigin,
+            cls.build_send_payload("enable", {
             }),
-            cls.convert_payload({
-                "databaseNames": {
-                    "class": [],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def requestDatabase(cls,
-                        securityOrigin: Union['str'],
-                        databaseName: Union['str'],
-                        ):
-        """Requests database with given name in given frame.
-        :param securityOrigin: Security origin.
-        :type securityOrigin: str
-        :param databaseName: Database name.
-        :type databaseName: str
-        """
-        return (
-            cls.build_send_payload("requestDatabase", {
-                "securityOrigin": securityOrigin,
-                "databaseName": databaseName,
-            }),
-            cls.convert_payload({
-                "databaseWithObjectStores": {
-                    "class": DatabaseWithObjectStores,
-                    "optional": False
-                },
-            })
+            None
         )
 
     @classmethod
@@ -231,46 +256,46 @@ class IndexedDB(PayloadMixin):
         )
 
     @classmethod
-    def clearObjectStore(cls,
-                         securityOrigin: Union['str'],
-                         databaseName: Union['str'],
-                         objectStoreName: Union['str'],
-                         ):
-        """Clears all entries from an object store.
+    def requestDatabase(cls,
+                        securityOrigin: Union['str'],
+                        databaseName: Union['str'],
+                        ):
+        """Requests database with given name in given frame.
         :param securityOrigin: Security origin.
         :type securityOrigin: str
         :param databaseName: Database name.
         :type databaseName: str
-        :param objectStoreName: Object store name.
-        :type objectStoreName: str
         """
         return (
-            cls.build_send_payload("clearObjectStore", {
+            cls.build_send_payload("requestDatabase", {
                 "securityOrigin": securityOrigin,
                 "databaseName": databaseName,
-                "objectStoreName": objectStoreName,
             }),
             cls.convert_payload({
+                "databaseWithObjectStores": {
+                    "class": DatabaseWithObjectStores,
+                    "optional": False
+                },
             })
         )
 
     @classmethod
-    def deleteDatabase(cls,
-                       securityOrigin: Union['str'],
-                       databaseName: Union['str'],
-                       ):
-        """Deletes a database.
+    def requestDatabaseNames(cls,
+                             securityOrigin: Union['str'],
+                             ):
+        """Requests database names for given security origin.
         :param securityOrigin: Security origin.
         :type securityOrigin: str
-        :param databaseName: Database name.
-        :type databaseName: str
         """
         return (
-            cls.build_send_payload("deleteDatabase", {
+            cls.build_send_payload("requestDatabaseNames", {
                 "securityOrigin": securityOrigin,
-                "databaseName": databaseName,
             }),
             cls.convert_payload({
+                "databaseNames": {
+                    "class": [],
+                    "optional": False
+                },
             })
         )
 

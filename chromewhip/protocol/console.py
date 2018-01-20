@@ -37,11 +37,11 @@ class Console(PayloadMixin):
     """ This domain is deprecated - use Runtime or Log instead.
     """
     @classmethod
-    def enable(cls):
-        """Enables console domain, sends the messages collected so far to the client by means of the <code>messageAdded</code> notification.
+    def clearMessages(cls):
+        """Does nothing.
         """
         return (
-            cls.build_send_payload("enable", {
+            cls.build_send_payload("clearMessages", {
             }),
             None
         )
@@ -57,11 +57,12 @@ class Console(PayloadMixin):
         )
 
     @classmethod
-    def clearMessages(cls):
-        """Does nothing.
+    def enable(cls):
+        """Enables console domain, sends the messages collected so far to the client by means of the
+`messageAdded` notification.
         """
         return (
-            cls.build_send_payload("clearMessages", {
+            cls.build_send_payload("enable", {
             }),
             None
         )

@@ -211,26 +211,6 @@ class Page(PayloadMixin):
     """ Actions and events related to the inspected page belong to the page domain.
     """
     @classmethod
-    def enable(cls):
-        """Enables page domain notifications.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def disable(cls):
-        """Disables page domain notifications.
-        """
-        return (
-            cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
     def addScriptToEvaluateOnLoad(cls,
                                   scriptSource: Union['str'],
                                   ):
@@ -248,21 +228,6 @@ class Page(PayloadMixin):
                     "optional": False
                 },
             })
-        )
-
-    @classmethod
-    def removeScriptToEvaluateOnLoad(cls,
-                                     identifier: Union['ScriptIdentifier'],
-                                     ):
-        """Deprecated, please use removeScriptToEvaluateOnNewDocument instead.
-        :param identifier: 
-        :type identifier: ScriptIdentifier
-        """
-        return (
-            cls.build_send_payload("removeScriptToEvaluateOnLoad", {
-                "identifier": identifier,
-            }),
-            None
         )
 
     @classmethod
@@ -286,170 +251,101 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def removeScriptToEvaluateOnNewDocument(cls,
-                                            identifier: Union['ScriptIdentifier'],
-                                            ):
-        """Removes given script from the list.
-        :param identifier: 
-        :type identifier: ScriptIdentifier
+    def bringToFront(cls):
+        """Brings page to front (activates tab).
         """
         return (
-            cls.build_send_payload("removeScriptToEvaluateOnNewDocument", {
-                "identifier": identifier,
+            cls.build_send_payload("bringToFront", {
             }),
             None
         )
 
     @classmethod
-    def setAutoAttachToCreatedPages(cls,
-                                    autoAttach: Union['bool'],
-                                    ):
-        """Controls whether browser will open a new inspector window for connected pages.
-        :param autoAttach: If true, browser will open a new inspector window for every page created from this one.
-        :type autoAttach: bool
+    def captureScreenshot(cls,
+                          format: Optional['str'] = None,
+                          quality: Optional['int'] = None,
+                          clip: Optional['Viewport'] = None,
+                          fromSurface: Optional['bool'] = None,
+                          ):
+        """Capture page screenshot.
+        :param format: Image compression format (defaults to png).
+        :type format: str
+        :param quality: Compression quality from range [0..100] (jpeg only).
+        :type quality: int
+        :param clip: Capture the screenshot of a given region only.
+        :type clip: Viewport
+        :param fromSurface: Capture the screenshot from the surface, rather than the view. Defaults to true.
+        :type fromSurface: bool
         """
         return (
-            cls.build_send_payload("setAutoAttachToCreatedPages", {
-                "autoAttach": autoAttach,
-            }),
-            None
-        )
-
-    @classmethod
-    def setLifecycleEventsEnabled(cls,
-                                  enabled: Union['bool'],
-                                  ):
-        """Controls whether page will emit lifecycle events.
-        :param enabled: If true, starts emitting lifecycle events.
-        :type enabled: bool
-        """
-        return (
-            cls.build_send_payload("setLifecycleEventsEnabled", {
-                "enabled": enabled,
-            }),
-            None
-        )
-
-    @classmethod
-    def reload(cls,
-               ignoreCache: Optional['bool'] = None,
-               scriptToEvaluateOnLoad: Optional['str'] = None,
-               ):
-        """Reloads given page optionally ignoring the cache.
-        :param ignoreCache: If true, browser cache is ignored (as if the user pressed Shift+refresh).
-        :type ignoreCache: bool
-        :param scriptToEvaluateOnLoad: If set, the script will be injected into all frames of the inspected page after reload.
-        :type scriptToEvaluateOnLoad: str
-        """
-        return (
-            cls.build_send_payload("reload", {
-                "ignoreCache": ignoreCache,
-                "scriptToEvaluateOnLoad": scriptToEvaluateOnLoad,
-            }),
-            None
-        )
-
-    @classmethod
-    def setAdBlockingEnabled(cls,
-                             enabled: Union['bool'],
-                             ):
-        """Enable Chrome's experimental ad filter on all sites.
-        :param enabled: Whether to block ads.
-        :type enabled: bool
-        """
-        return (
-            cls.build_send_payload("setAdBlockingEnabled", {
-                "enabled": enabled,
-            }),
-            None
-        )
-
-    @classmethod
-    def navigate(cls,
-                 url: Union['str'],
-                 referrer: Optional['str'] = None,
-                 transitionType: Optional['TransitionType'] = None,
-                 ):
-        """Navigates current page to the given URL.
-        :param url: URL to navigate the page to.
-        :type url: str
-        :param referrer: Referrer URL.
-        :type referrer: str
-        :param transitionType: Intended transition type.
-        :type transitionType: TransitionType
-        """
-        return (
-            cls.build_send_payload("navigate", {
-                "url": url,
-                "referrer": referrer,
-                "transitionType": transitionType,
+            cls.build_send_payload("captureScreenshot", {
+                "format": format,
+                "quality": quality,
+                "clip": clip,
+                "fromSurface": fromSurface,
             }),
             cls.convert_payload({
-                "frameId": {
-                    "class": FrameId,
-                    "optional": False
-                },
-                "loaderId": {
-                    "class": Network.LoaderId,
+                "data": {
+                    "class": str,
                     "optional": False
                 },
             })
         )
 
     @classmethod
-    def stopLoading(cls):
-        """Force the page stop all navigations and pending resource fetches.
+    def clearDeviceMetricsOverride(cls):
+        """Clears the overriden device metrics.
         """
         return (
-            cls.build_send_payload("stopLoading", {
+            cls.build_send_payload("clearDeviceMetricsOverride", {
             }),
             None
         )
 
     @classmethod
-    def getNavigationHistory(cls):
-        """Returns navigation history for the current page.
+    def clearDeviceOrientationOverride(cls):
+        """Clears the overridden Device Orientation.
         """
         return (
-            cls.build_send_payload("getNavigationHistory", {
-            }),
-            cls.convert_payload({
-                "currentIndex": {
-                    "class": int,
-                    "optional": False
-                },
-                "entries": {
-                    "class": [NavigationEntry],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def navigateToHistoryEntry(cls,
-                               entryId: Union['int'],
-                               ):
-        """Navigates current page to the given history entry.
-        :param entryId: Unique id of the entry to navigate to.
-        :type entryId: int
-        """
-        return (
-            cls.build_send_payload("navigateToHistoryEntry", {
-                "entryId": entryId,
+            cls.build_send_payload("clearDeviceOrientationOverride", {
             }),
             None
         )
 
     @classmethod
-    def getCookies(cls):
-        """Returns all browser cookies. Depending on the backend support, will return detailed cookie information in the <code>cookies</code> field.
+    def clearGeolocationOverride(cls):
+        """Clears the overriden Geolocation Position and Error.
         """
         return (
-            cls.build_send_payload("getCookies", {
+            cls.build_send_payload("clearGeolocationOverride", {
+            }),
+            None
+        )
+
+    @classmethod
+    def createIsolatedWorld(cls,
+                            frameId: Union['FrameId'],
+                            worldName: Optional['str'] = None,
+                            grantUniveralAccess: Optional['bool'] = None,
+                            ):
+        """Creates an isolated world for the given frame.
+        :param frameId: Id of the frame in which the isolated world should be created.
+        :type frameId: FrameId
+        :param worldName: An optional name which is reported in the Execution Context.
+        :type worldName: str
+        :param grantUniveralAccess: Whether or not universal access should be granted to the isolated world. This is a powerful
+option, use with caution.
+        :type grantUniveralAccess: bool
+        """
+        return (
+            cls.build_send_payload("createIsolatedWorld", {
+                "frameId": frameId,
+                "worldName": worldName,
+                "grantUniveralAccess": grantUniveralAccess,
             }),
             cls.convert_payload({
-                "cookies": {
-                    "class": [Network.Cookie],
+                "executionContextId": {
+                    "class": Runtime.ExecutionContextId,
                     "optional": False
                 },
             })
@@ -475,15 +371,59 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def getResourceTree(cls):
-        """Returns present frame / resource tree structure.
+    def disable(cls):
+        """Disables page domain notifications.
         """
         return (
-            cls.build_send_payload("getResourceTree", {
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables page domain notifications.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def getAppManifest(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("getAppManifest", {
             }),
             cls.convert_payload({
-                "frameTree": {
-                    "class": FrameResourceTree,
+                "url": {
+                    "class": str,
+                    "optional": False
+                },
+                "errors": {
+                    "class": [AppManifestError],
+                    "optional": False
+                },
+                "data": {
+                    "class": str,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getCookies(cls):
+        """Returns all browser cookies. Depending on the backend support, will return detailed cookie
+information in the `cookies` field.
+        """
+        return (
+            cls.build_send_payload("getCookies", {
+            }),
+            cls.convert_payload({
+                "cookies": {
+                    "class": [Network.Cookie],
                     "optional": False
                 },
             })
@@ -499,6 +439,48 @@ class Page(PayloadMixin):
             cls.convert_payload({
                 "frameTree": {
                     "class": FrameTree,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getLayoutMetrics(cls):
+        """Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
+        """
+        return (
+            cls.build_send_payload("getLayoutMetrics", {
+            }),
+            cls.convert_payload({
+                "layoutViewport": {
+                    "class": LayoutViewport,
+                    "optional": False
+                },
+                "visualViewport": {
+                    "class": VisualViewport,
+                    "optional": False
+                },
+                "contentSize": {
+                    "class": DOM.Rect,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getNavigationHistory(cls):
+        """Returns navigation history for the current page.
+        """
+        return (
+            cls.build_send_payload("getNavigationHistory", {
+            }),
+            cls.convert_payload({
+                "currentIndex": {
+                    "class": int,
+                    "optional": False
+                },
+                "entries": {
+                    "class": [NavigationEntry],
                     "optional": False
                 },
             })
@@ -530,6 +512,249 @@ class Page(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def getResourceTree(cls):
+        """Returns present frame / resource tree structure.
+        """
+        return (
+            cls.build_send_payload("getResourceTree", {
+            }),
+            cls.convert_payload({
+                "frameTree": {
+                    "class": FrameResourceTree,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def handleJavaScriptDialog(cls,
+                               accept: Union['bool'],
+                               promptText: Optional['str'] = None,
+                               ):
+        """Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+        :param accept: Whether to accept or dismiss the dialog.
+        :type accept: bool
+        :param promptText: The text to enter into the dialog prompt before accepting. Used only if this is a prompt
+dialog.
+        :type promptText: str
+        """
+        return (
+            cls.build_send_payload("handleJavaScriptDialog", {
+                "accept": accept,
+                "promptText": promptText,
+            }),
+            None
+        )
+
+    @classmethod
+    def navigate(cls,
+                 url: Union['str'],
+                 referrer: Optional['str'] = None,
+                 transitionType: Optional['TransitionType'] = None,
+                 ):
+        """Navigates current page to the given URL.
+        :param url: URL to navigate the page to.
+        :type url: str
+        :param referrer: Referrer URL.
+        :type referrer: str
+        :param transitionType: Intended transition type.
+        :type transitionType: TransitionType
+        """
+        return (
+            cls.build_send_payload("navigate", {
+                "url": url,
+                "referrer": referrer,
+                "transitionType": transitionType,
+            }),
+            cls.convert_payload({
+                "frameId": {
+                    "class": FrameId,
+                    "optional": False
+                },
+                "loaderId": {
+                    "class": Network.LoaderId,
+                    "optional": True
+                },
+                "errorText": {
+                    "class": str,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def navigateToHistoryEntry(cls,
+                               entryId: Union['int'],
+                               ):
+        """Navigates current page to the given history entry.
+        :param entryId: Unique id of the entry to navigate to.
+        :type entryId: int
+        """
+        return (
+            cls.build_send_payload("navigateToHistoryEntry", {
+                "entryId": entryId,
+            }),
+            None
+        )
+
+    @classmethod
+    def printToPDF(cls,
+                   landscape: Optional['bool'] = None,
+                   displayHeaderFooter: Optional['bool'] = None,
+                   printBackground: Optional['bool'] = None,
+                   scale: Optional['float'] = None,
+                   paperWidth: Optional['float'] = None,
+                   paperHeight: Optional['float'] = None,
+                   marginTop: Optional['float'] = None,
+                   marginBottom: Optional['float'] = None,
+                   marginLeft: Optional['float'] = None,
+                   marginRight: Optional['float'] = None,
+                   pageRanges: Optional['str'] = None,
+                   ignoreInvalidPageRanges: Optional['bool'] = None,
+                   headerTemplate: Optional['str'] = None,
+                   footerTemplate: Optional['str'] = None,
+                   ):
+        """Print page as PDF.
+        :param landscape: Paper orientation. Defaults to false.
+        :type landscape: bool
+        :param displayHeaderFooter: Display header and footer. Defaults to false.
+        :type displayHeaderFooter: bool
+        :param printBackground: Print background graphics. Defaults to false.
+        :type printBackground: bool
+        :param scale: Scale of the webpage rendering. Defaults to 1.
+        :type scale: float
+        :param paperWidth: Paper width in inches. Defaults to 8.5 inches.
+        :type paperWidth: float
+        :param paperHeight: Paper height in inches. Defaults to 11 inches.
+        :type paperHeight: float
+        :param marginTop: Top margin in inches. Defaults to 1cm (~0.4 inches).
+        :type marginTop: float
+        :param marginBottom: Bottom margin in inches. Defaults to 1cm (~0.4 inches).
+        :type marginBottom: float
+        :param marginLeft: Left margin in inches. Defaults to 1cm (~0.4 inches).
+        :type marginLeft: float
+        :param marginRight: Right margin in inches. Defaults to 1cm (~0.4 inches).
+        :type marginRight: float
+        :param pageRanges: Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means
+print all pages.
+        :type pageRanges: str
+        :param ignoreInvalidPageRanges: Whether to silently ignore invalid but successfully parsed page ranges, such as '3-2'.
+Defaults to false.
+        :type ignoreInvalidPageRanges: bool
+        :param headerTemplate: HTML template for the print header. Should be valid HTML markup with following
+classes used to inject printing values into them:
+- date - formatted print date
+- title - document title
+- url - document location
+- pageNumber - current page number
+- totalPages - total pages in the document
+
+For example, <span class=title></span> would generate span containing the title.
+        :type headerTemplate: str
+        :param footerTemplate: HTML template for the print footer. Should use the same format as the `headerTemplate`.
+        :type footerTemplate: str
+        """
+        return (
+            cls.build_send_payload("printToPDF", {
+                "landscape": landscape,
+                "displayHeaderFooter": displayHeaderFooter,
+                "printBackground": printBackground,
+                "scale": scale,
+                "paperWidth": paperWidth,
+                "paperHeight": paperHeight,
+                "marginTop": marginTop,
+                "marginBottom": marginBottom,
+                "marginLeft": marginLeft,
+                "marginRight": marginRight,
+                "pageRanges": pageRanges,
+                "ignoreInvalidPageRanges": ignoreInvalidPageRanges,
+                "headerTemplate": headerTemplate,
+                "footerTemplate": footerTemplate,
+            }),
+            cls.convert_payload({
+                "data": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def reload(cls,
+               ignoreCache: Optional['bool'] = None,
+               scriptToEvaluateOnLoad: Optional['str'] = None,
+               ):
+        """Reloads given page optionally ignoring the cache.
+        :param ignoreCache: If true, browser cache is ignored (as if the user pressed Shift+refresh).
+        :type ignoreCache: bool
+        :param scriptToEvaluateOnLoad: If set, the script will be injected into all frames of the inspected page after reload.
+Argument will be ignored if reloading dataURL origin.
+        :type scriptToEvaluateOnLoad: str
+        """
+        return (
+            cls.build_send_payload("reload", {
+                "ignoreCache": ignoreCache,
+                "scriptToEvaluateOnLoad": scriptToEvaluateOnLoad,
+            }),
+            None
+        )
+
+    @classmethod
+    def removeScriptToEvaluateOnLoad(cls,
+                                     identifier: Union['ScriptIdentifier'],
+                                     ):
+        """Deprecated, please use removeScriptToEvaluateOnNewDocument instead.
+        :param identifier: 
+        :type identifier: ScriptIdentifier
+        """
+        return (
+            cls.build_send_payload("removeScriptToEvaluateOnLoad", {
+                "identifier": identifier,
+            }),
+            None
+        )
+
+    @classmethod
+    def removeScriptToEvaluateOnNewDocument(cls,
+                                            identifier: Union['ScriptIdentifier'],
+                                            ):
+        """Removes given script from the list.
+        :param identifier: 
+        :type identifier: ScriptIdentifier
+        """
+        return (
+            cls.build_send_payload("removeScriptToEvaluateOnNewDocument", {
+                "identifier": identifier,
+            }),
+            None
+        )
+
+    @classmethod
+    def requestAppBanner(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("requestAppBanner", {
+            }),
+            None
+        )
+
+    @classmethod
+    def screencastFrameAck(cls,
+                           sessionId: Union['int'],
+                           ):
+        """Acknowledges that a screencast frame has been received by the frontend.
+        :param sessionId: Frame number.
+        :type sessionId: int
+        """
+        return (
+            cls.build_send_payload("screencastFrameAck", {
+                "sessionId": sessionId,
+            }),
+            None
         )
 
     @classmethod
@@ -569,20 +794,16 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def setDocumentContent(cls,
-                           frameId: Union['FrameId'],
-                           html: Union['str'],
-                           ):
-        """Sets given markup as the document's HTML.
-        :param frameId: Frame id to set HTML for.
-        :type frameId: FrameId
-        :param html: HTML content to set.
-        :type html: str
+    def setAdBlockingEnabled(cls,
+                             enabled: Union['bool'],
+                             ):
+        """Enable Chrome's experimental ad filter on all sites.
+        :param enabled: Whether to block ads.
+        :type enabled: bool
         """
         return (
-            cls.build_send_payload("setDocumentContent", {
-                "frameId": frameId,
-                "html": html,
+            cls.build_send_payload("setAdBlockingEnabled", {
+                "enabled": enabled,
             }),
             None
         )
@@ -602,14 +823,17 @@ class Page(PayloadMixin):
                                  screenOrientation: Optional['Emulation.ScreenOrientation'] = None,
                                  viewport: Optional['Viewport'] = None,
                                  ):
-        """Overrides the values of device screen dimensions (window.screen.width, window.screen.height, window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media query results).
+        """Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
+window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
+query results).
         :param width: Overriding width value in pixels (minimum 0, maximum 10000000). 0 disables the override.
         :type width: int
         :param height: Overriding height value in pixels (minimum 0, maximum 10000000). 0 disables the override.
         :type height: int
         :param deviceScaleFactor: Overriding device scale factor value. 0 disables the override.
         :type deviceScaleFactor: float
-        :param mobile: Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text autosizing and more.
+        :param mobile: Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text
+autosizing and more.
         :type mobile: bool
         :param scale: Scale to apply to resulting view image.
         :type scale: float
@@ -647,49 +871,6 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def clearDeviceMetricsOverride(cls):
-        """Clears the overriden device metrics.
-        """
-        return (
-            cls.build_send_payload("clearDeviceMetricsOverride", {
-            }),
-            None
-        )
-
-    @classmethod
-    def setGeolocationOverride(cls,
-                               latitude: Optional['float'] = None,
-                               longitude: Optional['float'] = None,
-                               accuracy: Optional['float'] = None,
-                               ):
-        """Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position unavailable.
-        :param latitude: Mock latitude
-        :type latitude: float
-        :param longitude: Mock longitude
-        :type longitude: float
-        :param accuracy: Mock accuracy
-        :type accuracy: float
-        """
-        return (
-            cls.build_send_payload("setGeolocationOverride", {
-                "latitude": latitude,
-                "longitude": longitude,
-                "accuracy": accuracy,
-            }),
-            None
-        )
-
-    @classmethod
-    def clearGeolocationOverride(cls):
-        """Clears the overriden Geolocation Position and Error.
-        """
-        return (
-            cls.build_send_payload("clearGeolocationOverride", {
-            }),
-            None
-        )
-
-    @classmethod
     def setDeviceOrientationOverride(cls,
                                      alpha: Union['float'],
                                      beta: Union['float'],
@@ -713,11 +894,79 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def clearDeviceOrientationOverride(cls):
-        """Clears the overridden Device Orientation.
+    def setDocumentContent(cls,
+                           frameId: Union['FrameId'],
+                           html: Union['str'],
+                           ):
+        """Sets given markup as the document's HTML.
+        :param frameId: Frame id to set HTML for.
+        :type frameId: FrameId
+        :param html: HTML content to set.
+        :type html: str
         """
         return (
-            cls.build_send_payload("clearDeviceOrientationOverride", {
+            cls.build_send_payload("setDocumentContent", {
+                "frameId": frameId,
+                "html": html,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDownloadBehavior(cls,
+                            behavior: Union['str'],
+                            downloadPath: Optional['str'] = None,
+                            ):
+        """Set the behavior when downloading a file.
+        :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if
+available (otherwise deny).
+        :type behavior: str
+        :param downloadPath: The default path to save downloaded files to. This is requred if behavior is set to 'allow'
+        :type downloadPath: str
+        """
+        return (
+            cls.build_send_payload("setDownloadBehavior", {
+                "behavior": behavior,
+                "downloadPath": downloadPath,
+            }),
+            None
+        )
+
+    @classmethod
+    def setGeolocationOverride(cls,
+                               latitude: Optional['float'] = None,
+                               longitude: Optional['float'] = None,
+                               accuracy: Optional['float'] = None,
+                               ):
+        """Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
+unavailable.
+        :param latitude: Mock latitude
+        :type latitude: float
+        :param longitude: Mock longitude
+        :type longitude: float
+        :param accuracy: Mock accuracy
+        :type accuracy: float
+        """
+        return (
+            cls.build_send_payload("setGeolocationOverride", {
+                "latitude": latitude,
+                "longitude": longitude,
+                "accuracy": accuracy,
+            }),
+            None
+        )
+
+    @classmethod
+    def setLifecycleEventsEnabled(cls,
+                                  enabled: Union['bool'],
+                                  ):
+        """Controls whether page will emit lifecycle events.
+        :param enabled: If true, starts emitting lifecycle events.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setLifecycleEventsEnabled", {
+                "enabled": enabled,
             }),
             None
         )
@@ -742,102 +991,6 @@ class Page(PayloadMixin):
         )
 
     @classmethod
-    def captureScreenshot(cls,
-                          format: Optional['str'] = None,
-                          quality: Optional['int'] = None,
-                          clip: Optional['Viewport'] = None,
-                          fromSurface: Optional['bool'] = None,
-                          ):
-        """Capture page screenshot.
-        :param format: Image compression format (defaults to png).
-        :type format: str
-        :param quality: Compression quality from range [0..100] (jpeg only).
-        :type quality: int
-        :param clip: Capture the screenshot of a given region only.
-        :type clip: Viewport
-        :param fromSurface: Capture the screenshot from the surface, rather than the view. Defaults to true.
-        :type fromSurface: bool
-        """
-        return (
-            cls.build_send_payload("captureScreenshot", {
-                "format": format,
-                "quality": quality,
-                "clip": clip,
-                "fromSurface": fromSurface,
-            }),
-            cls.convert_payload({
-                "data": {
-                    "class": str,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def printToPDF(cls,
-                   landscape: Optional['bool'] = None,
-                   displayHeaderFooter: Optional['bool'] = None,
-                   printBackground: Optional['bool'] = None,
-                   scale: Optional['float'] = None,
-                   paperWidth: Optional['float'] = None,
-                   paperHeight: Optional['float'] = None,
-                   marginTop: Optional['float'] = None,
-                   marginBottom: Optional['float'] = None,
-                   marginLeft: Optional['float'] = None,
-                   marginRight: Optional['float'] = None,
-                   pageRanges: Optional['str'] = None,
-                   ignoreInvalidPageRanges: Optional['bool'] = None,
-                   ):
-        """Print page as PDF.
-        :param landscape: Paper orientation. Defaults to false.
-        :type landscape: bool
-        :param displayHeaderFooter: Display header and footer. Defaults to false.
-        :type displayHeaderFooter: bool
-        :param printBackground: Print background graphics. Defaults to false.
-        :type printBackground: bool
-        :param scale: Scale of the webpage rendering. Defaults to 1.
-        :type scale: float
-        :param paperWidth: Paper width in inches. Defaults to 8.5 inches.
-        :type paperWidth: float
-        :param paperHeight: Paper height in inches. Defaults to 11 inches.
-        :type paperHeight: float
-        :param marginTop: Top margin in inches. Defaults to 1cm (~0.4 inches).
-        :type marginTop: float
-        :param marginBottom: Bottom margin in inches. Defaults to 1cm (~0.4 inches).
-        :type marginBottom: float
-        :param marginLeft: Left margin in inches. Defaults to 1cm (~0.4 inches).
-        :type marginLeft: float
-        :param marginRight: Right margin in inches. Defaults to 1cm (~0.4 inches).
-        :type marginRight: float
-        :param pageRanges: Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
-        :type pageRanges: str
-        :param ignoreInvalidPageRanges: Whether to silently ignore invalid but successfully parsed page ranges, such as '3-2'. Defaults to false.
-        :type ignoreInvalidPageRanges: bool
-        """
-        return (
-            cls.build_send_payload("printToPDF", {
-                "landscape": landscape,
-                "displayHeaderFooter": displayHeaderFooter,
-                "printBackground": printBackground,
-                "scale": scale,
-                "paperWidth": paperWidth,
-                "paperHeight": paperHeight,
-                "marginTop": marginTop,
-                "marginBottom": marginBottom,
-                "marginLeft": marginLeft,
-                "marginRight": marginRight,
-                "pageRanges": pageRanges,
-                "ignoreInvalidPageRanges": ignoreInvalidPageRanges,
-            }),
-            cls.convert_payload({
-                "data": {
-                    "class": str,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
     def startScreencast(cls,
                         format: Optional['str'] = None,
                         quality: Optional['int'] = None,
@@ -845,7 +998,7 @@ class Page(PayloadMixin):
                         maxHeight: Optional['int'] = None,
                         everyNthFrame: Optional['int'] = None,
                         ):
-        """Starts sending each frame using the <code>screencastFrame</code> event.
+        """Starts sending each frame using the `screencastFrame` event.
         :param format: Image compression format.
         :type format: str
         :param quality: Compression quality from range [0..100].
@@ -869,158 +1022,31 @@ class Page(PayloadMixin):
         )
 
     @classmethod
+    def stopLoading(cls):
+        """Force the page stop all navigations and pending resource fetches.
+        """
+        return (
+            cls.build_send_payload("stopLoading", {
+            }),
+            None
+        )
+
+    @classmethod
+    def crash(cls):
+        """Crashes renderer on the IO thread, generates minidumps.
+        """
+        return (
+            cls.build_send_payload("crash", {
+            }),
+            None
+        )
+
+    @classmethod
     def stopScreencast(cls):
-        """Stops sending each frame in the <code>screencastFrame</code>.
+        """Stops sending each frame in the `screencastFrame`.
         """
         return (
             cls.build_send_payload("stopScreencast", {
-            }),
-            None
-        )
-
-    @classmethod
-    def screencastFrameAck(cls,
-                           sessionId: Union['int'],
-                           ):
-        """Acknowledges that a screencast frame has been received by the frontend.
-        :param sessionId: Frame number.
-        :type sessionId: int
-        """
-        return (
-            cls.build_send_payload("screencastFrameAck", {
-                "sessionId": sessionId,
-            }),
-            None
-        )
-
-    @classmethod
-    def handleJavaScriptDialog(cls,
-                               accept: Union['bool'],
-                               promptText: Optional['str'] = None,
-                               ):
-        """Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
-        :param accept: Whether to accept or dismiss the dialog.
-        :type accept: bool
-        :param promptText: The text to enter into the dialog prompt before accepting. Used only if this is a prompt dialog.
-        :type promptText: str
-        """
-        return (
-            cls.build_send_payload("handleJavaScriptDialog", {
-                "accept": accept,
-                "promptText": promptText,
-            }),
-            None
-        )
-
-    @classmethod
-    def getAppManifest(cls):
-        """
-        """
-        return (
-            cls.build_send_payload("getAppManifest", {
-            }),
-            cls.convert_payload({
-                "url": {
-                    "class": str,
-                    "optional": False
-                },
-                "errors": {
-                    "class": [AppManifestError],
-                    "optional": False
-                },
-                "data": {
-                    "class": str,
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
-    def requestAppBanner(cls):
-        """
-        """
-        return (
-            cls.build_send_payload("requestAppBanner", {
-            }),
-            None
-        )
-
-    @classmethod
-    def getLayoutMetrics(cls):
-        """Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
-        """
-        return (
-            cls.build_send_payload("getLayoutMetrics", {
-            }),
-            cls.convert_payload({
-                "layoutViewport": {
-                    "class": LayoutViewport,
-                    "optional": False
-                },
-                "visualViewport": {
-                    "class": VisualViewport,
-                    "optional": False
-                },
-                "contentSize": {
-                    "class": DOM.Rect,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def createIsolatedWorld(cls,
-                            frameId: Union['FrameId'],
-                            worldName: Optional['str'] = None,
-                            grantUniveralAccess: Optional['bool'] = None,
-                            ):
-        """Creates an isolated world for the given frame.
-        :param frameId: Id of the frame in which the isolated world should be created.
-        :type frameId: FrameId
-        :param worldName: An optional name which is reported in the Execution Context.
-        :type worldName: str
-        :param grantUniveralAccess: Whether or not universal access should be granted to the isolated world. This is a powerful option, use with caution.
-        :type grantUniveralAccess: bool
-        """
-        return (
-            cls.build_send_payload("createIsolatedWorld", {
-                "frameId": frameId,
-                "worldName": worldName,
-                "grantUniveralAccess": grantUniveralAccess,
-            }),
-            cls.convert_payload({
-                "executionContextId": {
-                    "class": Runtime.ExecutionContextId,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def bringToFront(cls):
-        """Brings page to front (activates tab).
-        """
-        return (
-            cls.build_send_payload("bringToFront", {
-            }),
-            None
-        )
-
-    @classmethod
-    def setDownloadBehavior(cls,
-                            behavior: Union['str'],
-                            downloadPath: Optional['str'] = None,
-                            ):
-        """Set the behavior when downloading a file.
-        :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if available (otherwise deny).
-        :type behavior: str
-        :param downloadPath: The default path to save downloaded files to. This is requred if behavior is set to 'allow'
-        :type downloadPath: str
-        """
-        return (
-            cls.build_send_payload("setDownloadBehavior", {
-                "behavior": behavior,
-                "downloadPath": downloadPath,
             }),
             None
         )
@@ -1045,63 +1071,10 @@ class DomContentEventFiredEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
-class LoadEventFiredEvent(BaseEvent):
-
-    js_name = 'Page.loadEventFired'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 timestamp: Union['Network.MonotonicTime', dict],
-                 ):
-        if isinstance(timestamp, dict):
-            timestamp = Network.MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class LifecycleEventEvent(BaseEvent):
-
-    js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId', 'loaderId']
-    is_hashable = True
-
-    def __init__(self,
-                 frameId: Union['FrameId', dict],
-                 loaderId: Union['Network.LoaderId', dict],
-                 name: Union['str', dict],
-                 timestamp: Union['Network.MonotonicTime', dict],
-                 ):
-        if isinstance(frameId, dict):
-            frameId = FrameId(**frameId)
-        self.frameId = frameId
-        if isinstance(loaderId, dict):
-            loaderId = Network.LoaderId(**loaderId)
-        self.loaderId = loaderId
-        if isinstance(name, dict):
-            name = str(**name)
-        self.name = name
-        if isinstance(timestamp, dict):
-            timestamp = Network.MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-
-    @classmethod
-    def build_hash(cls, frameId, loaderId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1120,7 +1093,53 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class FrameClearedScheduledNavigationEvent(BaseEvent):
+
+    js_name = 'Page.frameClearedScheduledNavigation'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+
+    @classmethod
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class FrameDetachedEvent(BaseEvent):
+
+    js_name = 'Page.frameDetached'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+
+    @classmethod
+    def build_hash(cls, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1152,18 +1171,44 @@ class FrameNavigatedEvent(BaseEvent):
         return h
 
 
-class FrameDetachedEvent(BaseEvent):
+class FrameResizedEvent(BaseEvent):
 
-    js_name = 'Page.frameDetached'
+    js_name = 'Page.frameResized'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class FrameScheduledNavigationEvent(BaseEvent):
+
+    js_name = 'Page.frameScheduledNavigation'
     hashable = ['frameId']
     is_hashable = True
 
     def __init__(self,
                  frameId: Union['FrameId', dict],
+                 delay: Union['float', dict],
+                 reason: Union['str', dict],
+                 url: Union['str', dict],
                  ):
         if isinstance(frameId, dict):
             frameId = FrameId(**frameId)
         self.frameId = frameId
+        if isinstance(delay, dict):
+            delay = float(**delay)
+        self.delay = delay
+        if isinstance(reason, dict):
+            reason = str(**reason)
+        self.reason = reason
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
 
     @classmethod
     def build_hash(cls, frameId):
@@ -1221,72 +1266,50 @@ class FrameStoppedLoadingEvent(BaseEvent):
         return h
 
 
-class FrameScheduledNavigationEvent(BaseEvent):
+class InterstitialHiddenEvent(BaseEvent):
 
-    js_name = 'Page.frameScheduledNavigation'
-    hashable = ['frameId']
-    is_hashable = True
-
-    def __init__(self,
-                 frameId: Union['FrameId', dict],
-                 delay: Union['float', dict],
-                 reason: Union['str', dict],
-                 url: Union['str', dict],
-                 ):
-        if isinstance(frameId, dict):
-            frameId = FrameId(**frameId)
-        self.frameId = frameId
-        if isinstance(delay, dict):
-            delay = float(**delay)
-        self.delay = delay
-        if isinstance(reason, dict):
-            reason = str(**reason)
-        self.reason = reason
-        if isinstance(url, dict):
-            url = str(**url)
-        self.url = url
-
-    @classmethod
-    def build_hash(cls, frameId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class FrameClearedScheduledNavigationEvent(BaseEvent):
-
-    js_name = 'Page.frameClearedScheduledNavigation'
-    hashable = ['frameId']
-    is_hashable = True
-
-    def __init__(self,
-                 frameId: Union['FrameId', dict],
-                 ):
-        if isinstance(frameId, dict):
-            frameId = FrameId(**frameId)
-        self.frameId = frameId
-
-    @classmethod
-    def build_hash(cls, frameId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class FrameResizedEvent(BaseEvent):
-
-    js_name = 'Page.frameResized'
+    js_name = 'Page.interstitialHidden'
     hashable = []
     is_hashable = False
 
     def __init__(self):
         pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class InterstitialShownEvent(BaseEvent):
+
+    js_name = 'Page.interstitialShown'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class JavascriptDialogClosedEvent(BaseEvent):
+
+    js_name = 'Page.javascriptDialogClosed'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 result: Union['bool', dict],
+                 userInput: Union['str', dict],
+                 ):
+        if isinstance(result, dict):
+            result = bool(**result)
+        self.result = result
+        if isinstance(userInput, dict):
+            userInput = str(**userInput)
+        self.userInput = userInput
 
     @classmethod
     def build_hash(cls):
@@ -1323,22 +1346,53 @@ class JavascriptDialogOpeningEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
-class JavascriptDialogClosedEvent(BaseEvent):
+class LifecycleEventEvent(BaseEvent):
 
-    js_name = 'Page.javascriptDialogClosed'
+    js_name = 'Page.lifecycleEvent'
+    hashable = ['loaderId', 'frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 loaderId: Union['Network.LoaderId', dict],
+                 name: Union['str', dict],
+                 timestamp: Union['Network.MonotonicTime', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(loaderId, dict):
+            loaderId = Network.LoaderId(**loaderId)
+        self.loaderId = loaderId
+        if isinstance(name, dict):
+            name = str(**name)
+        self.name = name
+        if isinstance(timestamp, dict):
+            timestamp = Network.MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+
+    @classmethod
+    def build_hash(cls, loaderId, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class LoadEventFiredEvent(BaseEvent):
+
+    js_name = 'Page.loadEventFired'
     hashable = []
     is_hashable = False
 
     def __init__(self,
-                 result: Union['bool', dict],
-                 userInput: Union['str', dict],
+                 timestamp: Union['Network.MonotonicTime', dict],
                  ):
-        if isinstance(result, dict):
-            result = bool(**result)
-        self.result = result
-        if isinstance(userInput, dict):
-            userInput = str(**userInput)
-        self.userInput = userInput
+        if isinstance(timestamp, dict):
+            timestamp = Network.MonotonicTime(**timestamp)
+        self.timestamp = timestamp
 
     @classmethod
     def build_hash(cls):
@@ -1388,34 +1442,6 @@ class ScreencastVisibilityChangedEvent(BaseEvent):
         if isinstance(visible, dict):
             visible = bool(**visible)
         self.visible = visible
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class InterstitialShownEvent(BaseEvent):
-
-    js_name = 'Page.interstitialShown'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class InterstitialHiddenEvent(BaseEvent):
-
-    js_name = 'Page.interstitialHidden'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self):
-        pass
 
     @classmethod
     def build_hash(cls):

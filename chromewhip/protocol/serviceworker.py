@@ -80,11 +80,24 @@ class ServiceWorker(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
+    def deliverPushMessage(cls,
+                           origin: Union['str'],
+                           registrationId: Union['str'],
+                           data: Union['str'],
+                           ):
         """
+        :param origin: 
+        :type origin: str
+        :param registrationId: 
+        :type registrationId: str
+        :param data: 
+        :type data: str
         """
         return (
-            cls.build_send_payload("enable", {
+            cls.build_send_payload("deliverPushMessage", {
+                "origin": origin,
+                "registrationId": registrationId,
+                "data": data,
             }),
             None
         )
@@ -100,86 +113,38 @@ class ServiceWorker(PayloadMixin):
         )
 
     @classmethod
-    def unregister(cls,
-                   scopeURL: Union['str'],
-                   ):
+    def dispatchSyncEvent(cls,
+                          origin: Union['str'],
+                          registrationId: Union['str'],
+                          tag: Union['str'],
+                          lastChance: Union['bool'],
+                          ):
         """
-        :param scopeURL: 
-        :type scopeURL: str
+        :param origin: 
+        :type origin: str
+        :param registrationId: 
+        :type registrationId: str
+        :param tag: 
+        :type tag: str
+        :param lastChance: 
+        :type lastChance: bool
         """
         return (
-            cls.build_send_payload("unregister", {
-                "scopeURL": scopeURL,
+            cls.build_send_payload("dispatchSyncEvent", {
+                "origin": origin,
+                "registrationId": registrationId,
+                "tag": tag,
+                "lastChance": lastChance,
             }),
             None
         )
 
     @classmethod
-    def updateRegistration(cls,
-                           scopeURL: Union['str'],
-                           ):
-        """
-        :param scopeURL: 
-        :type scopeURL: str
-        """
-        return (
-            cls.build_send_payload("updateRegistration", {
-                "scopeURL": scopeURL,
-            }),
-            None
-        )
-
-    @classmethod
-    def startWorker(cls,
-                    scopeURL: Union['str'],
-                    ):
-        """
-        :param scopeURL: 
-        :type scopeURL: str
-        """
-        return (
-            cls.build_send_payload("startWorker", {
-                "scopeURL": scopeURL,
-            }),
-            None
-        )
-
-    @classmethod
-    def skipWaiting(cls,
-                    scopeURL: Union['str'],
-                    ):
-        """
-        :param scopeURL: 
-        :type scopeURL: str
-        """
-        return (
-            cls.build_send_payload("skipWaiting", {
-                "scopeURL": scopeURL,
-            }),
-            None
-        )
-
-    @classmethod
-    def stopWorker(cls,
-                   versionId: Union['str'],
-                   ):
-        """
-        :param versionId: 
-        :type versionId: str
-        """
-        return (
-            cls.build_send_payload("stopWorker", {
-                "versionId": versionId,
-            }),
-            None
-        )
-
-    @classmethod
-    def stopAllWorkers(cls):
+    def enable(cls):
         """
         """
         return (
-            cls.build_send_payload("stopAllWorkers", {
+            cls.build_send_payload("enable", {
             }),
             None
         )
@@ -215,55 +180,108 @@ class ServiceWorker(PayloadMixin):
         )
 
     @classmethod
-    def deliverPushMessage(cls,
-                           origin: Union['str'],
-                           registrationId: Union['str'],
-                           data: Union['str'],
-                           ):
+    def skipWaiting(cls,
+                    scopeURL: Union['str'],
+                    ):
         """
-        :param origin: 
-        :type origin: str
-        :param registrationId: 
-        :type registrationId: str
-        :param data: 
-        :type data: str
+        :param scopeURL: 
+        :type scopeURL: str
         """
         return (
-            cls.build_send_payload("deliverPushMessage", {
-                "origin": origin,
-                "registrationId": registrationId,
-                "data": data,
+            cls.build_send_payload("skipWaiting", {
+                "scopeURL": scopeURL,
             }),
             None
         )
 
     @classmethod
-    def dispatchSyncEvent(cls,
-                          origin: Union['str'],
-                          registrationId: Union['str'],
-                          tag: Union['str'],
-                          lastChance: Union['bool'],
-                          ):
+    def startWorker(cls,
+                    scopeURL: Union['str'],
+                    ):
         """
-        :param origin: 
-        :type origin: str
-        :param registrationId: 
-        :type registrationId: str
-        :param tag: 
-        :type tag: str
-        :param lastChance: 
-        :type lastChance: bool
+        :param scopeURL: 
+        :type scopeURL: str
         """
         return (
-            cls.build_send_payload("dispatchSyncEvent", {
-                "origin": origin,
-                "registrationId": registrationId,
-                "tag": tag,
-                "lastChance": lastChance,
+            cls.build_send_payload("startWorker", {
+                "scopeURL": scopeURL,
             }),
             None
         )
 
+    @classmethod
+    def stopAllWorkers(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("stopAllWorkers", {
+            }),
+            None
+        )
+
+    @classmethod
+    def stopWorker(cls,
+                   versionId: Union['str'],
+                   ):
+        """
+        :param versionId: 
+        :type versionId: str
+        """
+        return (
+            cls.build_send_payload("stopWorker", {
+                "versionId": versionId,
+            }),
+            None
+        )
+
+    @classmethod
+    def unregister(cls,
+                   scopeURL: Union['str'],
+                   ):
+        """
+        :param scopeURL: 
+        :type scopeURL: str
+        """
+        return (
+            cls.build_send_payload("unregister", {
+                "scopeURL": scopeURL,
+            }),
+            None
+        )
+
+    @classmethod
+    def updateRegistration(cls,
+                           scopeURL: Union['str'],
+                           ):
+        """
+        :param scopeURL: 
+        :type scopeURL: str
+        """
+        return (
+            cls.build_send_payload("updateRegistration", {
+                "scopeURL": scopeURL,
+            }),
+            None
+        )
+
+
+
+class WorkerErrorReportedEvent(BaseEvent):
+
+    js_name = 'Serviceworker.workerErrorReported'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 errorMessage: Union['ServiceWorkerErrorMessage', dict],
+                 ):
+        if isinstance(errorMessage, dict):
+            errorMessage = ServiceWorkerErrorMessage(**errorMessage)
+        self.errorMessage = errorMessage
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class WorkerRegistrationUpdatedEvent(BaseEvent):
@@ -296,24 +314,6 @@ class WorkerVersionUpdatedEvent(BaseEvent):
         if isinstance(versions, dict):
             versions = [ServiceWorkerVersion](**versions)
         self.versions = versions
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class WorkerErrorReportedEvent(BaseEvent):
-
-    js_name = 'Serviceworker.workerErrorReported'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 errorMessage: Union['ServiceWorkerErrorMessage', dict],
-                 ):
-        if isinstance(errorMessage, dict):
-            errorMessage = ServiceWorkerErrorMessage(**errorMessage)
-        self.errorMessage = errorMessage
 
     @classmethod
     def build_hash(cls):

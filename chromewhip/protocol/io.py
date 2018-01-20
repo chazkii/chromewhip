@@ -13,12 +13,27 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
-# StreamHandle: This is either obtained from another method or specifed as <code>blob:&lt;uuid&gt;</code> where <code>&lt;uuid&gt</code> is an UUID of a Blob.
+# StreamHandle: This is either obtained from another method or specifed as `blob:&lt;uuid&gt;` where`&lt;uuid&gt` is an UUID of a Blob.
 StreamHandle = str
 
 class IO(PayloadMixin):
     """ Input/Output operations for streams produced by DevTools.
     """
+    @classmethod
+    def close(cls,
+              handle: Union['StreamHandle'],
+              ):
+        """Close the stream, discard any temporary backing storage.
+        :param handle: Handle of the stream to close.
+        :type handle: StreamHandle
+        """
+        return (
+            cls.build_send_payload("close", {
+                "handle": handle,
+            }),
+            None
+        )
+
     @classmethod
     def read(cls,
              handle: Union['StreamHandle'],
@@ -28,7 +43,8 @@ class IO(PayloadMixin):
         """Read a chunk of the stream
         :param handle: Handle of the stream to read.
         :type handle: StreamHandle
-        :param offset: Seek to the specified offset before reading (if not specificed, proceed with offset following the last read).
+        :param offset: Seek to the specified offset before reading (if not specificed, proceed with offset
+following the last read).
         :type offset: int
         :param size: Maximum number of bytes to read (left upon the agent discretion if not specified).
         :type size: int
@@ -53,21 +69,6 @@ class IO(PayloadMixin):
                     "optional": False
                 },
             })
-        )
-
-    @classmethod
-    def close(cls,
-              handle: Union['StreamHandle'],
-              ):
-        """Close the stream, discard any temporary backing storage.
-        :param handle: Handle of the stream to close.
-        :type handle: StreamHandle
-        """
-        return (
-            cls.build_send_payload("close", {
-                "handle": handle,
-            }),
-            None
         )
 
     @classmethod

@@ -17,7 +17,7 @@ from chromewhip.protocol import dom as DOM
 # StyleSheetId: 
 StyleSheetId = str
 
-# StyleSheetOrigin: Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via inspector" rules), "regular" for regular stylesheets.
+# StyleSheetOrigin: Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agentstylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "viainspector" rules), "regular" for regular stylesheets.
 StyleSheetOrigin = str
 
 # PseudoElementMatches: CSS rule collection for a single pseudo style.
@@ -319,147 +319,37 @@ class StyleDeclarationEdit(ChromeTypeBase):
 
 
 class CSS(PayloadMixin):
-    """ This domain exposes CSS read/write operations. All CSS objects (stylesheets, rules, and styles) have an associated <code>id</code> used in subsequent operations on the related object. Each object type has a specific <code>id</code> structure, and those are not interchangeable between objects of different kinds. CSS objects can be loaded using the <code>get*ForNode()</code> calls (which accept a DOM node id). A client can also keep track of stylesheets via the <code>styleSheetAdded</code>/<code>styleSheetRemoved</code> events and subsequently load the required stylesheet contents using the <code>getStyleSheet[Text]()</code> methods.
+    """ This domain exposes CSS read/write operations. All CSS objects (stylesheets, rules, and styles)
+have an associated `id` used in subsequent operations on the related object. Each object type has
+a specific `id` structure, and those are not interchangeable between objects of different kinds.
+CSS objects can be loaded using the `get*ForNode()` calls (which accept a DOM node id). A client
+can also keep track of stylesheets via the `styleSheetAdded`/`styleSheetRemoved` events and
+subsequently load the required stylesheet contents using the `getStyleSheet[Text]()` methods.
     """
     @classmethod
-    def enable(cls):
-        """Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been enabled until the result of this command is received.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def disable(cls):
-        """Disables the CSS agent for the given page.
-        """
-        return (
-            cls.build_send_payload("disable", {
-            }),
-            None
-        )
-
-    @classmethod
-    def getMatchedStylesForNode(cls,
-                                nodeId: Union['DOM.NodeId'],
-                                ):
-        """Returns requested styles for a DOM node identified by <code>nodeId</code>.
-        :param nodeId: 
-        :type nodeId: DOM.NodeId
-        """
-        return (
-            cls.build_send_payload("getMatchedStylesForNode", {
-                "nodeId": nodeId,
-            }),
-            cls.convert_payload({
-                "inlineStyle": {
-                    "class": CSSStyle,
-                    "optional": True
-                },
-                "attributesStyle": {
-                    "class": CSSStyle,
-                    "optional": True
-                },
-                "matchedCSSRules": {
-                    "class": [RuleMatch],
-                    "optional": True
-                },
-                "pseudoElements": {
-                    "class": [PseudoElementMatches],
-                    "optional": True
-                },
-                "inherited": {
-                    "class": [InheritedStyleEntry],
-                    "optional": True
-                },
-                "cssKeyframesRules": {
-                    "class": [CSSKeyframesRule],
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
-    def getInlineStylesForNode(cls,
-                               nodeId: Union['DOM.NodeId'],
-                               ):
-        """Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM attributes) for a DOM node identified by <code>nodeId</code>.
-        :param nodeId: 
-        :type nodeId: DOM.NodeId
-        """
-        return (
-            cls.build_send_payload("getInlineStylesForNode", {
-                "nodeId": nodeId,
-            }),
-            cls.convert_payload({
-                "inlineStyle": {
-                    "class": CSSStyle,
-                    "optional": True
-                },
-                "attributesStyle": {
-                    "class": CSSStyle,
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
-    def getComputedStyleForNode(cls,
-                                nodeId: Union['DOM.NodeId'],
-                                ):
-        """Returns the computed style for a DOM node identified by <code>nodeId</code>.
-        :param nodeId: 
-        :type nodeId: DOM.NodeId
-        """
-        return (
-            cls.build_send_payload("getComputedStyleForNode", {
-                "nodeId": nodeId,
-            }),
-            cls.convert_payload({
-                "computedStyle": {
-                    "class": [CSSComputedStyleProperty],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def getPlatformFontsForNode(cls,
-                                nodeId: Union['DOM.NodeId'],
-                                ):
-        """Requests information about platform fonts which we used to render child TextNodes in the given node.
-        :param nodeId: 
-        :type nodeId: DOM.NodeId
-        """
-        return (
-            cls.build_send_payload("getPlatformFontsForNode", {
-                "nodeId": nodeId,
-            }),
-            cls.convert_payload({
-                "fonts": {
-                    "class": [PlatformFontUsage],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def getStyleSheetText(cls,
-                          styleSheetId: Union['StyleSheetId'],
-                          ):
-        """Returns the current textual content and the URL for a stylesheet.
-        :param styleSheetId: 
+    def addRule(cls,
+                styleSheetId: Union['StyleSheetId'],
+                ruleText: Union['str'],
+                location: Union['SourceRange'],
+                ):
+        """Inserts a new rule with the given `ruleText` in a stylesheet with given `styleSheetId`, at the
+position specified by `location`.
+        :param styleSheetId: The css style sheet identifier where a new rule should be inserted.
         :type styleSheetId: StyleSheetId
+        :param ruleText: The text of a new rule.
+        :type ruleText: str
+        :param location: Text position of a new rule in the target style sheet.
+        :type location: SourceRange
         """
         return (
-            cls.build_send_payload("getStyleSheetText", {
+            cls.build_send_payload("addRule", {
                 "styleSheetId": styleSheetId,
+                "ruleText": ruleText,
+                "location": location,
             }),
             cls.convert_payload({
-                "text": {
-                    "class": str,
+                "rule": {
+                    "class": CSSRule,
                     "optional": False
                 },
             })
@@ -486,138 +376,10 @@ class CSS(PayloadMixin):
         )
 
     @classmethod
-    def setStyleSheetText(cls,
-                          styleSheetId: Union['StyleSheetId'],
-                          text: Union['str'],
-                          ):
-        """Sets the new stylesheet text.
-        :param styleSheetId: 
-        :type styleSheetId: StyleSheetId
-        :param text: 
-        :type text: str
-        """
-        return (
-            cls.build_send_payload("setStyleSheetText", {
-                "styleSheetId": styleSheetId,
-                "text": text,
-            }),
-            cls.convert_payload({
-                "sourceMapURL": {
-                    "class": str,
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
-    def setRuleSelector(cls,
-                        styleSheetId: Union['StyleSheetId'],
-                        range: Union['SourceRange'],
-                        selector: Union['str'],
-                        ):
-        """Modifies the rule selector.
-        :param styleSheetId: 
-        :type styleSheetId: StyleSheetId
-        :param range: 
-        :type range: SourceRange
-        :param selector: 
-        :type selector: str
-        """
-        return (
-            cls.build_send_payload("setRuleSelector", {
-                "styleSheetId": styleSheetId,
-                "range": range,
-                "selector": selector,
-            }),
-            cls.convert_payload({
-                "selectorList": {
-                    "class": SelectorList,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def setKeyframeKey(cls,
-                       styleSheetId: Union['StyleSheetId'],
-                       range: Union['SourceRange'],
-                       keyText: Union['str'],
-                       ):
-        """Modifies the keyframe rule key text.
-        :param styleSheetId: 
-        :type styleSheetId: StyleSheetId
-        :param range: 
-        :type range: SourceRange
-        :param keyText: 
-        :type keyText: str
-        """
-        return (
-            cls.build_send_payload("setKeyframeKey", {
-                "styleSheetId": styleSheetId,
-                "range": range,
-                "keyText": keyText,
-            }),
-            cls.convert_payload({
-                "keyText": {
-                    "class": Value,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def setStyleTexts(cls,
-                      edits: Union['[StyleDeclarationEdit]'],
-                      ):
-        """Applies specified style edits one after another in the given order.
-        :param edits: 
-        :type edits: [StyleDeclarationEdit]
-        """
-        return (
-            cls.build_send_payload("setStyleTexts", {
-                "edits": edits,
-            }),
-            cls.convert_payload({
-                "styles": {
-                    "class": [CSSStyle],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def setMediaText(cls,
-                     styleSheetId: Union['StyleSheetId'],
-                     range: Union['SourceRange'],
-                     text: Union['str'],
-                     ):
-        """Modifies the rule selector.
-        :param styleSheetId: 
-        :type styleSheetId: StyleSheetId
-        :param range: 
-        :type range: SourceRange
-        :param text: 
-        :type text: str
-        """
-        return (
-            cls.build_send_payload("setMediaText", {
-                "styleSheetId": styleSheetId,
-                "range": range,
-                "text": text,
-            }),
-            cls.convert_payload({
-                "media": {
-                    "class": CSSMedia,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
     def createStyleSheet(cls,
                          frameId: Union['Page.FrameId'],
                          ):
-        """Creates a new special "via-inspector" stylesheet in the frame with given <code>frameId</code>.
+        """Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
         :param frameId: Identifier of the frame where "via-inspector" stylesheet should be created.
         :type frameId: Page.FrameId
         """
@@ -634,31 +396,24 @@ class CSS(PayloadMixin):
         )
 
     @classmethod
-    def addRule(cls,
-                styleSheetId: Union['StyleSheetId'],
-                ruleText: Union['str'],
-                location: Union['SourceRange'],
-                ):
-        """Inserts a new rule with the given <code>ruleText</code> in a stylesheet with given <code>styleSheetId</code>, at the position specified by <code>location</code>.
-        :param styleSheetId: The css style sheet identifier where a new rule should be inserted.
-        :type styleSheetId: StyleSheetId
-        :param ruleText: The text of a new rule.
-        :type ruleText: str
-        :param location: Text position of a new rule in the target style sheet.
-        :type location: SourceRange
+    def disable(cls):
+        """Disables the CSS agent for the given page.
         """
         return (
-            cls.build_send_payload("addRule", {
-                "styleSheetId": styleSheetId,
-                "ruleText": ruleText,
-                "location": location,
+            cls.build_send_payload("disable", {
             }),
-            cls.convert_payload({
-                "rule": {
-                    "class": CSSRule,
-                    "optional": False
-                },
-            })
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
+enabled until the result of this command is received.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
         )
 
     @classmethod
@@ -666,7 +421,8 @@ class CSS(PayloadMixin):
                          nodeId: Union['DOM.NodeId'],
                          forcedPseudoClasses: Union['[]'],
                          ):
-        """Ensures that the given node will have specified pseudo-classes whenever its style is computed by the browser.
+        """Ensures that the given node will have specified pseudo-classes whenever its style is computed by
+the browser.
         :param nodeId: The element id for which to force the pseudo state.
         :type nodeId: DOM.NodeId
         :param forcedPseudoClasses: Element pseudo classes to force when computing the element's style.
@@ -676,44 +432,6 @@ class CSS(PayloadMixin):
             cls.build_send_payload("forcePseudoState", {
                 "nodeId": nodeId,
                 "forcedPseudoClasses": forcedPseudoClasses,
-            }),
-            None
-        )
-
-    @classmethod
-    def getMediaQueries(cls):
-        """Returns all media queries parsed by the rendering engine.
-        """
-        return (
-            cls.build_send_payload("getMediaQueries", {
-            }),
-            cls.convert_payload({
-                "medias": {
-                    "class": [CSSMedia],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def setEffectivePropertyValueForNode(cls,
-                                         nodeId: Union['DOM.NodeId'],
-                                         propertyName: Union['str'],
-                                         value: Union['str'],
-                                         ):
-        """Find a rule with the given active property for the given node and set the new value for this property
-        :param nodeId: The element id for which to set property.
-        :type nodeId: DOM.NodeId
-        :param propertyName: 
-        :type propertyName: str
-        :param value: 
-        :type value: str
-        """
-        return (
-            cls.build_send_payload("setEffectivePropertyValueForNode", {
-                "nodeId": nodeId,
-                "propertyName": propertyName,
-                "value": value,
             }),
             None
         )
@@ -751,6 +469,299 @@ class CSS(PayloadMixin):
         )
 
     @classmethod
+    def getComputedStyleForNode(cls,
+                                nodeId: Union['DOM.NodeId'],
+                                ):
+        """Returns the computed style for a DOM node identified by `nodeId`.
+        :param nodeId: 
+        :type nodeId: DOM.NodeId
+        """
+        return (
+            cls.build_send_payload("getComputedStyleForNode", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "computedStyle": {
+                    "class": [CSSComputedStyleProperty],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getInlineStylesForNode(cls,
+                               nodeId: Union['DOM.NodeId'],
+                               ):
+        """Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
+attributes) for a DOM node identified by `nodeId`.
+        :param nodeId: 
+        :type nodeId: DOM.NodeId
+        """
+        return (
+            cls.build_send_payload("getInlineStylesForNode", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "inlineStyle": {
+                    "class": CSSStyle,
+                    "optional": True
+                },
+                "attributesStyle": {
+                    "class": CSSStyle,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getMatchedStylesForNode(cls,
+                                nodeId: Union['DOM.NodeId'],
+                                ):
+        """Returns requested styles for a DOM node identified by `nodeId`.
+        :param nodeId: 
+        :type nodeId: DOM.NodeId
+        """
+        return (
+            cls.build_send_payload("getMatchedStylesForNode", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "inlineStyle": {
+                    "class": CSSStyle,
+                    "optional": True
+                },
+                "attributesStyle": {
+                    "class": CSSStyle,
+                    "optional": True
+                },
+                "matchedCSSRules": {
+                    "class": [RuleMatch],
+                    "optional": True
+                },
+                "pseudoElements": {
+                    "class": [PseudoElementMatches],
+                    "optional": True
+                },
+                "inherited": {
+                    "class": [InheritedStyleEntry],
+                    "optional": True
+                },
+                "cssKeyframesRules": {
+                    "class": [CSSKeyframesRule],
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getMediaQueries(cls):
+        """Returns all media queries parsed by the rendering engine.
+        """
+        return (
+            cls.build_send_payload("getMediaQueries", {
+            }),
+            cls.convert_payload({
+                "medias": {
+                    "class": [CSSMedia],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getPlatformFontsForNode(cls,
+                                nodeId: Union['DOM.NodeId'],
+                                ):
+        """Requests information about platform fonts which we used to render child TextNodes in the given
+node.
+        :param nodeId: 
+        :type nodeId: DOM.NodeId
+        """
+        return (
+            cls.build_send_payload("getPlatformFontsForNode", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "fonts": {
+                    "class": [PlatformFontUsage],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getStyleSheetText(cls,
+                          styleSheetId: Union['StyleSheetId'],
+                          ):
+        """Returns the current textual content and the URL for a stylesheet.
+        :param styleSheetId: 
+        :type styleSheetId: StyleSheetId
+        """
+        return (
+            cls.build_send_payload("getStyleSheetText", {
+                "styleSheetId": styleSheetId,
+            }),
+            cls.convert_payload({
+                "text": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setEffectivePropertyValueForNode(cls,
+                                         nodeId: Union['DOM.NodeId'],
+                                         propertyName: Union['str'],
+                                         value: Union['str'],
+                                         ):
+        """Find a rule with the given active property for the given node and set the new value for this
+property
+        :param nodeId: The element id for which to set property.
+        :type nodeId: DOM.NodeId
+        :param propertyName: 
+        :type propertyName: str
+        :param value: 
+        :type value: str
+        """
+        return (
+            cls.build_send_payload("setEffectivePropertyValueForNode", {
+                "nodeId": nodeId,
+                "propertyName": propertyName,
+                "value": value,
+            }),
+            None
+        )
+
+    @classmethod
+    def setKeyframeKey(cls,
+                       styleSheetId: Union['StyleSheetId'],
+                       range: Union['SourceRange'],
+                       keyText: Union['str'],
+                       ):
+        """Modifies the keyframe rule key text.
+        :param styleSheetId: 
+        :type styleSheetId: StyleSheetId
+        :param range: 
+        :type range: SourceRange
+        :param keyText: 
+        :type keyText: str
+        """
+        return (
+            cls.build_send_payload("setKeyframeKey", {
+                "styleSheetId": styleSheetId,
+                "range": range,
+                "keyText": keyText,
+            }),
+            cls.convert_payload({
+                "keyText": {
+                    "class": Value,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setMediaText(cls,
+                     styleSheetId: Union['StyleSheetId'],
+                     range: Union['SourceRange'],
+                     text: Union['str'],
+                     ):
+        """Modifies the rule selector.
+        :param styleSheetId: 
+        :type styleSheetId: StyleSheetId
+        :param range: 
+        :type range: SourceRange
+        :param text: 
+        :type text: str
+        """
+        return (
+            cls.build_send_payload("setMediaText", {
+                "styleSheetId": styleSheetId,
+                "range": range,
+                "text": text,
+            }),
+            cls.convert_payload({
+                "media": {
+                    "class": CSSMedia,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setRuleSelector(cls,
+                        styleSheetId: Union['StyleSheetId'],
+                        range: Union['SourceRange'],
+                        selector: Union['str'],
+                        ):
+        """Modifies the rule selector.
+        :param styleSheetId: 
+        :type styleSheetId: StyleSheetId
+        :param range: 
+        :type range: SourceRange
+        :param selector: 
+        :type selector: str
+        """
+        return (
+            cls.build_send_payload("setRuleSelector", {
+                "styleSheetId": styleSheetId,
+                "range": range,
+                "selector": selector,
+            }),
+            cls.convert_payload({
+                "selectorList": {
+                    "class": SelectorList,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setStyleSheetText(cls,
+                          styleSheetId: Union['StyleSheetId'],
+                          text: Union['str'],
+                          ):
+        """Sets the new stylesheet text.
+        :param styleSheetId: 
+        :type styleSheetId: StyleSheetId
+        :param text: 
+        :type text: str
+        """
+        return (
+            cls.build_send_payload("setStyleSheetText", {
+                "styleSheetId": styleSheetId,
+                "text": text,
+            }),
+            cls.convert_payload({
+                "sourceMapURL": {
+                    "class": str,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def setStyleTexts(cls,
+                      edits: Union['[StyleDeclarationEdit]'],
+                      ):
+        """Applies specified style edits one after another in the given order.
+        :param edits: 
+        :type edits: [StyleDeclarationEdit]
+        """
+        return (
+            cls.build_send_payload("setStyleTexts", {
+                "edits": edits,
+            }),
+            cls.convert_payload({
+                "styles": {
+                    "class": [CSSStyle],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def startRuleUsageTracking(cls):
         """Enables the selector recording.
         """
@@ -758,21 +769,6 @@ class CSS(PayloadMixin):
             cls.build_send_payload("startRuleUsageTracking", {
             }),
             None
-        )
-
-    @classmethod
-    def takeCoverageDelta(cls):
-        """Obtain list of rules that became used since last call to this method (or since start of coverage instrumentation)
-        """
-        return (
-            cls.build_send_payload("takeCoverageDelta", {
-            }),
-            cls.convert_payload({
-                "coverage": {
-                    "class": [RuleUsage],
-                    "optional": False
-                },
-            })
         )
 
     @classmethod
@@ -790,6 +786,36 @@ class CSS(PayloadMixin):
             })
         )
 
+    @classmethod
+    def takeCoverageDelta(cls):
+        """Obtain list of rules that became used since last call to this method (or since start of coverage
+instrumentation)
+        """
+        return (
+            cls.build_send_payload("takeCoverageDelta", {
+            }),
+            cls.convert_payload({
+                "coverage": {
+                    "class": [RuleUsage],
+                    "optional": False
+                },
+            })
+        )
+
+
+
+class FontsUpdatedEvent(BaseEvent):
+
+    js_name = 'Css.fontsUpdated'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class MediaQueryResultChangedEvent(BaseEvent):
@@ -806,14 +832,18 @@ class MediaQueryResultChangedEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
-class FontsUpdatedEvent(BaseEvent):
+class StyleSheetAddedEvent(BaseEvent):
 
-    js_name = 'Css.fontsUpdated'
+    js_name = 'Css.styleSheetAdded'
     hashable = []
     is_hashable = False
 
-    def __init__(self):
-        pass
+    def __init__(self,
+                 header: Union['CSSStyleSheetHeader', dict],
+                 ):
+        if isinstance(header, dict):
+            header = CSSStyleSheetHeader(**header)
+        self.header = header
 
     @classmethod
     def build_hash(cls):
@@ -841,24 +871,6 @@ class StyleSheetChangedEvent(BaseEvent):
         h = '{}:{}'.format(cls.js_name, serialized_id_params)
         log.debug('generated hash = %s' % h)
         return h
-
-
-class StyleSheetAddedEvent(BaseEvent):
-
-    js_name = 'Css.styleSheetAdded'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 header: Union['CSSStyleSheetHeader', dict],
-                 ):
-        if isinstance(header, dict):
-            header = CSSStyleSheetHeader(**header)
-        self.header = header
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class StyleSheetRemovedEvent(BaseEvent):

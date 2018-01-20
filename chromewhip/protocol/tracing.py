@@ -40,40 +40,12 @@ class TraceConfig(ChromeTypeBase):
         self.memoryDumpConfig = memoryDumpConfig
 
 
+# StreamCompression: Compression type to use for traces returned via streams.
+StreamCompression = str
+
 class Tracing(PayloadMixin):
     """ 
     """
-    @classmethod
-    def start(cls,
-              categories: Optional['str'] = None,
-              options: Optional['str'] = None,
-              bufferUsageReportingInterval: Optional['float'] = None,
-              transferMode: Optional['str'] = None,
-              traceConfig: Optional['TraceConfig'] = None,
-              ):
-        """Start trace events collection.
-        :param categories: Category/tag filter
-        :type categories: str
-        :param options: Tracing options
-        :type options: str
-        :param bufferUsageReportingInterval: If set, the agent will issue bufferUsage events at this interval, specified in milliseconds
-        :type bufferUsageReportingInterval: float
-        :param transferMode: Whether to report trace events as series of dataCollected events or to save trace to a stream (defaults to <code>ReportEvents</code>).
-        :type transferMode: str
-        :param traceConfig: 
-        :type traceConfig: TraceConfig
-        """
-        return (
-            cls.build_send_payload("start", {
-                "categories": categories,
-                "options": options,
-                "bufferUsageReportingInterval": bufferUsageReportingInterval,
-                "transferMode": transferMode,
-                "traceConfig": traceConfig,
-            }),
-            None
-        )
-
     @classmethod
     def end(cls):
         """Stop trace events collection.
@@ -100,6 +72,21 @@ class Tracing(PayloadMixin):
         )
 
     @classmethod
+    def recordClockSyncMarker(cls,
+                              syncId: Union['str'],
+                              ):
+        """Record a clock sync marker in the trace.
+        :param syncId: The ID of this clock sync marker
+        :type syncId: str
+        """
+        return (
+            cls.build_send_payload("recordClockSyncMarker", {
+                "syncId": syncId,
+            }),
+            None
+        )
+
+    @classmethod
     def requestMemoryDump(cls):
         """Request a global memory dump.
         """
@@ -119,20 +106,68 @@ class Tracing(PayloadMixin):
         )
 
     @classmethod
-    def recordClockSyncMarker(cls,
-                              syncId: Union['str'],
-                              ):
-        """Record a clock sync marker in the trace.
-        :param syncId: The ID of this clock sync marker
-        :type syncId: str
+    def start(cls,
+              categories: Optional['str'] = None,
+              options: Optional['str'] = None,
+              bufferUsageReportingInterval: Optional['float'] = None,
+              transferMode: Optional['str'] = None,
+              streamCompression: Optional['StreamCompression'] = None,
+              traceConfig: Optional['TraceConfig'] = None,
+              ):
+        """Start trace events collection.
+        :param categories: Category/tag filter
+        :type categories: str
+        :param options: Tracing options
+        :type options: str
+        :param bufferUsageReportingInterval: If set, the agent will issue bufferUsage events at this interval, specified in milliseconds
+        :type bufferUsageReportingInterval: float
+        :param transferMode: Whether to report trace events as series of dataCollected events or to save trace to a
+stream (defaults to `ReportEvents`).
+        :type transferMode: str
+        :param streamCompression: Compression format to use. This only applies when using `ReturnAsStream`
+transfer mode (defaults to `none`)
+        :type streamCompression: StreamCompression
+        :param traceConfig: 
+        :type traceConfig: TraceConfig
         """
         return (
-            cls.build_send_payload("recordClockSyncMarker", {
-                "syncId": syncId,
+            cls.build_send_payload("start", {
+                "categories": categories,
+                "options": options,
+                "bufferUsageReportingInterval": bufferUsageReportingInterval,
+                "transferMode": transferMode,
+                "streamCompression": streamCompression,
+                "traceConfig": traceConfig,
             }),
             None
         )
 
+
+
+class BufferUsageEvent(BaseEvent):
+
+    js_name = 'Tracing.bufferUsage'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 percentFull: Union['float', dict, None] = None,
+                 eventCount: Union['float', dict, None] = None,
+                 value: Union['float', dict, None] = None,
+                 ):
+        if isinstance(percentFull, dict):
+            percentFull = float(**percentFull)
+        self.percentFull = percentFull
+        if isinstance(eventCount, dict):
+            eventCount = float(**eventCount)
+        self.eventCount = eventCount
+        if isinstance(value, dict):
+            value = float(**value)
+        self.value = value
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class DataCollectedEvent(BaseEvent):
@@ -161,36 +196,14 @@ class TracingCompleteEvent(BaseEvent):
 
     def __init__(self,
                  stream: Union['IO.StreamHandle', dict, None] = None,
+                 streamCompression: Union['StreamCompression', dict, None] = None,
                  ):
         if isinstance(stream, dict):
             stream = IO.StreamHandle(**stream)
         self.stream = stream
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class BufferUsageEvent(BaseEvent):
-
-    js_name = 'Tracing.bufferUsage'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 percentFull: Union['float', dict, None] = None,
-                 eventCount: Union['float', dict, None] = None,
-                 value: Union['float', dict, None] = None,
-                 ):
-        if isinstance(percentFull, dict):
-            percentFull = float(**percentFull)
-        self.percentFull = percentFull
-        if isinstance(eventCount, dict):
-            eventCount = float(**eventCount)
-        self.eventCount = eventCount
-        if isinstance(value, dict):
-            value = float(**value)
-        self.value = value
+        if isinstance(streamCompression, dict):
+            streamCompression = StreamCompression(**streamCompression)
+        self.streamCompression = streamCompression
 
     @classmethod
     def build_hash(cls):

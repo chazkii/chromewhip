@@ -17,6 +17,16 @@ class DeviceOrientation(PayloadMixin):
     """ 
     """
     @classmethod
+    def clearDeviceOrientationOverride(cls):
+        """Clears the overridden Device Orientation.
+        """
+        return (
+            cls.build_send_payload("clearDeviceOrientationOverride", {
+            }),
+            None
+        )
+
+    @classmethod
     def setDeviceOrientationOverride(cls,
                                      alpha: Union['float'],
                                      beta: Union['float'],
@@ -35,16 +45,6 @@ class DeviceOrientation(PayloadMixin):
                 "alpha": alpha,
                 "beta": beta,
                 "gamma": gamma,
-            }),
-            None
-        )
-
-    @classmethod
-    def clearDeviceOrientationOverride(cls):
-        """Clears the overridden Device Orientation.
-        """
-        return (
-            cls.build_send_payload("clearDeviceOrientationOverride", {
             }),
             None
         )

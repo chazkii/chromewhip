@@ -57,11 +57,11 @@ class Log(PayloadMixin):
     """ Provides access to log entries.
     """
     @classmethod
-    def enable(cls):
-        """Enables log domain, sends the entries collected so far to the client by means of the <code>entryAdded</code> notification.
+    def clear(cls):
+        """Clears the log.
         """
         return (
-            cls.build_send_payload("enable", {
+            cls.build_send_payload("clear", {
             }),
             None
         )
@@ -77,11 +77,12 @@ class Log(PayloadMixin):
         )
 
     @classmethod
-    def clear(cls):
-        """Clears the log.
+    def enable(cls):
+        """Enables log domain, sends the entries collected so far to the client by means of the
+`entryAdded` notification.
         """
         return (
-            cls.build_send_payload("clear", {
+            cls.build_send_payload("enable", {
             }),
             None
         )

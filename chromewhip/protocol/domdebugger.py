@@ -46,25 +46,37 @@ class EventListener(ChromeTypeBase):
 
 
 class DOMDebugger(PayloadMixin):
-    """ DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript execution will stop on these operations as if there was a regular breakpoint set.
+    """ DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript
+execution will stop on these operations as if there was a regular breakpoint set.
     """
     @classmethod
-    def setDOMBreakpoint(cls,
-                         nodeId: Union['DOM.NodeId'],
-                         type: Union['DOMBreakpointType'],
-                         ):
-        """Sets breakpoint on particular operation with DOM.
-        :param nodeId: Identifier of the node to set breakpoint on.
-        :type nodeId: DOM.NodeId
-        :param type: Type of the operation to stop upon.
-        :type type: DOMBreakpointType
+    def getEventListeners(cls,
+                          objectId: Union['Runtime.RemoteObjectId'],
+                          depth: Optional['int'] = None,
+                          pierce: Optional['bool'] = None,
+                          ):
+        """Returns event listeners of the given object.
+        :param objectId: Identifier of the object to return listeners for.
+        :type objectId: Runtime.RemoteObjectId
+        :param depth: The maximum depth at which Node children should be retrieved, defaults to 1. Use -1 for the
+entire subtree or provide an integer larger than 0.
+        :type depth: int
+        :param pierce: Whether or not iframes and shadow roots should be traversed when returning the subtree
+(default is false). Reports listeners for all contexts if pierce is enabled.
+        :type pierce: bool
         """
         return (
-            cls.build_send_payload("setDOMBreakpoint", {
-                "nodeId": nodeId,
-                "type": type,
+            cls.build_send_payload("getEventListeners", {
+                "objectId": objectId,
+                "depth": depth,
+                "pierce": pierce,
             }),
-            None
+            cls.convert_payload({
+                "listeners": {
+                    "class": [EventListener],
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -72,7 +84,7 @@ class DOMDebugger(PayloadMixin):
                             nodeId: Union['DOM.NodeId'],
                             type: Union['DOMBreakpointType'],
                             ):
-        """Removes DOM breakpoint that was set using <code>setDOMBreakpoint</code>.
+        """Removes DOM breakpoint that was set using `setDOMBreakpoint`.
         :param nodeId: Identifier of the node to remove breakpoint from.
         :type nodeId: DOM.NodeId
         :param type: Type of the breakpoint to remove.
@@ -82,25 +94,6 @@ class DOMDebugger(PayloadMixin):
             cls.build_send_payload("removeDOMBreakpoint", {
                 "nodeId": nodeId,
                 "type": type,
-            }),
-            None
-        )
-
-    @classmethod
-    def setEventListenerBreakpoint(cls,
-                                   eventName: Union['str'],
-                                   targetName: Optional['str'] = None,
-                                   ):
-        """Sets breakpoint on particular DOM event.
-        :param eventName: DOM Event name to stop on (any DOM event will do).
-        :type eventName: str
-        :param targetName: EventTarget interface name to stop on. If equal to <code>"*"</code> or not provided, will stop on any EventTarget.
-        :type targetName: str
-        """
-        return (
-            cls.build_send_payload("setEventListenerBreakpoint", {
-                "eventName": eventName,
-                "targetName": targetName,
             }),
             None
         )
@@ -125,21 +118,6 @@ class DOMDebugger(PayloadMixin):
         )
 
     @classmethod
-    def setInstrumentationBreakpoint(cls,
-                                     eventName: Union['str'],
-                                     ):
-        """Sets breakpoint on particular native event.
-        :param eventName: Instrumentation name to stop on.
-        :type eventName: str
-        """
-        return (
-            cls.build_send_payload("setInstrumentationBreakpoint", {
-                "eventName": eventName,
-            }),
-            None
-        )
-
-    @classmethod
     def removeInstrumentationBreakpoint(cls,
                                         eventName: Union['str'],
                                         ):
@@ -150,21 +128,6 @@ class DOMDebugger(PayloadMixin):
         return (
             cls.build_send_payload("removeInstrumentationBreakpoint", {
                 "eventName": eventName,
-            }),
-            None
-        )
-
-    @classmethod
-    def setXHRBreakpoint(cls,
-                         url: Union['str'],
-                         ):
-        """Sets breakpoint on XMLHttpRequest.
-        :param url: Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
-        :type url: str
-        """
-        return (
-            cls.build_send_payload("setXHRBreakpoint", {
-                "url": url,
             }),
             None
         )
@@ -185,30 +148,71 @@ class DOMDebugger(PayloadMixin):
         )
 
     @classmethod
-    def getEventListeners(cls,
-                          objectId: Union['Runtime.RemoteObjectId'],
-                          depth: Optional['int'] = None,
-                          pierce: Optional['bool'] = None,
-                          ):
-        """Returns event listeners of the given object.
-        :param objectId: Identifier of the object to return listeners for.
-        :type objectId: Runtime.RemoteObjectId
-        :param depth: The maximum depth at which Node children should be retrieved, defaults to 1. Use -1 for the entire subtree or provide an integer larger than 0.
-        :type depth: int
-        :param pierce: Whether or not iframes and shadow roots should be traversed when returning the subtree (default is false). Reports listeners for all contexts if pierce is enabled.
-        :type pierce: bool
+    def setDOMBreakpoint(cls,
+                         nodeId: Union['DOM.NodeId'],
+                         type: Union['DOMBreakpointType'],
+                         ):
+        """Sets breakpoint on particular operation with DOM.
+        :param nodeId: Identifier of the node to set breakpoint on.
+        :type nodeId: DOM.NodeId
+        :param type: Type of the operation to stop upon.
+        :type type: DOMBreakpointType
         """
         return (
-            cls.build_send_payload("getEventListeners", {
-                "objectId": objectId,
-                "depth": depth,
-                "pierce": pierce,
+            cls.build_send_payload("setDOMBreakpoint", {
+                "nodeId": nodeId,
+                "type": type,
             }),
-            cls.convert_payload({
-                "listeners": {
-                    "class": [EventListener],
-                    "optional": False
-                },
-            })
+            None
+        )
+
+    @classmethod
+    def setEventListenerBreakpoint(cls,
+                                   eventName: Union['str'],
+                                   targetName: Optional['str'] = None,
+                                   ):
+        """Sets breakpoint on particular DOM event.
+        :param eventName: DOM Event name to stop on (any DOM event will do).
+        :type eventName: str
+        :param targetName: EventTarget interface name to stop on. If equal to `"*"` or not provided, will stop on any
+EventTarget.
+        :type targetName: str
+        """
+        return (
+            cls.build_send_payload("setEventListenerBreakpoint", {
+                "eventName": eventName,
+                "targetName": targetName,
+            }),
+            None
+        )
+
+    @classmethod
+    def setInstrumentationBreakpoint(cls,
+                                     eventName: Union['str'],
+                                     ):
+        """Sets breakpoint on particular native event.
+        :param eventName: Instrumentation name to stop on.
+        :type eventName: str
+        """
+        return (
+            cls.build_send_payload("setInstrumentationBreakpoint", {
+                "eventName": eventName,
+            }),
+            None
+        )
+
+    @classmethod
+    def setXHRBreakpoint(cls,
+                         url: Union['str'],
+                         ):
+        """Sets breakpoint on XMLHttpRequest.
+        :param url: Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
+        :type url: str
+        """
+        return (
+            cls.build_send_payload("setXHRBreakpoint", {
+                "url": url,
+            }),
+            None
         )
 

@@ -40,7 +40,7 @@ from chromewhip.protocol import {{ dependency | lower }} as {{ dependency }}
 {% endfor %}
 
 {% for type_obj in domain.types %}
-# {{ type_obj.id }}: {{ type_obj.description }}
+# {{ type_obj.id }}: {{ type_obj.description | replace('\n', '') }}
 {% if type_obj.type == 'object' %}
 class {{ type_obj.id }}(ChromeTypeBase):
     def __init__(self

@@ -17,21 +17,21 @@ class Inspector(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enables inspector domain notifications.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
     def disable(cls):
         """Disables inspector domain notifications.
         """
         return (
             cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables inspector domain notifications.
+        """
+        return (
+            cls.build_send_payload("enable", {
             }),
             None
         )

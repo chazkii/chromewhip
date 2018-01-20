@@ -12,6 +12,7 @@ from typing import Any, Optional, Union
 from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
+from chromewhip.protocol import debugger as Debugger
 from chromewhip.protocol import runtime as Runtime
 from chromewhip.protocol import security as Security
 from chromewhip.protocol import page as Page
@@ -40,7 +41,7 @@ Headers = dict
 # ConnectionType: The underlying connection technology that the browser is supposedly using.
 ConnectionType = str
 
-# CookieSameSite: Represents the cookie's 'SameSite' status: https://tools.ietf.org/html/draft-west-first-party-cookies
+# CookieSameSite: Represents the cookie's 'SameSite' status:https://tools.ietf.org/html/draft-west-first-party-cookies
 CookieSameSite = str
 
 # ResourceTiming: Timing information for the request.
@@ -94,6 +95,7 @@ class Request(ChromeTypeBase):
                  initialPriority: Union['ResourcePriority'],
                  referrerPolicy: Union['str'],
                  postData: Optional['str'] = None,
+                 hasPostData: Optional['bool'] = None,
                  mixedContentType: Optional['Security.MixedContentType'] = None,
                  isLinkPreload: Optional['bool'] = None,
                  ):
@@ -102,6 +104,7 @@ class Request(ChromeTypeBase):
         self.method = method
         self.headers = headers
         self.postData = postData
+        self.hasPostData = hasPostData
         self.mixedContentType = mixedContentType
         self.initialPriority = initialPriority
         self.referrerPolicy = referrerPolicy
@@ -175,8 +178,8 @@ class Response(ChromeTypeBase):
                  mimeType: Union['str'],
                  connectionReused: Union['bool'],
                  connectionId: Union['float'],
-                 securityState: Union['Security.SecurityState'],
                  encodedDataLength: Union['float'],
+                 securityState: Union['Security.SecurityState'],
                  headersText: Optional['str'] = None,
                  requestHeaders: Optional['Headers'] = None,
                  requestHeadersText: Optional['str'] = None,
@@ -361,35 +364,167 @@ class AuthChallengeResponse(ChromeTypeBase):
         self.password = password
 
 
+# InterceptionStage: Stages of the interception to begin intercepting. Request will intercept before the request issent. Response will intercept after the response is received.
+InterceptionStage = str
+
 # RequestPattern: Request pattern for interception.
 class RequestPattern(ChromeTypeBase):
     def __init__(self,
                  urlPattern: Optional['str'] = None,
                  resourceType: Optional['Page.ResourceType'] = None,
+                 interceptionStage: Optional['InterceptionStage'] = None,
                  ):
 
         self.urlPattern = urlPattern
         self.resourceType = resourceType
+        self.interceptionStage = interceptionStage
 
 
 class Network(PayloadMixin):
-    """ Network domain allows tracking network activities of the page. It exposes information about http, file, data and other requests and responses, their headers, bodies, timing, etc.
+    """ Network domain allows tracking network activities of the page. It exposes information about http,
+file, data and other requests and responses, their headers, bodies, timing, etc.
     """
     @classmethod
-    def enable(cls,
-               maxTotalBufferSize: Optional['int'] = None,
-               maxResourceBufferSize: Optional['int'] = None,
-               ):
-        """Enables network tracking, network events will now be delivered to the client.
-        :param maxTotalBufferSize: Buffer size in bytes to use when preserving network payloads (XHRs, etc).
-        :type maxTotalBufferSize: int
-        :param maxResourceBufferSize: Per-resource buffer size in bytes to use when preserving network payloads (XHRs, etc).
-        :type maxResourceBufferSize: int
+    def canClearBrowserCache(cls):
+        """Tells whether clearing browser cache is supported.
         """
         return (
-            cls.build_send_payload("enable", {
-                "maxTotalBufferSize": maxTotalBufferSize,
-                "maxResourceBufferSize": maxResourceBufferSize,
+            cls.build_send_payload("canClearBrowserCache", {
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": bool,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def canClearBrowserCookies(cls):
+        """Tells whether clearing browser cookies is supported.
+        """
+        return (
+            cls.build_send_payload("canClearBrowserCookies", {
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": bool,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def canEmulateNetworkConditions(cls):
+        """Tells whether emulation of network conditions is supported.
+        """
+        return (
+            cls.build_send_payload("canEmulateNetworkConditions", {
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": bool,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def clearBrowserCache(cls):
+        """Clears browser cache.
+        """
+        return (
+            cls.build_send_payload("clearBrowserCache", {
+            }),
+            None
+        )
+
+    @classmethod
+    def clearBrowserCookies(cls):
+        """Clears browser cookies.
+        """
+        return (
+            cls.build_send_payload("clearBrowserCookies", {
+            }),
+            None
+        )
+
+    @classmethod
+    def continueInterceptedRequest(cls,
+                                   interceptionId: Union['InterceptionId'],
+                                   errorReason: Optional['ErrorReason'] = None,
+                                   rawResponse: Optional['str'] = None,
+                                   url: Optional['str'] = None,
+                                   method: Optional['str'] = None,
+                                   postData: Optional['str'] = None,
+                                   headers: Optional['Headers'] = None,
+                                   authChallengeResponse: Optional['AuthChallengeResponse'] = None,
+                                   ):
+        """Response to Network.requestIntercepted which either modifies the request to continue with any
+modifications, or blocks it, or completes it with the provided response bytes. If a network
+fetch occurs as a result which encounters a redirect an additional Network.requestIntercepted
+event will be sent with the same InterceptionId.
+        :param interceptionId: 
+        :type interceptionId: InterceptionId
+        :param errorReason: If set this causes the request to fail with the given reason. Passing `Aborted` for requests
+marked with `isNavigationRequest` also cancels the navigation. Must not be set in response
+to an authChallenge.
+        :type errorReason: ErrorReason
+        :param rawResponse: If set the requests completes using with the provided base64 encoded raw response, including
+HTTP status line and headers etc... Must not be set in response to an authChallenge.
+        :type rawResponse: str
+        :param url: If set the request url will be modified in a way that's not observable by page. Must not be
+set in response to an authChallenge.
+        :type url: str
+        :param method: If set this allows the request method to be overridden. Must not be set in response to an
+authChallenge.
+        :type method: str
+        :param postData: If set this allows postData to be set. Must not be set in response to an authChallenge.
+        :type postData: str
+        :param headers: If set this allows the request headers to be changed. Must not be set in response to an
+authChallenge.
+        :type headers: Headers
+        :param authChallengeResponse: Response to a requestIntercepted with an authChallenge. Must not be set otherwise.
+        :type authChallengeResponse: AuthChallengeResponse
+        """
+        return (
+            cls.build_send_payload("continueInterceptedRequest", {
+                "interceptionId": interceptionId,
+                "errorReason": errorReason,
+                "rawResponse": rawResponse,
+                "url": url,
+                "method": method,
+                "postData": postData,
+                "headers": headers,
+                "authChallengeResponse": authChallengeResponse,
+            }),
+            None
+        )
+
+    @classmethod
+    def deleteCookies(cls,
+                      name: Union['str'],
+                      url: Optional['str'] = None,
+                      domain: Optional['str'] = None,
+                      path: Optional['str'] = None,
+                      ):
+        """Deletes browser cookies with matching name and url or domain/path pair.
+        :param name: Name of the cookies to remove.
+        :type name: str
+        :param url: If specified, deletes all the cookies with the given name where domain and path match
+provided URL.
+        :type url: str
+        :param domain: If specified, deletes only cookies with the exact domain.
+        :type domain: str
+        :param path: If specified, deletes only cookies with the exact path.
+        :type path: str
+        """
+        return (
+            cls.build_send_payload("deleteCookies", {
+                "name": name,
+                "url": url,
+                "domain": domain,
+                "path": path,
             }),
             None
         )
@@ -405,33 +540,114 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def setUserAgentOverride(cls,
-                             userAgent: Union['str'],
-                             ):
-        """Allows overriding user agent with the given string.
-        :param userAgent: User agent to use.
-        :type userAgent: str
+    def emulateNetworkConditions(cls,
+                                 offline: Union['bool'],
+                                 latency: Union['float'],
+                                 downloadThroughput: Union['float'],
+                                 uploadThroughput: Union['float'],
+                                 connectionType: Optional['ConnectionType'] = None,
+                                 ):
+        """Activates emulation of network conditions.
+        :param offline: True to emulate internet disconnection.
+        :type offline: bool
+        :param latency: Minimum latency from request sent to response headers received (ms).
+        :type latency: float
+        :param downloadThroughput: Maximal aggregated download throughput (bytes/sec). -1 disables download throttling.
+        :type downloadThroughput: float
+        :param uploadThroughput: Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
+        :type uploadThroughput: float
+        :param connectionType: Connection type if known.
+        :type connectionType: ConnectionType
         """
         return (
-            cls.build_send_payload("setUserAgentOverride", {
-                "userAgent": userAgent,
+            cls.build_send_payload("emulateNetworkConditions", {
+                "offline": offline,
+                "latency": latency,
+                "downloadThroughput": downloadThroughput,
+                "uploadThroughput": uploadThroughput,
+                "connectionType": connectionType,
             }),
             None
         )
 
     @classmethod
-    def setExtraHTTPHeaders(cls,
-                            headers: Union['Headers'],
-                            ):
-        """Specifies whether to always send extra HTTP headers with the requests from this page.
-        :param headers: Map with extra HTTP headers.
-        :type headers: Headers
+    def enable(cls,
+               maxTotalBufferSize: Optional['int'] = None,
+               maxResourceBufferSize: Optional['int'] = None,
+               maxPostDataSize: Optional['int'] = None,
+               ):
+        """Enables network tracking, network events will now be delivered to the client.
+        :param maxTotalBufferSize: Buffer size in bytes to use when preserving network payloads (XHRs, etc).
+        :type maxTotalBufferSize: int
+        :param maxResourceBufferSize: Per-resource buffer size in bytes to use when preserving network payloads (XHRs, etc).
+        :type maxResourceBufferSize: int
+        :param maxPostDataSize: Longest post body size (in bytes) that would be included in requestWillBeSent notification
+        :type maxPostDataSize: int
         """
         return (
-            cls.build_send_payload("setExtraHTTPHeaders", {
-                "headers": headers,
+            cls.build_send_payload("enable", {
+                "maxTotalBufferSize": maxTotalBufferSize,
+                "maxResourceBufferSize": maxResourceBufferSize,
+                "maxPostDataSize": maxPostDataSize,
             }),
             None
+        )
+
+    @classmethod
+    def getAllCookies(cls):
+        """Returns all browser cookies. Depending on the backend support, will return detailed cookie
+information in the `cookies` field.
+        """
+        return (
+            cls.build_send_payload("getAllCookies", {
+            }),
+            cls.convert_payload({
+                "cookies": {
+                    "class": [Cookie],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getCertificate(cls,
+                       origin: Union['str'],
+                       ):
+        """Returns the DER-encoded certificate.
+        :param origin: Origin to get certificate for.
+        :type origin: str
+        """
+        return (
+            cls.build_send_payload("getCertificate", {
+                "origin": origin,
+            }),
+            cls.convert_payload({
+                "tableNames": {
+                    "class": [],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getCookies(cls,
+                   urls: Optional['[]'] = None,
+                   ):
+        """Returns all browser cookies for the current URL. Depending on the backend support, will return
+detailed cookie information in the `cookies` field.
+        :param urls: The list of URLs for which applicable cookies will be fetched
+        :type urls: []
+        """
+        return (
+            cls.build_send_payload("getCookies", {
+                "urls": urls,
+            }),
+            cls.convert_payload({
+                "cookies": {
+                    "class": [Cookie],
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -459,6 +675,99 @@ class Network(PayloadMixin):
         )
 
     @classmethod
+    def getRequestPostData(cls,
+                           requestId: Union['RequestId'],
+                           ):
+        """Returns post data sent with the request. Returns an error when no data was sent with the request.
+        :param requestId: Identifier of the network request to get content for.
+        :type requestId: RequestId
+        """
+        return (
+            cls.build_send_payload("getRequestPostData", {
+                "requestId": requestId,
+            }),
+            cls.convert_payload({
+                "postData": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getResponseBodyForInterception(cls,
+                                       interceptionId: Union['InterceptionId'],
+                                       ):
+        """Returns content served for the given currently intercepted request.
+        :param interceptionId: Identifier for the intercepted request to get body for.
+        :type interceptionId: InterceptionId
+        """
+        return (
+            cls.build_send_payload("getResponseBodyForInterception", {
+                "interceptionId": interceptionId,
+            }),
+            cls.convert_payload({
+                "body": {
+                    "class": str,
+                    "optional": False
+                },
+                "base64Encoded": {
+                    "class": bool,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def replayXHR(cls,
+                  requestId: Union['RequestId'],
+                  ):
+        """This method sends a new XMLHttpRequest which is identical to the original one. The following
+parameters should be identical: method, url, async, request body, extra headers, withCredentials
+attribute, user, password.
+        :param requestId: Identifier of XHR to replay.
+        :type requestId: RequestId
+        """
+        return (
+            cls.build_send_payload("replayXHR", {
+                "requestId": requestId,
+            }),
+            None
+        )
+
+    @classmethod
+    def searchInResponseBody(cls,
+                             requestId: Union['RequestId'],
+                             query: Union['str'],
+                             caseSensitive: Optional['bool'] = None,
+                             isRegex: Optional['bool'] = None,
+                             ):
+        """Searches for given string in response content.
+        :param requestId: Identifier of the network response to search.
+        :type requestId: RequestId
+        :param query: String to search for.
+        :type query: str
+        :param caseSensitive: If true, search is case sensitive.
+        :type caseSensitive: bool
+        :param isRegex: If true, treats string parameter as regex.
+        :type isRegex: bool
+        """
+        return (
+            cls.build_send_payload("searchInResponseBody", {
+                "requestId": requestId,
+                "query": query,
+                "caseSensitive": caseSensitive,
+                "isRegex": isRegex,
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": [Debugger.SearchMatch],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setBlockedURLs(cls,
                        urls: Union['[]'],
                        ):
@@ -474,128 +783,31 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def replayXHR(cls,
-                  requestId: Union['RequestId'],
-                  ):
-        """This method sends a new XMLHttpRequest which is identical to the original one. The following parameters should be identical: method, url, async, request body, extra headers, withCredentials attribute, user, password.
-        :param requestId: Identifier of XHR to replay.
-        :type requestId: RequestId
+    def setBypassServiceWorker(cls,
+                               bypass: Union['bool'],
+                               ):
+        """Toggles ignoring of service worker for each request.
+        :param bypass: Bypass service worker and load from network.
+        :type bypass: bool
         """
         return (
-            cls.build_send_payload("replayXHR", {
-                "requestId": requestId,
+            cls.build_send_payload("setBypassServiceWorker", {
+                "bypass": bypass,
             }),
             None
         )
 
     @classmethod
-    def canClearBrowserCache(cls):
-        """Tells whether clearing browser cache is supported.
+    def setCacheDisabled(cls,
+                         cacheDisabled: Union['bool'],
+                         ):
+        """Toggles ignoring cache for each request. If `true`, cache will not be used.
+        :param cacheDisabled: Cache disabled state.
+        :type cacheDisabled: bool
         """
         return (
-            cls.build_send_payload("canClearBrowserCache", {
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": bool,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def clearBrowserCache(cls):
-        """Clears browser cache.
-        """
-        return (
-            cls.build_send_payload("clearBrowserCache", {
-            }),
-            None
-        )
-
-    @classmethod
-    def canClearBrowserCookies(cls):
-        """Tells whether clearing browser cookies is supported.
-        """
-        return (
-            cls.build_send_payload("canClearBrowserCookies", {
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": bool,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def clearBrowserCookies(cls):
-        """Clears browser cookies.
-        """
-        return (
-            cls.build_send_payload("clearBrowserCookies", {
-            }),
-            None
-        )
-
-    @classmethod
-    def getCookies(cls,
-                   urls: Optional['[]'] = None,
-                   ):
-        """Returns all browser cookies for the current URL. Depending on the backend support, will return detailed cookie information in the <code>cookies</code> field.
-        :param urls: The list of URLs for which applicable cookies will be fetched
-        :type urls: []
-        """
-        return (
-            cls.build_send_payload("getCookies", {
-                "urls": urls,
-            }),
-            cls.convert_payload({
-                "cookies": {
-                    "class": [Cookie],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def getAllCookies(cls):
-        """Returns all browser cookies. Depending on the backend support, will return detailed cookie information in the <code>cookies</code> field.
-        """
-        return (
-            cls.build_send_payload("getAllCookies", {
-            }),
-            cls.convert_payload({
-                "cookies": {
-                    "class": [Cookie],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def deleteCookies(cls,
-                      name: Union['str'],
-                      url: Optional['str'] = None,
-                      domain: Optional['str'] = None,
-                      path: Optional['str'] = None,
-                      ):
-        """Deletes browser cookies with matching name and url or domain/path pair.
-        :param name: Name of the cookies to remove.
-        :type name: str
-        :param url: If specified, deletes all the cookies with the given name where domain and path match provided URL.
-        :type url: str
-        :param domain: If specified, deletes only cookies with the exact domain.
-        :type domain: str
-        :param path: If specified, deletes only cookies with the exact path.
-        :type path: str
-        """
-        return (
-            cls.build_send_payload("deleteCookies", {
-                "name": name,
-                "url": url,
-                "domain": domain,
-                "path": path,
+            cls.build_send_payload("setCacheDisabled", {
+                "cacheDisabled": cacheDisabled,
             }),
             None
         )
@@ -617,7 +829,8 @@ class Network(PayloadMixin):
         :type name: str
         :param value: Cookie value.
         :type value: str
-        :param url: The request-URI to associate with the setting of the cookie. This value can affect the default domain and path values of the created cookie.
+        :param url: The request-URI to associate with the setting of the cookie. This value can affect the
+default domain and path values of the created cookie.
         :type url: str
         :param domain: Cookie domain.
         :type domain: str
@@ -668,82 +881,6 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def canEmulateNetworkConditions(cls):
-        """Tells whether emulation of network conditions is supported.
-        """
-        return (
-            cls.build_send_payload("canEmulateNetworkConditions", {
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": bool,
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
-    def emulateNetworkConditions(cls,
-                                 offline: Union['bool'],
-                                 latency: Union['float'],
-                                 downloadThroughput: Union['float'],
-                                 uploadThroughput: Union['float'],
-                                 connectionType: Optional['ConnectionType'] = None,
-                                 ):
-        """Activates emulation of network conditions.
-        :param offline: True to emulate internet disconnection.
-        :type offline: bool
-        :param latency: Minimum latency from request sent to response headers received (ms).
-        :type latency: float
-        :param downloadThroughput: Maximal aggregated download throughput (bytes/sec). -1 disables download throttling.
-        :type downloadThroughput: float
-        :param uploadThroughput: Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
-        :type uploadThroughput: float
-        :param connectionType: Connection type if known.
-        :type connectionType: ConnectionType
-        """
-        return (
-            cls.build_send_payload("emulateNetworkConditions", {
-                "offline": offline,
-                "latency": latency,
-                "downloadThroughput": downloadThroughput,
-                "uploadThroughput": uploadThroughput,
-                "connectionType": connectionType,
-            }),
-            None
-        )
-
-    @classmethod
-    def setCacheDisabled(cls,
-                         cacheDisabled: Union['bool'],
-                         ):
-        """Toggles ignoring cache for each request. If <code>true</code>, cache will not be used.
-        :param cacheDisabled: Cache disabled state.
-        :type cacheDisabled: bool
-        """
-        return (
-            cls.build_send_payload("setCacheDisabled", {
-                "cacheDisabled": cacheDisabled,
-            }),
-            None
-        )
-
-    @classmethod
-    def setBypassServiceWorker(cls,
-                               bypass: Union['bool'],
-                               ):
-        """Toggles ignoring of service worker for each request.
-        :param bypass: Bypass service worker and load from network.
-        :type bypass: bool
-        """
-        return (
-            cls.build_send_payload("setBypassServiceWorker", {
-                "bypass": bypass,
-            }),
-            None
-        )
-
-    @classmethod
     def setDataSizeLimitsForTest(cls,
                                  maxTotalSize: Union['int'],
                                  maxResourceSize: Union['int'],
@@ -763,23 +900,18 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def getCertificate(cls,
-                       origin: Union['str'],
-                       ):
-        """Returns the DER-encoded certificate.
-        :param origin: Origin to get certificate for.
-        :type origin: str
+    def setExtraHTTPHeaders(cls,
+                            headers: Union['Headers'],
+                            ):
+        """Specifies whether to always send extra HTTP headers with the requests from this page.
+        :param headers: Map with extra HTTP headers.
+        :type headers: Headers
         """
         return (
-            cls.build_send_payload("getCertificate", {
-                "origin": origin,
+            cls.build_send_payload("setExtraHTTPHeaders", {
+                "headers": headers,
             }),
-            cls.convert_payload({
-                "tableNames": {
-                    "class": [],
-                    "optional": False
-                },
-            })
+            None
         )
 
     @classmethod
@@ -787,7 +919,8 @@ class Network(PayloadMixin):
                                patterns: Union['[RequestPattern]'],
                                ):
         """Sets the requests to intercept that match a the provided patterns and optionally resource types.
-        :param patterns: Requests matching any of these patterns will be forwarded and wait for the corresponding continueInterceptedRequest call.
+        :param patterns: Requests matching any of these patterns will be forwarded and wait for the corresponding
+continueInterceptedRequest call.
         :type patterns: [RequestPattern]
         """
         return (
@@ -798,204 +931,20 @@ class Network(PayloadMixin):
         )
 
     @classmethod
-    def continueInterceptedRequest(cls,
-                                   interceptionId: Union['InterceptionId'],
-                                   errorReason: Optional['ErrorReason'] = None,
-                                   rawResponse: Optional['str'] = None,
-                                   url: Optional['str'] = None,
-                                   method: Optional['str'] = None,
-                                   postData: Optional['str'] = None,
-                                   headers: Optional['Headers'] = None,
-                                   authChallengeResponse: Optional['AuthChallengeResponse'] = None,
-                                   ):
-        """Response to Network.requestIntercepted which either modifies the request to continue with any modifications, or blocks it, or completes it with the provided response bytes. If a network fetch occurs as a result which encounters a redirect an additional Network.requestIntercepted event will be sent with the same InterceptionId.
-        :param interceptionId: 
-        :type interceptionId: InterceptionId
-        :param errorReason: If set this causes the request to fail with the given reason. Passing <code>Aborted</code> for requests marked with <code>isNavigationRequest</code> also cancels the navigation. Must not be set in response to an authChallenge.
-        :type errorReason: ErrorReason
-        :param rawResponse: If set the requests completes using with the provided base64 encoded raw response, including HTTP status line and headers etc... Must not be set in response to an authChallenge.
-        :type rawResponse: str
-        :param url: If set the request url will be modified in a way that's not observable by page. Must not be set in response to an authChallenge.
-        :type url: str
-        :param method: If set this allows the request method to be overridden. Must not be set in response to an authChallenge.
-        :type method: str
-        :param postData: If set this allows postData to be set. Must not be set in response to an authChallenge.
-        :type postData: str
-        :param headers: If set this allows the request headers to be changed. Must not be set in response to an authChallenge.
-        :type headers: Headers
-        :param authChallengeResponse: Response to a requestIntercepted with an authChallenge. Must not be set otherwise.
-        :type authChallengeResponse: AuthChallengeResponse
+    def setUserAgentOverride(cls,
+                             userAgent: Union['str'],
+                             ):
+        """Allows overriding user agent with the given string.
+        :param userAgent: User agent to use.
+        :type userAgent: str
         """
         return (
-            cls.build_send_payload("continueInterceptedRequest", {
-                "interceptionId": interceptionId,
-                "errorReason": errorReason,
-                "rawResponse": rawResponse,
-                "url": url,
-                "method": method,
-                "postData": postData,
-                "headers": headers,
-                "authChallengeResponse": authChallengeResponse,
+            cls.build_send_payload("setUserAgentOverride", {
+                "userAgent": userAgent,
             }),
             None
         )
 
-
-
-class ResourceChangedPriorityEvent(BaseEvent):
-
-    js_name = 'Network.resourceChangedPriority'
-    hashable = ['requestId']
-    is_hashable = True
-
-    def __init__(self,
-                 requestId: Union['RequestId', dict],
-                 newPriority: Union['ResourcePriority', dict],
-                 timestamp: Union['MonotonicTime', dict],
-                 ):
-        if isinstance(requestId, dict):
-            requestId = RequestId(**requestId)
-        self.requestId = requestId
-        if isinstance(newPriority, dict):
-            newPriority = ResourcePriority(**newPriority)
-        self.newPriority = newPriority
-        if isinstance(timestamp, dict):
-            timestamp = MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-
-    @classmethod
-    def build_hash(cls, requestId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class RequestWillBeSentEvent(BaseEvent):
-
-    js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'frameId', 'requestId']
-    is_hashable = True
-
-    def __init__(self,
-                 requestId: Union['RequestId', dict],
-                 loaderId: Union['LoaderId', dict],
-                 documentURL: Union['str', dict],
-                 request: Union['Request', dict],
-                 timestamp: Union['MonotonicTime', dict],
-                 wallTime: Union['TimeSinceEpoch', dict],
-                 initiator: Union['Initiator', dict],
-                 redirectResponse: Union['Response', dict, None] = None,
-                 type: Union['Page.ResourceType', dict, None] = None,
-                 frameId: Union['Page.FrameId', dict, None] = None,
-                 ):
-        if isinstance(requestId, dict):
-            requestId = RequestId(**requestId)
-        self.requestId = requestId
-        if isinstance(loaderId, dict):
-            loaderId = LoaderId(**loaderId)
-        self.loaderId = loaderId
-        if isinstance(documentURL, dict):
-            documentURL = str(**documentURL)
-        self.documentURL = documentURL
-        if isinstance(request, dict):
-            request = Request(**request)
-        self.request = request
-        if isinstance(timestamp, dict):
-            timestamp = MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-        if isinstance(wallTime, dict):
-            wallTime = TimeSinceEpoch(**wallTime)
-        self.wallTime = wallTime
-        if isinstance(initiator, dict):
-            initiator = Initiator(**initiator)
-        self.initiator = initiator
-        if isinstance(redirectResponse, dict):
-            redirectResponse = Response(**redirectResponse)
-        self.redirectResponse = redirectResponse
-        if isinstance(type, dict):
-            type = Page.ResourceType(**type)
-        self.type = type
-        if isinstance(frameId, dict):
-            frameId = Page.FrameId(**frameId)
-        self.frameId = frameId
-
-    @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class RequestServedFromCacheEvent(BaseEvent):
-
-    js_name = 'Network.requestServedFromCache'
-    hashable = ['requestId']
-    is_hashable = True
-
-    def __init__(self,
-                 requestId: Union['RequestId', dict],
-                 ):
-        if isinstance(requestId, dict):
-            requestId = RequestId(**requestId)
-        self.requestId = requestId
-
-    @classmethod
-    def build_hash(cls, requestId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
-class ResponseReceivedEvent(BaseEvent):
-
-    js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'frameId', 'requestId']
-    is_hashable = True
-
-    def __init__(self,
-                 requestId: Union['RequestId', dict],
-                 loaderId: Union['LoaderId', dict],
-                 timestamp: Union['MonotonicTime', dict],
-                 type: Union['Page.ResourceType', dict],
-                 response: Union['Response', dict],
-                 frameId: Union['Page.FrameId', dict, None] = None,
-                 ):
-        if isinstance(requestId, dict):
-            requestId = RequestId(**requestId)
-        self.requestId = requestId
-        if isinstance(loaderId, dict):
-            loaderId = LoaderId(**loaderId)
-        self.loaderId = loaderId
-        if isinstance(timestamp, dict):
-            timestamp = MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-        if isinstance(type, dict):
-            type = Page.ResourceType(**type)
-        self.type = type
-        if isinstance(response, dict):
-            response = Response(**response)
-        self.response = response
-        if isinstance(frameId, dict):
-            frameId = Page.FrameId(**frameId)
-        self.frameId = frameId
-
-    @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
 
 
 class DataReceivedEvent(BaseEvent):
@@ -1033,16 +982,18 @@ class DataReceivedEvent(BaseEvent):
         return h
 
 
-class LoadingFinishedEvent(BaseEvent):
+class EventSourceMessageReceivedEvent(BaseEvent):
 
-    js_name = 'Network.loadingFinished'
-    hashable = ['requestId']
+    js_name = 'Network.eventSourceMessageReceived'
+    hashable = ['requestId', 'eventId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 encodedDataLength: Union['float', dict],
+                 eventName: Union['str', dict],
+                 eventId: Union['str', dict],
+                 data: Union['str', dict],
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1050,12 +1001,18 @@ class LoadingFinishedEvent(BaseEvent):
         if isinstance(timestamp, dict):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
-        if isinstance(encodedDataLength, dict):
-            encodedDataLength = float(**encodedDataLength)
-        self.encodedDataLength = encodedDataLength
+        if isinstance(eventName, dict):
+            eventName = str(**eventName)
+        self.eventName = eventName
+        if isinstance(eventId, dict):
+            eventId = str(**eventId)
+        self.eventId = eventId
+        if isinstance(data, dict):
+            data = str(**data)
+        self.data = data
 
     @classmethod
-    def build_hash(cls, requestId):
+    def build_hash(cls, requestId, eventId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1107,17 +1064,17 @@ class LoadingFailedEvent(BaseEvent):
         return h
 
 
-class WebSocketWillSendHandshakeRequestEvent(BaseEvent):
+class LoadingFinishedEvent(BaseEvent):
 
-    js_name = 'Network.webSocketWillSendHandshakeRequest'
+    js_name = 'Network.loadingFinished'
     hashable = ['requestId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 wallTime: Union['TimeSinceEpoch', dict],
-                 request: Union['WebSocketRequest', dict],
+                 encodedDataLength: Union['float', dict],
+                 blockedCrossSiteDocument: Union['bool', dict, None] = None,
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1125,12 +1082,12 @@ class WebSocketWillSendHandshakeRequestEvent(BaseEvent):
         if isinstance(timestamp, dict):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
-        if isinstance(wallTime, dict):
-            wallTime = TimeSinceEpoch(**wallTime)
-        self.wallTime = wallTime
-        if isinstance(request, dict):
-            request = WebSocketRequest(**request)
-        self.request = request
+        if isinstance(encodedDataLength, dict):
+            encodedDataLength = float(**encodedDataLength)
+        self.encodedDataLength = encodedDataLength
+        if isinstance(blockedCrossSiteDocument, dict):
+            blockedCrossSiteDocument = bool(**blockedCrossSiteDocument)
+        self.blockedCrossSiteDocument = blockedCrossSiteDocument
 
     @classmethod
     def build_hash(cls, requestId):
@@ -1142,16 +1099,230 @@ class WebSocketWillSendHandshakeRequestEvent(BaseEvent):
         return h
 
 
-class WebSocketHandshakeResponseReceivedEvent(BaseEvent):
+class RequestInterceptedEvent(BaseEvent):
 
-    js_name = 'Network.webSocketHandshakeResponseReceived'
+    js_name = 'Network.requestIntercepted'
+    hashable = ['interceptionId', 'frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 interceptionId: Union['InterceptionId', dict],
+                 request: Union['Request', dict],
+                 frameId: Union['Page.FrameId', dict],
+                 resourceType: Union['Page.ResourceType', dict],
+                 isNavigationRequest: Union['bool', dict],
+                 redirectUrl: Union['str', dict, None] = None,
+                 authChallenge: Union['AuthChallenge', dict, None] = None,
+                 responseErrorReason: Union['ErrorReason', dict, None] = None,
+                 responseStatusCode: Union['int', dict, None] = None,
+                 responseHeaders: Union['Headers', dict, None] = None,
+                 ):
+        if isinstance(interceptionId, dict):
+            interceptionId = InterceptionId(**interceptionId)
+        self.interceptionId = interceptionId
+        if isinstance(request, dict):
+            request = Request(**request)
+        self.request = request
+        if isinstance(frameId, dict):
+            frameId = Page.FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(resourceType, dict):
+            resourceType = Page.ResourceType(**resourceType)
+        self.resourceType = resourceType
+        if isinstance(isNavigationRequest, dict):
+            isNavigationRequest = bool(**isNavigationRequest)
+        self.isNavigationRequest = isNavigationRequest
+        if isinstance(redirectUrl, dict):
+            redirectUrl = str(**redirectUrl)
+        self.redirectUrl = redirectUrl
+        if isinstance(authChallenge, dict):
+            authChallenge = AuthChallenge(**authChallenge)
+        self.authChallenge = authChallenge
+        if isinstance(responseErrorReason, dict):
+            responseErrorReason = ErrorReason(**responseErrorReason)
+        self.responseErrorReason = responseErrorReason
+        if isinstance(responseStatusCode, dict):
+            responseStatusCode = int(**responseStatusCode)
+        self.responseStatusCode = responseStatusCode
+        if isinstance(responseHeaders, dict):
+            responseHeaders = Headers(**responseHeaders)
+        self.responseHeaders = responseHeaders
+
+    @classmethod
+    def build_hash(cls, interceptionId, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class RequestServedFromCacheEvent(BaseEvent):
+
+    js_name = 'Network.requestServedFromCache'
+    hashable = ['requestId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+
+    @classmethod
+    def build_hash(cls, requestId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class RequestWillBeSentEvent(BaseEvent):
+
+    js_name = 'Network.requestWillBeSent'
+    hashable = ['requestId', 'loaderId', 'frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 loaderId: Union['LoaderId', dict],
+                 documentURL: Union['str', dict],
+                 request: Union['Request', dict],
+                 timestamp: Union['MonotonicTime', dict],
+                 wallTime: Union['TimeSinceEpoch', dict],
+                 initiator: Union['Initiator', dict],
+                 redirectResponse: Union['Response', dict, None] = None,
+                 type: Union['Page.ResourceType', dict, None] = None,
+                 frameId: Union['Page.FrameId', dict, None] = None,
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(loaderId, dict):
+            loaderId = LoaderId(**loaderId)
+        self.loaderId = loaderId
+        if isinstance(documentURL, dict):
+            documentURL = str(**documentURL)
+        self.documentURL = documentURL
+        if isinstance(request, dict):
+            request = Request(**request)
+        self.request = request
+        if isinstance(timestamp, dict):
+            timestamp = MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+        if isinstance(wallTime, dict):
+            wallTime = TimeSinceEpoch(**wallTime)
+        self.wallTime = wallTime
+        if isinstance(initiator, dict):
+            initiator = Initiator(**initiator)
+        self.initiator = initiator
+        if isinstance(redirectResponse, dict):
+            redirectResponse = Response(**redirectResponse)
+        self.redirectResponse = redirectResponse
+        if isinstance(type, dict):
+            type = Page.ResourceType(**type)
+        self.type = type
+        if isinstance(frameId, dict):
+            frameId = Page.FrameId(**frameId)
+        self.frameId = frameId
+
+    @classmethod
+    def build_hash(cls, requestId, loaderId, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class ResourceChangedPriorityEvent(BaseEvent):
+
+    js_name = 'Network.resourceChangedPriority'
+    hashable = ['requestId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 newPriority: Union['ResourcePriority', dict],
+                 timestamp: Union['MonotonicTime', dict],
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(newPriority, dict):
+            newPriority = ResourcePriority(**newPriority)
+        self.newPriority = newPriority
+        if isinstance(timestamp, dict):
+            timestamp = MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+
+    @classmethod
+    def build_hash(cls, requestId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class ResponseReceivedEvent(BaseEvent):
+
+    js_name = 'Network.responseReceived'
+    hashable = ['requestId', 'loaderId', 'frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 loaderId: Union['LoaderId', dict],
+                 timestamp: Union['MonotonicTime', dict],
+                 type: Union['Page.ResourceType', dict],
+                 response: Union['Response', dict],
+                 frameId: Union['Page.FrameId', dict, None] = None,
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(loaderId, dict):
+            loaderId = LoaderId(**loaderId)
+        self.loaderId = loaderId
+        if isinstance(timestamp, dict):
+            timestamp = MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+        if isinstance(type, dict):
+            type = Page.ResourceType(**type)
+        self.type = type
+        if isinstance(response, dict):
+            response = Response(**response)
+        self.response = response
+        if isinstance(frameId, dict):
+            frameId = Page.FrameId(**frameId)
+        self.frameId = frameId
+
+    @classmethod
+    def build_hash(cls, requestId, loaderId, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class WebSocketClosedEvent(BaseEvent):
+
+    js_name = 'Network.webSocketClosed'
     hashable = ['requestId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 response: Union['WebSocketResponse', dict],
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1159,9 +1330,6 @@ class WebSocketHandshakeResponseReceivedEvent(BaseEvent):
         if isinstance(timestamp, dict):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
-        if isinstance(response, dict):
-            response = WebSocketResponse(**response)
-        self.response = response
 
     @classmethod
     def build_hash(cls, requestId):
@@ -1204,15 +1372,16 @@ class WebSocketCreatedEvent(BaseEvent):
         return h
 
 
-class WebSocketClosedEvent(BaseEvent):
+class WebSocketFrameErrorEvent(BaseEvent):
 
-    js_name = 'Network.webSocketClosed'
+    js_name = 'Network.webSocketFrameError'
     hashable = ['requestId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
+                 errorMessage: Union['str', dict],
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1220,6 +1389,9 @@ class WebSocketClosedEvent(BaseEvent):
         if isinstance(timestamp, dict):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
+        if isinstance(errorMessage, dict):
+            errorMessage = str(**errorMessage)
+        self.errorMessage = errorMessage
 
     @classmethod
     def build_hash(cls, requestId):
@@ -1262,37 +1434,6 @@ class WebSocketFrameReceivedEvent(BaseEvent):
         return h
 
 
-class WebSocketFrameErrorEvent(BaseEvent):
-
-    js_name = 'Network.webSocketFrameError'
-    hashable = ['requestId']
-    is_hashable = True
-
-    def __init__(self,
-                 requestId: Union['RequestId', dict],
-                 timestamp: Union['MonotonicTime', dict],
-                 errorMessage: Union['str', dict],
-                 ):
-        if isinstance(requestId, dict):
-            requestId = RequestId(**requestId)
-        self.requestId = requestId
-        if isinstance(timestamp, dict):
-            timestamp = MonotonicTime(**timestamp)
-        self.timestamp = timestamp
-        if isinstance(errorMessage, dict):
-            errorMessage = str(**errorMessage)
-        self.errorMessage = errorMessage
-
-    @classmethod
-    def build_hash(cls, requestId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h
-
-
 class WebSocketFrameSentEvent(BaseEvent):
 
     js_name = 'Network.webSocketFrameSent'
@@ -1324,18 +1465,16 @@ class WebSocketFrameSentEvent(BaseEvent):
         return h
 
 
-class EventSourceMessageReceivedEvent(BaseEvent):
+class WebSocketHandshakeResponseReceivedEvent(BaseEvent):
 
-    js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['eventId', 'requestId']
+    js_name = 'Network.webSocketHandshakeResponseReceived'
+    hashable = ['requestId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 eventName: Union['str', dict],
-                 eventId: Union['str', dict],
-                 data: Union['str', dict],
+                 response: Union['WebSocketResponse', dict],
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1343,18 +1482,12 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         if isinstance(timestamp, dict):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
-        if isinstance(eventName, dict):
-            eventName = str(**eventName)
-        self.eventName = eventName
-        if isinstance(eventId, dict):
-            eventId = str(**eventId)
-        self.eventId = eventId
-        if isinstance(data, dict):
-            data = str(**data)
-        self.data = data
+        if isinstance(response, dict):
+            response = WebSocketResponse(**response)
+        self.response = response
 
     @classmethod
-    def build_hash(cls, eventId, requestId):
+    def build_hash(cls, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1363,53 +1496,33 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         return h
 
 
-class RequestInterceptedEvent(BaseEvent):
+class WebSocketWillSendHandshakeRequestEvent(BaseEvent):
 
-    js_name = 'Network.requestIntercepted'
-    hashable = ['frameId', 'interceptionId']
+    js_name = 'Network.webSocketWillSendHandshakeRequest'
+    hashable = ['requestId']
     is_hashable = True
 
     def __init__(self,
-                 interceptionId: Union['InterceptionId', dict],
-                 request: Union['Request', dict],
-                 frameId: Union['Page.FrameId', dict],
-                 resourceType: Union['Page.ResourceType', dict],
-                 isNavigationRequest: Union['bool', dict],
-                 redirectHeaders: Union['Headers', dict, None] = None,
-                 redirectStatusCode: Union['int', dict, None] = None,
-                 redirectUrl: Union['str', dict, None] = None,
-                 authChallenge: Union['AuthChallenge', dict, None] = None,
+                 requestId: Union['RequestId', dict],
+                 timestamp: Union['MonotonicTime', dict],
+                 wallTime: Union['TimeSinceEpoch', dict],
+                 request: Union['WebSocketRequest', dict],
                  ):
-        if isinstance(interceptionId, dict):
-            interceptionId = InterceptionId(**interceptionId)
-        self.interceptionId = interceptionId
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(timestamp, dict):
+            timestamp = MonotonicTime(**timestamp)
+        self.timestamp = timestamp
+        if isinstance(wallTime, dict):
+            wallTime = TimeSinceEpoch(**wallTime)
+        self.wallTime = wallTime
         if isinstance(request, dict):
-            request = Request(**request)
+            request = WebSocketRequest(**request)
         self.request = request
-        if isinstance(frameId, dict):
-            frameId = Page.FrameId(**frameId)
-        self.frameId = frameId
-        if isinstance(resourceType, dict):
-            resourceType = Page.ResourceType(**resourceType)
-        self.resourceType = resourceType
-        if isinstance(isNavigationRequest, dict):
-            isNavigationRequest = bool(**isNavigationRequest)
-        self.isNavigationRequest = isNavigationRequest
-        if isinstance(redirectHeaders, dict):
-            redirectHeaders = Headers(**redirectHeaders)
-        self.redirectHeaders = redirectHeaders
-        if isinstance(redirectStatusCode, dict):
-            redirectStatusCode = int(**redirectStatusCode)
-        self.redirectStatusCode = redirectStatusCode
-        if isinstance(redirectUrl, dict):
-            redirectUrl = str(**redirectUrl)
-        self.redirectUrl = redirectUrl
-        if isinstance(authChallenge, dict):
-            authChallenge = AuthChallenge(**authChallenge)
-        self.authChallenge = authChallenge
 
     @classmethod
-    def build_hash(cls, frameId, interceptionId):
+    def build_hash(cls, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

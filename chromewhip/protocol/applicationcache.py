@@ -60,21 +60,6 @@ class ApplicationCache(PayloadMixin):
     """ 
     """
     @classmethod
-    def getFramesWithManifests(cls):
-        """Returns array of frame identifiers with manifest urls for each frame containing a document associated with some application cache.
-        """
-        return (
-            cls.build_send_payload("getFramesWithManifests", {
-            }),
-            cls.convert_payload({
-                "frameIds": {
-                    "class": [FrameWithManifest],
-                    "optional": False
-                },
-            })
-        )
-
-    @classmethod
     def enable(cls):
         """Enables application cache domain notifications.
         """
@@ -82,26 +67,6 @@ class ApplicationCache(PayloadMixin):
             cls.build_send_payload("enable", {
             }),
             None
-        )
-
-    @classmethod
-    def getManifestForFrame(cls,
-                            frameId: Union['Page.FrameId'],
-                            ):
-        """Returns manifest URL for document in the given frame.
-        :param frameId: Identifier of the frame containing document whose manifest is retrieved.
-        :type frameId: Page.FrameId
-        """
-        return (
-            cls.build_send_payload("getManifestForFrame", {
-                "frameId": frameId,
-            }),
-            cls.convert_payload({
-                "manifestURL": {
-                    "class": str,
-                    "optional": False
-                },
-            })
         )
 
     @classmethod
@@ -119,6 +84,42 @@ class ApplicationCache(PayloadMixin):
             cls.convert_payload({
                 "applicationCache": {
                     "class": ApplicationCache,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getFramesWithManifests(cls):
+        """Returns array of frame identifiers with manifest urls for each frame containing a document
+associated with some application cache.
+        """
+        return (
+            cls.build_send_payload("getFramesWithManifests", {
+            }),
+            cls.convert_payload({
+                "frameIds": {
+                    "class": [FrameWithManifest],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getManifestForFrame(cls,
+                            frameId: Union['Page.FrameId'],
+                            ):
+        """Returns manifest URL for document in the given frame.
+        :param frameId: Identifier of the frame containing document whose manifest is retrieved.
+        :type frameId: Page.FrameId
+        """
+        return (
+            cls.build_send_payload("getManifestForFrame", {
+                "frameId": frameId,
+            }),
+            cls.convert_payload({
+                "manifestURL": {
+                    "class": str,
                     "optional": False
                 },
             })

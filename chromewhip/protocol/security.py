@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 # CertificateId: An internal certificate ID value.
 CertificateId = int
 
-# MixedContentType: A description of mixed content (HTTP resources on HTTPS pages), as defined by https://www.w3.org/TR/mixed-content/#categories
+# MixedContentType: A description of mixed content (HTTP resources on HTTPS pages), as defined byhttps://www.w3.org/TR/mixed-content/#categories
 MixedContentType = str
 
 # SecurityState: The security level of a page or resource.
@@ -26,6 +26,7 @@ SecurityState = str
 class SecurityStateExplanation(ChromeTypeBase):
     def __init__(self,
                  securityState: Union['SecurityState'],
+                 title: Union['str'],
                  summary: Union['str'],
                  description: Union['str'],
                  mixedContentType: Union['MixedContentType'],
@@ -33,6 +34,7 @@ class SecurityStateExplanation(ChromeTypeBase):
                  ):
 
         self.securityState = securityState
+        self.title = title
         self.summary = summary
         self.description = description
         self.mixedContentType = mixedContentType
@@ -60,12 +62,22 @@ class InsecureContentStatus(ChromeTypeBase):
         self.displayedInsecureContentStyle = displayedInsecureContentStyle
 
 
-# CertificateErrorAction: The action to take when a certificate error occurs. continue will continue processing the request and cancel will cancel the request.
+# CertificateErrorAction: The action to take when a certificate error occurs. continue will continue processing therequest and cancel will cancel the request.
 CertificateErrorAction = str
 
 class Security(PayloadMixin):
     """ Security
     """
+    @classmethod
+    def disable(cls):
+        """Disables tracking security state changes.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
     @classmethod
     def enable(cls):
         """Enables tracking security state changes.
@@ -77,11 +89,16 @@ class Security(PayloadMixin):
         )
 
     @classmethod
-    def disable(cls):
-        """Disables tracking security state changes.
+    def setIgnoreCertificateErrors(cls,
+                                   ignore: Union['bool'],
+                                   ):
+        """Enable/disable whether all certificate errors should be ignored.
+        :param ignore: If true, all certificate errors will be ignored.
+        :type ignore: bool
         """
         return (
-            cls.build_send_payload("disable", {
+            cls.build_send_payload("setIgnoreCertificateErrors", {
+                "ignore": ignore,
             }),
             None
         )
@@ -109,7 +126,8 @@ class Security(PayloadMixin):
     def setOverrideCertificateErrors(cls,
                                      override: Union['bool'],
                                      ):
-        """Enable/disable overriding certificate errors. If enabled, all certificate error events need to be handled by the DevTools client and should be answered with handleCertificateError commands.
+        """Enable/disable overriding certificate errors. If enabled, all certificate error events need to
+be handled by the DevTools client and should be answered with handleCertificateError commands.
         :param override: If true, certificate errors will be overridden.
         :type override: bool
         """
@@ -120,6 +138,37 @@ class Security(PayloadMixin):
             None
         )
 
+
+
+class CertificateErrorEvent(BaseEvent):
+
+    js_name = 'Security.certificateError'
+    hashable = ['eventId']
+    is_hashable = True
+
+    def __init__(self,
+                 eventId: Union['int', dict],
+                 errorType: Union['str', dict],
+                 requestURL: Union['str', dict],
+                 ):
+        if isinstance(eventId, dict):
+            eventId = int(**eventId)
+        self.eventId = eventId
+        if isinstance(errorType, dict):
+            errorType = str(**errorType)
+        self.errorType = errorType
+        if isinstance(requestURL, dict):
+            requestURL = str(**requestURL)
+        self.requestURL = requestURL
+
+    @classmethod
+    def build_hash(cls, eventId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class SecurityStateChangedEvent(BaseEvent):
@@ -154,34 +203,3 @@ class SecurityStateChangedEvent(BaseEvent):
     @classmethod
     def build_hash(cls):
         raise ValueError('Unable to build hash for non-hashable type')
-
-
-class CertificateErrorEvent(BaseEvent):
-
-    js_name = 'Security.certificateError'
-    hashable = ['eventId']
-    is_hashable = True
-
-    def __init__(self,
-                 eventId: Union['int', dict],
-                 errorType: Union['str', dict],
-                 requestURL: Union['str', dict],
-                 ):
-        if isinstance(eventId, dict):
-            eventId = int(**eventId)
-        self.eventId = eventId
-        if isinstance(errorType, dict):
-            errorType = str(**errorType)
-        self.errorType = errorType
-        if isinstance(requestURL, dict):
-            requestURL = str(**requestURL)
-        self.requestURL = requestURL
-
-    @classmethod
-    def build_hash(cls, eventId):
-        kwargs = locals()
-        kwargs.pop('cls')
-        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
-        h = '{}:{}'.format(cls.js_name, serialized_id_params)
-        log.debug('generated hash = %s' % h)
-        return h

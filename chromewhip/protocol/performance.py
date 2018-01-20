@@ -28,21 +28,21 @@ class Performance(PayloadMixin):
     """ 
     """
     @classmethod
-    def enable(cls):
-        """Enable collecting and reporting metrics.
-        """
-        return (
-            cls.build_send_payload("enable", {
-            }),
-            None
-        )
-
-    @classmethod
     def disable(cls):
         """Disable collecting and reporting metrics.
         """
         return (
             cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enable collecting and reporting metrics.
+        """
+        return (
+            cls.build_send_payload("enable", {
             }),
             None
         )
