@@ -19,7 +19,7 @@ ScriptId = str
 # RemoteObjectId: Unique object identifier.
 RemoteObjectId = str
 
-# UnserializableValue: Primitive value which cannot be JSON-stringified.
+# UnserializableValue: Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,`-Infinity`, and bigint literals.
 UnserializableValue = str
 
 # RemoteObject: Mirror object referencing original JavaScript object.
@@ -440,6 +440,7 @@ context.
                  generatePreview: Optional['bool'] = None,
                  userGesture: Optional['bool'] = None,
                  awaitPromise: Optional['bool'] = None,
+                 throwOnSideEffect: Optional['bool'] = None,
                  ):
         """Evaluates expression on global object.
         :param expression: Expression to evaluate.
@@ -463,6 +464,8 @@ evaluation will be performed in the context of the inspected page.
         :param awaitPromise: Whether execution should `await` for resulting value and return once awaited promise is
 resolved.
         :type awaitPromise: bool
+        :param throwOnSideEffect: Whether to throw an exception if side effect cannot be ruled out during evaluation.
+        :type throwOnSideEffect: bool
         """
         return (
             cls.build_send_payload("evaluate", {
@@ -475,6 +478,7 @@ resolved.
                 "generatePreview": generatePreview,
                 "userGesture": userGesture,
                 "awaitPromise": awaitPromise,
+                "throwOnSideEffect": throwOnSideEffect,
             }),
             cls.convert_payload({
                 "result": {
@@ -484,6 +488,41 @@ resolved.
                 "exceptionDetails": {
                     "class": ExceptionDetails,
                     "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getIsolateId(cls):
+        """Returns the isolate id.
+        """
+        return (
+            cls.build_send_payload("getIsolateId", {
+            }),
+            cls.convert_payload({
+                "id": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getHeapUsage(cls):
+        """Returns the JavaScript heap usage.
+It is the total usage of the corresponding isolate not scoped to a particular Runtime.
+        """
+        return (
+            cls.build_send_payload("getHeapUsage", {
+            }),
+            cls.convert_payload({
+                "usedSize": {
+                    "class": float,
+                    "optional": False
+                },
+                "totalSize": {
+                    "class": float,
+                    "optional": False
                 },
             })
         )
@@ -554,14 +593,18 @@ returned either.
     @classmethod
     def queryObjects(cls,
                      prototypeObjectId: Union['RemoteObjectId'],
+                     objectGroup: Optional['str'] = None,
                      ):
         """
         :param prototypeObjectId: Identifier of the prototype to return objects for.
         :type prototypeObjectId: RemoteObjectId
+        :param objectGroup: Symbolic group name that can be used to release the results.
+        :type objectGroup: str
         """
         return (
             cls.build_send_payload("queryObjects", {
                 "prototypeObjectId": prototypeObjectId,
+                "objectGroup": objectGroup,
             }),
             cls.convert_payload({
                 "objects": {
@@ -677,6 +720,17 @@ resolved.
         return (
             cls.build_send_payload("setCustomObjectFormatterEnabled", {
                 "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def terminateExecution(cls):
+        """Terminate current or next JavaScript execution.
+Will cancel the termination when the outer-most script execution ends.
+        """
+        return (
+            cls.build_send_payload("terminateExecution", {
             }),
             None
         )

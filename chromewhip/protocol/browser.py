@@ -109,6 +109,22 @@ class Browser(PayloadMixin):
         )
 
     @classmethod
+    def getBrowserCommandLine(cls):
+        """Returns the command line switches for the browser process if, and only if
+--enable-automation is on the commandline.
+        """
+        return (
+            cls.build_send_payload("getBrowserCommandLine", {
+            }),
+            cls.convert_payload({
+                "arguments": {
+                    "class": [],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def getHistograms(cls,
                       query: Optional['str'] = None,
                       ):

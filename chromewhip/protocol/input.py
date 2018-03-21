@@ -200,8 +200,8 @@ one by one.
                                    type: Union['str'],
                                    x: Union['int'],
                                    y: Union['int'],
-                                   timestamp: Union['TimeSinceEpoch'],
                                    button: Union['str'],
+                                   timestamp: Optional['TimeSinceEpoch'] = None,
                                    deltaX: Optional['float'] = None,
                                    deltaY: Optional['float'] = None,
                                    modifiers: Optional['int'] = None,
@@ -214,10 +214,10 @@ one by one.
         :type x: int
         :param y: Y coordinate of the mouse pointer in DIP.
         :type y: int
-        :param timestamp: Time at which the event occurred.
-        :type timestamp: TimeSinceEpoch
         :param button: Mouse button.
         :type button: str
+        :param timestamp: Time at which the event occurred (default: current time).
+        :type timestamp: TimeSinceEpoch
         :param deltaX: X delta in DIP for mouse wheel event (default: 0).
         :type deltaX: float
         :param deltaY: Y delta in DIP for mouse wheel event (default: 0).
@@ -233,8 +233,8 @@ one by one.
                 "type": type,
                 "x": x,
                 "y": y,
-                "timestamp": timestamp,
                 "button": button,
+                "timestamp": timestamp,
                 "deltaX": deltaX,
                 "deltaY": deltaY,
                 "modifiers": modifiers,

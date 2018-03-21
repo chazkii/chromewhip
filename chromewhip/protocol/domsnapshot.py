@@ -43,6 +43,7 @@ class DOMNode(ChromeTypeBase):
                  importedDocumentIndex: Optional['int'] = None,
                  templateContentIndex: Optional['int'] = None,
                  pseudoType: Optional['DOM.PseudoType'] = None,
+                 shadowRootType: Optional['DOM.ShadowRootType'] = None,
                  isClickable: Optional['bool'] = None,
                  eventListeners: Optional['[DOMDebugger.EventListener]'] = None,
                  currentSourceURL: Optional['str'] = None,
@@ -71,6 +72,7 @@ class DOMNode(ChromeTypeBase):
         self.importedDocumentIndex = importedDocumentIndex
         self.templateContentIndex = templateContentIndex
         self.pseudoType = pseudoType
+        self.shadowRootType = shadowRootType
         self.isClickable = isClickable
         self.eventListeners = eventListeners
         self.currentSourceURL = currentSourceURL
@@ -97,6 +99,7 @@ class LayoutTreeNode(ChromeTypeBase):
                  layoutText: Optional['str'] = None,
                  inlineTextNodes: Optional['[InlineTextBox]'] = None,
                  styleIndex: Optional['int'] = None,
+                 paintOrder: Optional['int'] = None,
                  ):
 
         self.domNodeIndex = domNodeIndex
@@ -104,6 +107,7 @@ class LayoutTreeNode(ChromeTypeBase):
         self.layoutText = layoutText
         self.inlineTextNodes = inlineTextNodes
         self.styleIndex = styleIndex
+        self.paintOrder = paintOrder
 
 
 # ComputedStyle: A subset of the full ComputedStyle as defined by the request whitelist.
@@ -133,6 +137,7 @@ class DOMSnapshot(PayloadMixin):
     def getSnapshot(cls,
                     computedStyleWhitelist: Union['[]'],
                     includeEventListeners: Optional['bool'] = None,
+                    includePaintOrder: Optional['bool'] = None,
                     ):
         """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
 template contents, and imported documents) in a flattened array, as well as layout and
@@ -142,11 +147,14 @@ flattened.
         :type computedStyleWhitelist: []
         :param includeEventListeners: Whether or not to retrieve details of DOM listeners (default false).
         :type includeEventListeners: bool
+        :param includePaintOrder: Whether to determine and include the paint order index of LayoutTreeNodes (default false).
+        :type includePaintOrder: bool
         """
         return (
             cls.build_send_payload("getSnapshot", {
                 "computedStyleWhitelist": computedStyleWhitelist,
                 "includeEventListeners": includeEventListeners,
+                "includePaintOrder": includePaintOrder,
             }),
             cls.convert_payload({
                 "domNodes": {

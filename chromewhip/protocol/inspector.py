@@ -68,3 +68,17 @@ class TargetCrashedEvent(BaseEvent):
     @classmethod
     def build_hash(cls):
         raise ValueError('Unable to build hash for non-hashable type')
+
+
+class TargetReloadedAfterCrashEvent(BaseEvent):
+
+    js_name = 'Inspector.targetReloadedAfterCrash'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')

@@ -39,7 +39,8 @@ class HeadlessExperimental(PayloadMixin):
                    ):
         """Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
 screenshot from the resulting frame. Requires that the target was created with enabled
-BeginFrameControl.
+BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
+https://goo.gl/3zHXhB for more background.
         :param frameTime: Timestamp of this BeginFrame (milliseconds since epoch). If not set, the current time will
 be used.
         :type frameTime: Runtime.Timestamp
@@ -54,7 +55,8 @@ true, only side effects of the BeginFrame will be run, such as layout and animat
 any visual updates may not be visible on the display or in screenshots.
         :type noDisplayUpdates: bool
         :param screenshot: If set, a screenshot of the frame will be captured and returned in the response. Otherwise,
-no screenshot will be captured.
+no screenshot will be captured. Note that capturing a screenshot can fail, for example,
+during renderer initialization. In such a case, no screenshot data will be returned.
         :type screenshot: ScreenshotParams
         """
         return (
@@ -70,15 +72,27 @@ no screenshot will be captured.
                     "class": bool,
                     "optional": False
                 },
-                "mainFrameContentUpdated": {
-                    "class": bool,
-                    "optional": False
-                },
                 "screenshotData": {
                     "class": str,
                     "optional": True
                 },
             })
+        )
+
+    @classmethod
+    def enterDeterministicMode(cls,
+                               initialDate: Optional['float'] = None,
+                               ):
+        """Puts the browser into deterministic mode.  Only effective for subsequently created web contents.
+Only supported in headless mode.  Once set there's no way of leaving deterministic mode.
+        :param initialDate: Number of seconds since the Epoch
+        :type initialDate: float
+        """
+        return (
+            cls.build_send_payload("enterDeterministicMode", {
+                "initialDate": initialDate,
+            }),
+            None
         )
 
     @classmethod
@@ -101,20 +115,6 @@ no screenshot will be captured.
             None
         )
 
-
-
-class MainFrameReadyForScreenshotsEvent(BaseEvent):
-
-    js_name = 'Headlessexperimental.mainFrameReadyForScreenshots'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class NeedsBeginFramesChangedEvent(BaseEvent):

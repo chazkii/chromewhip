@@ -554,6 +554,7 @@ dialog.
                  url: Union['str'],
                  referrer: Optional['str'] = None,
                  transitionType: Optional['TransitionType'] = None,
+                 frameId: Optional['FrameId'] = None,
                  ):
         """Navigates current page to the given URL.
         :param url: URL to navigate the page to.
@@ -562,12 +563,15 @@ dialog.
         :type referrer: str
         :param transitionType: Intended transition type.
         :type transitionType: TransitionType
+        :param frameId: Frame id to navigate, if not specified navigates the top frame.
+        :type frameId: FrameId
         """
         return (
             cls.build_send_payload("navigate", {
                 "url": url,
                 "referrer": referrer,
                 "transitionType": transitionType,
+                "frameId": frameId,
             }),
             cls.convert_payload({
                 "frameId": {
@@ -616,6 +620,7 @@ dialog.
                    ignoreInvalidPageRanges: Optional['bool'] = None,
                    headerTemplate: Optional['str'] = None,
                    footerTemplate: Optional['str'] = None,
+                   preferCSSPageSize: Optional['bool'] = None,
                    ):
         """Print page as PDF.
         :param landscape: Paper orientation. Defaults to false.
@@ -656,6 +661,9 @@ For example, <span class=title></span> would generate span containing the title.
         :type headerTemplate: str
         :param footerTemplate: HTML template for the print footer. Should use the same format as the `headerTemplate`.
         :type footerTemplate: str
+        :param preferCSSPageSize: Whether or not to prefer page size as defined by css. Defaults to false,
+in which case the content will be scaled to fit the paper size.
+        :type preferCSSPageSize: bool
         """
         return (
             cls.build_send_payload("printToPDF", {
@@ -673,6 +681,7 @@ For example, <span class=title></span> would generate span containing the title.
                 "ignoreInvalidPageRanges": ignoreInvalidPageRanges,
                 "headerTemplate": headerTemplate,
                 "footerTemplate": footerTemplate,
+                "preferCSSPageSize": preferCSSPageSize,
             }),
             cls.convert_payload({
                 "data": {

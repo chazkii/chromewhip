@@ -20,12 +20,12 @@ PressureLevel = str
 class SamplingProfileNode(ChromeTypeBase):
     def __init__(self,
                  size: Union['float'],
-                 count: Union['float'],
+                 total: Union['float'],
                  stack: Union['[]'],
                  ):
 
         self.size = size
-        self.count = count
+        self.total = total
         self.stack = stack
 
 
@@ -134,8 +134,41 @@ class Memory(PayloadMixin):
         )
 
     @classmethod
+    def getAllTimeSamplingProfile(cls):
+        """Retrieve native memory allocations profile
+collected since renderer process startup.
+        """
+        return (
+            cls.build_send_payload("getAllTimeSamplingProfile", {
+            }),
+            cls.convert_payload({
+                "profile": {
+                    "class": SamplingProfile,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getBrowserSamplingProfile(cls):
+        """Retrieve native memory allocations profile
+collected since browser process startup.
+        """
+        return (
+            cls.build_send_payload("getBrowserSamplingProfile", {
+            }),
+            cls.convert_payload({
+                "profile": {
+                    "class": SamplingProfile,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def getSamplingProfile(cls):
-        """Retrieve collected native memory profile.
+        """Retrieve native memory allocations profile collected since last
+`startSampling` call.
         """
         return (
             cls.build_send_payload("getSamplingProfile", {

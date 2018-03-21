@@ -279,6 +279,29 @@ class PlatformFontUsage(ChromeTypeBase):
         self.glyphCount = glyphCount
 
 
+# FontFace: Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
+class FontFace(ChromeTypeBase):
+    def __init__(self,
+                 fontFamily: Union['str'],
+                 fontStyle: Union['str'],
+                 fontVariant: Union['str'],
+                 fontWeight: Union['str'],
+                 fontStretch: Union['str'],
+                 unicodeRange: Union['str'],
+                 src: Union['str'],
+                 platformFontFamily: Union['str'],
+                 ):
+
+        self.fontFamily = fontFamily
+        self.fontStyle = fontStyle
+        self.fontVariant = fontVariant
+        self.fontWeight = fontWeight
+        self.fontStretch = fontStretch
+        self.unicodeRange = unicodeRange
+        self.src = src
+        self.platformFontFamily = platformFontFamily
+
+
 # CSSKeyframesRule: CSS keyframes rule representation.
 class CSSKeyframesRule(ChromeTypeBase):
     def __init__(self,
@@ -773,7 +796,8 @@ property
 
     @classmethod
     def stopRuleUsageTracking(cls):
-        """The list of rules with an indication of whether these were used
+        """Stop tracking rule usage and return the list of rules that were used since last call to
+`takeCoverageDelta` (or since start of coverage instrumentation)
         """
         return (
             cls.build_send_payload("stopRuleUsageTracking", {
@@ -810,8 +834,12 @@ class FontsUpdatedEvent(BaseEvent):
     hashable = []
     is_hashable = False
 
-    def __init__(self):
-        pass
+    def __init__(self,
+                 font: Union['FontFace', dict, None] = None,
+                 ):
+        if isinstance(font, dict):
+            font = FontFace(**font)
+        self.font = font
 
     @classmethod
     def build_hash(cls):

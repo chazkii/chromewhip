@@ -1287,7 +1287,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['parentId', 'pseudoElementId']
+    hashable = ['pseudoElementId', 'parentId']
     is_hashable = True
 
     def __init__(self,
@@ -1302,7 +1302,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, parentId, pseudoElementId):
+    def build_hash(cls, pseudoElementId, parentId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1341,7 +1341,7 @@ class SetChildNodesEvent(BaseEvent):
 class ShadowRootPoppedEvent(BaseEvent):
 
     js_name = 'Dom.shadowRootPopped'
-    hashable = ['hostId', 'rootId']
+    hashable = ['rootId', 'hostId']
     is_hashable = True
 
     def __init__(self,
@@ -1356,7 +1356,7 @@ class ShadowRootPoppedEvent(BaseEvent):
         self.rootId = rootId
 
     @classmethod
-    def build_hash(cls, hostId, rootId):
+    def build_hash(cls, rootId, hostId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

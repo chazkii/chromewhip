@@ -1102,7 +1102,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['interceptionId', 'frameId']
+    hashable = ['frameId', 'interceptionId']
     is_hashable = True
 
     def __init__(self,
@@ -1149,7 +1149,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.responseHeaders = responseHeaders
 
     @classmethod
-    def build_hash(cls, interceptionId, frameId):
+    def build_hash(cls, frameId, interceptionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1198,6 +1198,7 @@ class RequestWillBeSentEvent(BaseEvent):
                  redirectResponse: Union['Response', dict, None] = None,
                  type: Union['Page.ResourceType', dict, None] = None,
                  frameId: Union['Page.FrameId', dict, None] = None,
+                 hasUserGesture: Union['bool', dict, None] = None,
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1229,6 +1230,9 @@ class RequestWillBeSentEvent(BaseEvent):
         if isinstance(frameId, dict):
             frameId = Page.FrameId(**frameId)
         self.frameId = frameId
+        if isinstance(hasUserGesture, dict):
+            hasUserGesture = bool(**hasUserGesture)
+        self.hasUserGesture = hasUserGesture
 
     @classmethod
     def build_hash(cls, requestId, loaderId, frameId):
