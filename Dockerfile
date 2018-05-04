@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 MAINTAINER Charlie Smith <charlie@chuckus.nz>
 
@@ -6,15 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NONINTERACTIVE_SEEN=true \
     DISPLAY=:99
 
-RUN  echo "deb http://archive.ubuntu.com/ubuntu xenial main universe\n" > /etc/apt/sources.list \
-  && echo "deb http://archive.ubuntu.com/ubuntu xenial-updates main universe\n" >> /etc/apt/sources.list \
-  && echo "deb http://security.ubuntu.com/ubuntu xenial-security main universe\n" >> /etc/apt/sources.list
+RUN  echo "deb http://archive.ubuntu.com/ubuntu bionic main universe\n" > /etc/apt/sources.list \
+  && echo "deb http://archive.ubuntu.com/ubuntu bionic-updates main universe\n" >> /etc/apt/sources.list \
+  && echo "deb http://security.ubuntu.com/ubuntu bionic-security main universe\n" >> /etc/apt/sources.list
 
 RUN apt-get update -qqy
-RUN apt-get install -y software-properties-common python-software-properties tzdata
+RUN apt-get install -y software-properties-common tzdata
 
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get update -qqy
+# RUN add-apt-repository ppa:deadsnakes/ppa
+# RUN apt-get update -qqy
 
 ENV TZ "UTC"
 RUN echo "${TZ}" > /etc/timezone \
@@ -22,7 +22,7 @@ RUN echo "${TZ}" > /etc/timezone \
 
 # RUN apt-get -y install python3.6 xvfb \
 # TODO: remove once gui render.png working
-RUN apt-get -y install python3.6 xvfb curl
+RUN apt-get -y install python3.6 python3.6-distutils xvfb curl
 #  && rm /etc/apt/sources.list.d/debian.list \
 #  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
@@ -38,7 +38,9 @@ RUN mkdir -p ~/.vnc \
   && x11vnc -storepasswd secret ~/.vnc/passwd
 
 COPY scripts/get-pip.py /tmp/
-RUN python3.6 /tmp/get-pip.py && rm /tmp/get-pip.py
+# RUN python3.6 /tmp/get-pip.py && rm /tmp/get-pip.py
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
+# RUN apt-get -y install python3.6-pip
 
 RUN mkdir /usr/jsprofiles
 WORKDIR /usr/src/app
