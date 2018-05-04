@@ -125,18 +125,26 @@ class Accessibility(PayloadMixin):
     """
     @classmethod
     def getPartialAXTree(cls,
-                         nodeId: Union['DOM.NodeId'],
+                         nodeId: Optional['DOM.NodeId'] = None,
+                         backendNodeId: Optional['DOM.BackendNodeId'] = None,
+                         objectId: Optional['Runtime.RemoteObjectId'] = None,
                          fetchRelatives: Optional['bool'] = None,
                          ):
         """Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
-        :param nodeId: ID of node to get the partial accessibility tree for.
+        :param nodeId: Identifier of the node to get the partial accessibility tree for.
         :type nodeId: DOM.NodeId
+        :param backendNodeId: Identifier of the backend node to get the partial accessibility tree for.
+        :type backendNodeId: DOM.BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper to get the partial accessibility tree for.
+        :type objectId: Runtime.RemoteObjectId
         :param fetchRelatives: Whether to fetch this nodes ancestors, siblings and children. Defaults to true.
         :type fetchRelatives: bool
         """
         return (
             cls.build_send_payload("getPartialAXTree", {
                 "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
                 "fetchRelatives": fetchRelatives,
             }),
             cls.convert_payload({

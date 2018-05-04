@@ -616,7 +616,7 @@ node.
     def getStyleSheetText(cls,
                           styleSheetId: Union['StyleSheetId'],
                           ):
-        """Returns the current textual content and the URL for a stylesheet.
+        """Returns the current textual content for a stylesheet.
         :param styleSheetId: 
         :type styleSheetId: StyleSheetId
         """

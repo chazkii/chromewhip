@@ -169,6 +169,7 @@ enabled until the result for this command is received.
                             returnByValue: Optional['bool'] = None,
                             generatePreview: Optional['bool'] = None,
                             throwOnSideEffect: Optional['bool'] = None,
+                            timeout: Optional['Runtime.TimeDelta'] = None,
                             ):
         """Evaluates expression on a given call frame.
         :param callFrameId: Call frame identifier to evaluate on.
@@ -190,6 +191,8 @@ execution. Overrides `setPauseOnException` state.
         :type generatePreview: bool
         :param throwOnSideEffect: Whether to throw an exception if side effect cannot be ruled out during evaluation.
         :type throwOnSideEffect: bool
+        :param timeout: Terminate execution after timing out (number of milliseconds).
+        :type timeout: Runtime.TimeDelta
         """
         return (
             cls.build_send_payload("evaluateOnCallFrame", {
@@ -201,6 +204,7 @@ execution. Overrides `setPauseOnException` state.
                 "returnByValue": returnByValue,
                 "generatePreview": generatePreview,
                 "throwOnSideEffect": throwOnSideEffect,
+                "timeout": timeout,
             }),
             cls.convert_payload({
                 "result": {
@@ -541,6 +545,33 @@ breakpoint if this expression evaluates to true.
         )
 
     @classmethod
+    def setBreakpointOnFunctionCall(cls,
+                                    objectId: Union['Runtime.RemoteObjectId'],
+                                    condition: Optional['str'] = None,
+                                    ):
+        """Sets JavaScript breakpoint before each call to the given function.
+If another function was created from the same source as a given one,
+calling it will also trigger the breakpoint.
+        :param objectId: Function object id.
+        :type objectId: Runtime.RemoteObjectId
+        :param condition: Expression to use as a breakpoint condition. When specified, debugger will
+stop on the breakpoint if this expression evaluates to true.
+        :type condition: str
+        """
+        return (
+            cls.build_send_payload("setBreakpointOnFunctionCall", {
+                "objectId": objectId,
+                "condition": condition,
+            }),
+            cls.convert_payload({
+                "breakpointId": {
+                    "class": BreakpointId,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setBreakpointsActive(cls,
                              active: Union['bool'],
                              ):
@@ -804,7 +835,7 @@ class ResumedEvent(BaseEvent):
 class ScriptFailedToParseEvent(BaseEvent):
 
     js_name = 'Debugger.scriptFailedToParse'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -867,7 +898,7 @@ class ScriptFailedToParseEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -879,7 +910,7 @@ class ScriptFailedToParseEvent(BaseEvent):
 class ScriptParsedEvent(BaseEvent):
 
     js_name = 'Debugger.scriptParsed'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -946,7 +977,7 @@ class ScriptParsedEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

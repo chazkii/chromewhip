@@ -301,6 +301,7 @@ unavailable.
                              budget: Optional['float'] = None,
                              maxVirtualTimeTaskStarvationCount: Optional['int'] = None,
                              waitForNavigation: Optional['bool'] = None,
+                             initialVirtualTime: Optional['Network.TimeSinceEpoch'] = None,
                              ):
         """Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets
 the current virtual time policy.  Note this supersedes any previous time budget.
@@ -315,6 +316,8 @@ forwards to prevent deadlock.
         :param waitForNavigation: If set the virtual time policy change should be deferred until any frame starts navigating.
 Note any previous deferred policy change is superseded.
         :type waitForNavigation: bool
+        :param initialVirtualTime: If set, base::Time::Now will be overriden to initially return this value.
+        :type initialVirtualTime: Network.TimeSinceEpoch
         """
         return (
             cls.build_send_payload("setVirtualTimePolicy", {
@@ -322,10 +325,15 @@ Note any previous deferred policy change is superseded.
                 "budget": budget,
                 "maxVirtualTimeTaskStarvationCount": maxVirtualTimeTaskStarvationCount,
                 "waitForNavigation": waitForNavigation,
+                "initialVirtualTime": initialVirtualTime,
             }),
             cls.convert_payload({
                 "virtualTimeBase": {
                     "class": Runtime.Timestamp,
+                    "optional": False
+                },
+                "virtualTimeTicksBase": {
+                    "class": float,
                     "optional": False
                 },
             })

@@ -651,13 +651,13 @@ Defaults to false.
         :type ignoreInvalidPageRanges: bool
         :param headerTemplate: HTML template for the print header. Should be valid HTML markup with following
 classes used to inject printing values into them:
-- date - formatted print date
-- title - document title
-- url - document location
-- pageNumber - current page number
-- totalPages - total pages in the document
+- `date`: formatted print date
+- `title`: document title
+- `url`: document location
+- `pageNumber`: current page number
+- `totalPages`: total pages in the document
 
-For example, <span class=title></span> would generate span containing the title.
+For example, `<span class=title></span>` would generate span containing the title.
         :type headerTemplate: str
         :param footerTemplate: HTML template for the print footer. Should use the same format as the `headerTemplate`.
         :type footerTemplate: str
@@ -812,6 +812,21 @@ Argument will be ignored if reloading dataURL origin.
         """
         return (
             cls.build_send_payload("setAdBlockingEnabled", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def setBypassCSP(cls,
+                     enabled: Union['bool'],
+                     ):
+        """Enable page Content Security Policy by-passing.
+        :param enabled: Whether to bypass page CSP.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setBypassCSP", {
                 "enabled": enabled,
             }),
             None
@@ -1051,6 +1066,33 @@ unavailable.
         )
 
     @classmethod
+    def close(cls):
+        """Tries to close page, running its beforeunload hooks, if any.
+        """
+        return (
+            cls.build_send_payload("close", {
+            }),
+            None
+        )
+
+    @classmethod
+    def setWebLifecycleState(cls,
+                             state: Union['str'],
+                             ):
+        """Tries to update the web lifecycle state of the page.
+It will transition the page to the given state according to:
+https://github.com/WICG/web-lifecycle/
+        :param state: Target lifecycle state
+        :type state: str
+        """
+        return (
+            cls.build_send_payload("setWebLifecycleState", {
+                "state": state,
+            }),
+            None
+        )
+
+    @classmethod
     def stopScreencast(cls):
         """Stops sending each frame in the `screencastFrame`.
         """
@@ -1083,7 +1125,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1102,7 +1144,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1335,6 +1377,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
                  url: Union['str', dict],
                  message: Union['str', dict],
                  type: Union['DialogType', dict],
+                 hasBrowserHandler: Union['bool', dict],
                  defaultPrompt: Union['str', dict, None] = None,
                  ):
         if isinstance(url, dict):
@@ -1346,6 +1389,9 @@ class JavascriptDialogOpeningEvent(BaseEvent):
         if isinstance(type, dict):
             type = DialogType(**type)
         self.type = type
+        if isinstance(hasBrowserHandler, dict):
+            hasBrowserHandler = bool(**hasBrowserHandler)
+        self.hasBrowserHandler = hasBrowserHandler
         if isinstance(defaultPrompt, dict):
             defaultPrompt = str(**defaultPrompt)
         self.defaultPrompt = defaultPrompt
@@ -1358,7 +1404,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1381,7 +1427,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1406,6 +1452,33 @@ class LoadEventFiredEvent(BaseEvent):
     @classmethod
     def build_hash(cls):
         raise ValueError('Unable to build hash for non-hashable type')
+
+
+class NavigatedWithinDocumentEvent(BaseEvent):
+
+    js_name = 'Page.navigatedWithinDocument'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 url: Union['str', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+
+    @classmethod
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class ScreencastFrameEvent(BaseEvent):

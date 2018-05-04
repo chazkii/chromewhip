@@ -127,7 +127,7 @@ class Security(PayloadMixin):
                                      override: Union['bool'],
                                      ):
         """Enable/disable overriding certificate errors. If enabled, all certificate error events need to
-be handled by the DevTools client and should be answered with handleCertificateError commands.
+be handled by the DevTools client and should be answered with `handleCertificateError` commands.
         :param override: If true, certificate errors will be overridden.
         :type override: bool
         """

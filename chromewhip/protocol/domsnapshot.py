@@ -138,6 +138,7 @@ class DOMSnapshot(PayloadMixin):
                     computedStyleWhitelist: Union['[]'],
                     includeEventListeners: Optional['bool'] = None,
                     includePaintOrder: Optional['bool'] = None,
+                    includeUserAgentShadowTree: Optional['bool'] = None,
                     ):
         """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
 template contents, and imported documents) in a flattened array, as well as layout and
@@ -149,12 +150,15 @@ flattened.
         :type includeEventListeners: bool
         :param includePaintOrder: Whether to determine and include the paint order index of LayoutTreeNodes (default false).
         :type includePaintOrder: bool
+        :param includeUserAgentShadowTree: Whether to include UA shadow tree in the snapshot (default false).
+        :type includeUserAgentShadowTree: bool
         """
         return (
             cls.build_send_payload("getSnapshot", {
                 "computedStyleWhitelist": computedStyleWhitelist,
                 "includeEventListeners": includeEventListeners,
                 "includePaintOrder": includePaintOrder,
+                "includeUserAgentShadowTree": includeUserAgentShadowTree,
             }),
             cls.convert_payload({
                 "domNodes": {

@@ -208,6 +208,9 @@ class ExceptionDetails(ChromeTypeBase):
 # Timestamp: Number of milliseconds since epoch.
 Timestamp = float
 
+# TimeDelta: Number of milliseconds.
+TimeDelta = float
+
 # CallFrame: Stack entry for runtime errors and assertions.
 class CallFrame(ChromeTypeBase):
     def __init__(self,
@@ -441,6 +444,7 @@ context.
                  userGesture: Optional['bool'] = None,
                  awaitPromise: Optional['bool'] = None,
                  throwOnSideEffect: Optional['bool'] = None,
+                 timeout: Optional['TimeDelta'] = None,
                  ):
         """Evaluates expression on global object.
         :param expression: Expression to evaluate.
@@ -466,6 +470,8 @@ resolved.
         :type awaitPromise: bool
         :param throwOnSideEffect: Whether to throw an exception if side effect cannot be ruled out during evaluation.
         :type throwOnSideEffect: bool
+        :param timeout: Terminate execution after timing out (number of milliseconds).
+        :type timeout: TimeDelta
         """
         return (
             cls.build_send_payload("evaluate", {
@@ -479,6 +485,7 @@ resolved.
                 "userGesture": userGesture,
                 "awaitPromise": awaitPromise,
                 "throwOnSideEffect": throwOnSideEffect,
+                "timeout": timeout,
             }),
             cls.convert_payload({
                 "result": {

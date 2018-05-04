@@ -31,6 +31,7 @@ class TargetInfo(ChromeTypeBase):
                  url: Union['str'],
                  attached: Union['bool'],
                  openerId: Optional['TargetID'] = None,
+                 browserContextId: Optional['BrowserContextID'] = None,
                  ):
 
         self.targetId = targetId
@@ -39,6 +40,7 @@ class TargetInfo(ChromeTypeBase):
         self.url = url
         self.attached = attached
         self.openerId = openerId
+        self.browserContextId = browserContextId
 
 
 # RemoteLocation: 
@@ -141,7 +143,7 @@ one.
         :type width: int
         :param height: Frame height in DIP (headless chrome only).
         :type height: int
-        :param browserContextId: The browser context to create the page in (headless chrome only).
+        :param browserContextId: The browser context to create the page in.
         :type browserContextId: BrowserContextID
         :param enableBeginFrameControl: Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
 not supported on MacOS yet, false by default).
@@ -186,7 +188,8 @@ not supported on MacOS yet, false by default).
     def disposeBrowserContext(cls,
                               browserContextId: Union['BrowserContextID'],
                               ):
-        """Deletes a BrowserContext, will fail of any open page uses it.
+        """Deletes a BrowserContext. All the belonging pages will be closed without calling their
+beforeunload hooks.
         :param browserContextId: 
         :type browserContextId: BrowserContextID
         """
@@ -194,12 +197,7 @@ not supported on MacOS yet, false by default).
             cls.build_send_payload("disposeBrowserContext", {
                 "browserContextId": browserContextId,
             }),
-            cls.convert_payload({
-                "success": {
-                    "class": bool,
-                    "optional": False
-                },
-            })
+            None
         )
 
     @classmethod

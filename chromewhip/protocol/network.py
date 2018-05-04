@@ -147,6 +147,7 @@ class SecurityDetails(ChromeTypeBase):
                  validFrom: Union['TimeSinceEpoch'],
                  validTo: Union['TimeSinceEpoch'],
                  signedCertificateTimestampList: Union['[SignedCertificateTimestamp]'],
+                 certificateTransparencyCompliance: Union['CertificateTransparencyCompliance'],
                  keyExchangeGroup: Optional['str'] = None,
                  mac: Optional['str'] = None,
                  ):
@@ -163,7 +164,11 @@ class SecurityDetails(ChromeTypeBase):
         self.validFrom = validFrom
         self.validTo = validTo
         self.signedCertificateTimestampList = signedCertificateTimestampList
+        self.certificateTransparencyCompliance = certificateTransparencyCompliance
 
+
+# CertificateTransparencyCompliance: Whether the request complied with Certificate Transparency policy.
+CertificateTransparencyCompliance = str
 
 # BlockedReason: The reason why request was blocked.
 BlockedReason = str
@@ -719,6 +724,29 @@ detailed cookie information in the `cookies` field.
         )
 
     @classmethod
+    def takeResponseBodyForInterceptionAsStream(cls,
+                                                interceptionId: Union['InterceptionId'],
+                                                ):
+        """Returns a handle to the stream representing the response body. Note that after this command,
+the intercepted request can't be continued as is -- you either need to cancel it or to provide
+the response body. The stream only supports sequential read, IO.read will fail if the position
+is specified.
+        :param interceptionId: 
+        :type interceptionId: InterceptionId
+        """
+        return (
+            cls.build_send_payload("takeResponseBodyForInterceptionAsStream", {
+                "interceptionId": interceptionId,
+            }),
+            cls.convert_payload({
+                "stream": {
+                    "class": IO.StreamHandle,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def replayXHR(cls,
                   requestId: Union['RequestId'],
                   ):
@@ -985,7 +1013,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1012,7 +1040,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1111,6 +1139,7 @@ class RequestInterceptedEvent(BaseEvent):
                  frameId: Union['Page.FrameId', dict],
                  resourceType: Union['Page.ResourceType', dict],
                  isNavigationRequest: Union['bool', dict],
+                 isDownload: Union['bool', dict, None] = None,
                  redirectUrl: Union['str', dict, None] = None,
                  authChallenge: Union['AuthChallenge', dict, None] = None,
                  responseErrorReason: Union['ErrorReason', dict, None] = None,
@@ -1132,6 +1161,9 @@ class RequestInterceptedEvent(BaseEvent):
         if isinstance(isNavigationRequest, dict):
             isNavigationRequest = bool(**isNavigationRequest)
         self.isNavigationRequest = isNavigationRequest
+        if isinstance(isDownload, dict):
+            isDownload = bool(**isDownload)
+        self.isDownload = isDownload
         if isinstance(redirectUrl, dict):
             redirectUrl = str(**redirectUrl)
         self.redirectUrl = redirectUrl
@@ -1184,7 +1216,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1235,7 +1267,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1278,7 +1310,7 @@ class ResourceChangedPriorityEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1309,7 +1341,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
