@@ -48,7 +48,7 @@ import asyncio
 import logging
 
 from chromewhip import Chrome
-from chromewhip.protocol import page, dom
+from chromewhip.protocol import browser, page, dom
 
 # see logging from chromewhip
 logging.basicConfig(level=logging.DEBUG)
@@ -97,6 +97,9 @@ assert isinstance(dom_obj, dom.Node)
 
 print(dom_obj.nodeId)
 print(dom_obj.nodeName)
+
+cmd = browser.Browser.close()
+result = loop.run_until_complete(tab.send_command(cmd))
 ```
 
 
