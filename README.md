@@ -26,7 +26,7 @@ docker run --init -it --rm --shm-size=1024m -p=127.0.0.1:8080:8080 --cap-add=SYS
 
 Refer to the HTTP API reference at the bottom of the README for what features are available.
 
-## How to use the driver
+## How to use the low-level driver
 
 As part of the Chromewhip service, a Python 3.6 asyncio compatible driver for Chrome devtools protocol was 
 developed and can be leveraged without having to run the HTTP server. The advantages of 
@@ -61,17 +61,20 @@ c = Chrome(host=HOST, port=PORT)
 
 loop.run_until_complete(c.connect())
 
+    
+# use the startup tab or create a new one
 tab = c.tabs[0]
+tab = loop.run_until_complete(c.create_tab())
 
 loop.run_until_complete(tab.enable_page_events())
 
-cmd = page.Page.navigate(url='http://nzherald.co.nz')
-
+def sync_cmd(*args, **kwargs):
+    return loop.run_until_complete(tab.send_command(*args, **kwargs))
+    
 # send_command will return once the frameStoppedLoading event is received THAT matches
 # the frameId that it is in the returned command payload.
-await_on_event_type = page.FrameStoppedLoadingEvent
-
-result = loop.run_until_complete(tab.send_command(cmd, await_on_event_type=await_on_event_type))
+result = sync_cmd(page.Page.navigate(url='http://nzherald.co.nz'), 
+                  await_on_event_type=page.FrameStoppedLoadingEvent)
 
 # send_command always returns a dict with keys `ack` and `event`
 # `ack` contains the payload on response of a command
@@ -80,14 +83,13 @@ ack = result['ack']['result']
 event = result['event']
 assert ack['frameId'] == event.frameId
 
-cmd = page.Page.setDeviceMetricsOverride(width=800,
-                                         height=600,
-                                         deviceScaleFactor=0.0,
-                                         mobile=False)
+sync_cmd(page.Page.setDeviceMetricsOverride(width=800,
+                                            height=600,
+                                            deviceScaleFactor=0.0,
+                                            mobile=False))
 
-loop.run_until_complete(tab.send_command(cmd))
 
-result = loop.run_until_complete(tab.send_command(dom.DOM.getDocument()))
+result = sync_cmd(dom.DOM.getDocument())
 
 dom_obj = result['ack']['result']['root']
 
@@ -98,8 +100,12 @@ assert isinstance(dom_obj, dom.Node)
 print(dom_obj.nodeId)
 print(dom_obj.nodeName)
 
-cmd = browser.Browser.close()
-result = loop.run_until_complete(tab.send_command(cmd))
+# close the tab
+loop.run_until_complete(c.close_tab(tab))
+
+# or close the browser via Devtools API
+tab = c.tabs[0]
+sync_cmd(browser.Browser.close())
 ```
 
 

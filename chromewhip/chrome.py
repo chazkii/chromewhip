@@ -35,7 +35,8 @@ class JSScriptError(ChromewhipException):
 
 class ChromeTab(metaclass=SyncAdder):
 
-    def __init__(self, title, url, ws_uri):
+    def __init__(self, title, url, ws_uri, tab_id):
+        self.id_ = tab_id
         self._title = title
         self._url = url
         self._ws_uri = ws_uri
@@ -52,6 +53,18 @@ class ChromeTab(metaclass=SyncAdder):
         self._log = logging.getLogger('chromewhip.chrome.ChromeTab')
         self._send_log = logging.getLogger('chromewhip.chrome.ChromeTab.send_handler')
         self._recv_log = logging.getLogger('chromewhip.chrome.ChromeTab.recv_handler')
+
+    @classmethod
+    async def create_from_json(cls, json_, host, port):
+        ws_url = json_.get('webSocketDebuggerUrl')
+        if not ws_url:
+            tab_id = json_['id']
+            ws_url = 'ws://{}:{}/devtools/page/{}'.format(host,
+                                                          port,
+                                                          tab_id)
+        t = cls(json_['title'], json_['url'],  ws_url, json_['id'])
+        await t.connect()
+        return t
 
     async def connect(self):
         self._ws = await websockets.connect(self._ws_uri, max_size=MAX_PAYLOAD_SIZE_BYTES)  # 16MB
@@ -300,7 +313,7 @@ class ChromeTab(metaclass=SyncAdder):
         return '%s - %s' % (self.title, self.url)
 
     def __repr__(self):
-        return 'ChromeTab("%s", "%s", "%s")' % (self.title, self.url, self.ws_uri)
+        return f'ChromeTab("{self.title}", "{self.url}", "{self.ws_uri}, "{self.id_}")'
 
 
 class Chrome(metaclass=SyncAdder):
@@ -330,14 +343,7 @@ class Chrome(metaclass=SyncAdder):
                 if not len(data):
                     self._log.warning('Empty data, will attempt to reconnect until able to get pages.')
                 for tab in filter(lambda x: x['type'] == 'page', data):
-                    ws_url = tab.get('webSocketDebuggerUrl')
-                    if not ws_url:
-                        tab_id = tab['id']
-                        ws_url = 'ws://{}:{}/devtools/page/{}'.format(self._host,
-                                                                      self._port,
-                                                                      tab_id)
-                    t = ChromeTab(tab['title'], tab['url'], ws_url)
-                    await t.connect()
+                    t = await ChromeTab.create_from_json(tab, self._host, self._port)
                     tabs.append(t)
                 self._tabs = tabs
                 self._log.debug("Connected to Chrome! Found {} tabs".format(len(self._tabs)))
@@ -361,4 +367,18 @@ class Chrome(metaclass=SyncAdder):
         if not len(self._tabs):
             raise ValueError('Must call connect_s or connect first!')
         return tuple(self._tabs)
+
+    async def create_tab(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self._url + '/json/new') as resp:
+                data = await resp.json()
+                t = await ChromeTab.create_from_json(data, self._host, self._port)
+                self._tabs.append(t)
+        return t
+
+    async def close_tab(self, tab):
+        await tab.disconnect()
+        async with aiohttp.ClientSession() as session:
+            await session.get(self._url + f'/json/close/{tab.id_}')
+
 

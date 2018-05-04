@@ -25,7 +25,7 @@ class ChromeMock:
         self._tabs = []
 
     async def connect(self):
-        tab = chrome.ChromeTab('test', 'about:blank', 'ws://%s:%s' % (TEST_HOST, TEST_PORT))
+        tab = chrome.ChromeTab('test', 'about:blank', f'ws://{TEST_HOST}:{TEST_PORT}', '123')
         self._tabs = [tab]
 
     @property
