@@ -28,12 +28,33 @@ class PayloadMixin:
                     expected_type_ = expected_['class']
                 except KeyError:
                     raise KeyError('name %s not in expected payload of %s' % (name, types))
-                if issubclass(expected_type_, ChromeTypeBase):
-                    result[name] = expected_type_(**val)
-                elif re.match(r'.*Id$', name) and isinstance(val, str):
-                    result[name] = expected_type_(val)
-                elif not isinstance(val, expected_type_):
-                    raise ValueError('%s is not expected type %s, instead is %s' % (val, expected_type_, val))
+
+                if type(val) is list:
+                    if type(expected_type_) is not list:
+                        raise ValueError('payload contains list - expected %s' % (expected_type_))
+
+                    if len(expected_type_) != 1:
+                        raise ValueError('payload contains list - expected %s' % (expected_type_))
+
+                    result[name] = []
+                    expected_type_ = expected_type_[0]
+
+                    for subvalue in val:
+                        if issubclass(expected_type_, ChromeTypeBase):
+                            result[name].append(expected_type_(**subvalue))
+                        elif re.match(r'.*Id$', name) and isinstance(subvalue, str):
+                            result[name].append(expected_type_(subvalue))
+                        elif not isinstance(subvalue, expected_type_):
+                            raise ValueError('%s is not expected type %s, instead is %s' % (subvalue, expected_type_, subvalue))
+
+                else:
+                    if issubclass(expected_type_, ChromeTypeBase):
+                        result[name] = expected_type_(**val)
+                    elif re.match(r'.*Id$', name) and isinstance(val, str):
+                        result[name] = expected_type_(val)
+                    elif not isinstance(val, expected_type_):
+                        raise ValueError('%s is not expected type %s, instead is %s' % (val, expected_type_, val))
+
             for rn, rv in types_.items():
                 if not rv.get('optional', False):
                     raise ValueError('expected payload param "%s" is missing!' % rn)
