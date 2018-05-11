@@ -1,14 +1,15 @@
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
-from os import path
+from os import path, chdir
 
 here = path.abspath(path.dirname(__file__))
 
+chdir(here)
 
 def readme():
     try:
-        with open('README.rst') as f:
+        with open(path.join(here, 'README.md')) as f:
             return f.read()
     except FileNotFoundError:
         return ""
