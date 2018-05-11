@@ -281,8 +281,7 @@ class ChromeTab(metaclass=SyncAdder):
 
     async def html(self):
         result = await self.evaluate('document.documentElement.outerHTML')
-        value = result['ack']['result']['result'].value
-        return value.encode('utf-8')
+        return result['ack']['result']['result'].value
 
     async def screenshot(self):
         result = await self.send_command(page.Page.captureScreenshot(format='png', fromSurface=False))
