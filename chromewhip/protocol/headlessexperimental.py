@@ -31,10 +31,7 @@ class HeadlessExperimental(PayloadMixin):
     """
     @classmethod
     def beginFrame(cls,
-                   frameTime: Optional['Runtime.Timestamp'] = None,
                    frameTimeTicks: Optional['float'] = None,
-                   deadline: Optional['Runtime.Timestamp'] = None,
-                   deadlineTicks: Optional['float'] = None,
                    interval: Optional['float'] = None,
                    noDisplayUpdates: Optional['bool'] = None,
                    screenshot: Optional['ScreenshotParams'] = None,
@@ -43,18 +40,9 @@ class HeadlessExperimental(PayloadMixin):
 screenshot from the resulting frame. Requires that the target was created with enabled
 BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
 https://goo.gl/3zHXhB for more background.
-        :param frameTime: Timestamp of this BeginFrame (milliseconds since epoch). If not set, the current time will
-be used unless frameTicks is specified.
-        :type frameTime: Runtime.Timestamp
         :param frameTimeTicks: Timestamp of this BeginFrame in Renderer TimeTicks (milliseconds of uptime). If not set,
-the current time will be used unless frameTime is specified.
+the current time will be used.
         :type frameTimeTicks: float
-        :param deadline: Deadline of this BeginFrame (milliseconds since epoch). If not set, the deadline will be
-calculated from the frameTime and interval unless deadlineTicks is specified.
-        :type deadline: Runtime.Timestamp
-        :param deadlineTicks: Deadline of this BeginFrame in Renderer TimeTicks  (milliseconds of uptime). If not set,
-the deadline will be calculated from the frameTime and interval unless deadline is specified.
-        :type deadlineTicks: float
         :param interval: The interval between BeginFrames that is reported to the compositor, in milliseconds.
 Defaults to a 60 frames/second interval, i.e. about 16.666 milliseconds.
         :type interval: float
@@ -69,10 +57,7 @@ during renderer initialization. In such a case, no screenshot data will be retur
         """
         return (
             cls.build_send_payload("beginFrame", {
-                "frameTime": frameTime,
                 "frameTimeTicks": frameTimeTicks,
-                "deadline": deadline,
-                "deadlineTicks": deadlineTicks,
                 "interval": interval,
                 "noDisplayUpdates": noDisplayUpdates,
                 "screenshot": screenshot,
@@ -87,22 +72,6 @@ during renderer initialization. In such a case, no screenshot data will be retur
                     "optional": True
                 },
             })
-        )
-
-    @classmethod
-    def enterDeterministicMode(cls,
-                               initialDate: Optional['float'] = None,
-                               ):
-        """Puts the browser into deterministic mode.  Only effective for subsequently created web contents.
-Only supported in headless mode.  Once set there's no way of leaving deterministic mode.
-        :param initialDate: Number of seconds since the Epoch
-        :type initialDate: float
-        """
-        return (
-            cls.build_send_payload("enterDeterministicMode", {
-                "initialDate": initialDate,
-            }),
-            None
         )
 
     @classmethod

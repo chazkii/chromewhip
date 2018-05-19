@@ -1125,7 +1125,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1144,7 +1144,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1404,7 +1404,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1427,7 +1427,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
