@@ -129,6 +129,21 @@ one.
         )
 
     @classmethod
+    def getBrowserContexts(cls):
+        """Returns all browser contexts created with `Target.createBrowserContext` method.
+        """
+        return (
+            cls.build_send_payload("getBrowserContexts", {
+            }),
+            cls.convert_payload({
+                "browserContextIds": {
+                    "class": [BrowserContextID],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def createTarget(cls,
                      url: Union['str'],
                      width: Optional['int'] = None,

@@ -328,10 +328,6 @@ Note any previous deferred policy change is superseded.
                 "initialVirtualTime": initialVirtualTime,
             }),
             cls.convert_payload({
-                "virtualTimeBase": {
-                    "class": Runtime.Timestamp,
-                    "optional": False
-                },
                 "virtualTimeTicksBase": {
                     "class": float,
                     "optional": False

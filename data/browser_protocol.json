@@ -5240,11 +5240,6 @@
                     ],
                     "returns": [
                         {
-                            "name": "virtualTimeBase",
-                            "description": "Absolute timestamp at which virtual time was first enabled (milliseconds since epoch).",
-                            "$ref": "Runtime.Timestamp"
-                        },
-                        {
                             "name": "virtualTimeTicksBase",
                             "description": "Absolute timestamp at which virtual time was first enabled (up time in milliseconds).",
                             "type": "number"
@@ -5341,26 +5336,8 @@
                     "description": "Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a\nscreenshot from the resulting frame. Requires that the target was created with enabled\nBeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also\nhttps://goo.gl/3zHXhB for more background.",
                     "parameters": [
                         {
-                            "name": "frameTime",
-                            "description": "Timestamp of this BeginFrame (milliseconds since epoch). If not set, the current time will\nbe used unless frameTicks is specified.",
-                            "optional": true,
-                            "$ref": "Runtime.Timestamp"
-                        },
-                        {
                             "name": "frameTimeTicks",
-                            "description": "Timestamp of this BeginFrame in Renderer TimeTicks (milliseconds of uptime). If not set,\nthe current time will be used unless frameTime is specified.",
-                            "optional": true,
-                            "type": "number"
-                        },
-                        {
-                            "name": "deadline",
-                            "description": "Deadline of this BeginFrame (milliseconds since epoch). If not set, the deadline will be\ncalculated from the frameTime and interval unless deadlineTicks is specified.",
-                            "optional": true,
-                            "$ref": "Runtime.Timestamp"
-                        },
-                        {
-                            "name": "deadlineTicks",
-                            "description": "Deadline of this BeginFrame in Renderer TimeTicks  (milliseconds of uptime). If not set,\nthe deadline will be calculated from the frameTime and interval unless deadline is specified.",
+                            "description": "Timestamp of this BeginFrame in Renderer TimeTicks (milliseconds of uptime). If not set,\nthe current time will be used.",
                             "optional": true,
                             "type": "number"
                         },
@@ -5394,18 +5371,6 @@
                             "description": "Base64-encoded image data of the screenshot, if one was requested and successfully taken.",
                             "optional": true,
                             "type": "string"
-                        }
-                    ]
-                },
-                {
-                    "name": "enterDeterministicMode",
-                    "description": "Puts the browser into deterministic mode.  Only effective for subsequently created web contents.\nOnly supported in headless mode.  Once set there's no way of leaving deterministic mode.",
-                    "parameters": [
-                        {
-                            "name": "initialDate",
-                            "description": "Number of seconds since the Epoch",
-                            "optional": true,
-                            "type": "number"
                         }
                     ]
                 },
@@ -7203,7 +7168,9 @@
                         "ConnectionFailed",
                         "NameNotResolved",
                         "InternetDisconnected",
-                        "AddressUnreachable"
+                        "AddressUnreachable",
+                        "BlockedByClient",
+                        "BlockedByResponse"
                     ]
                 },
                 {
@@ -7557,13 +7524,13 @@
                     "description": "The reason why request was blocked.",
                     "type": "string",
                     "enum": [
+                        "other",
                         "csp",
                         "mixed-content",
                         "origin",
                         "inspector",
                         "subresource-filter",
-                        "content-type",
-                        "other"
+                        "content-type"
                     ]
                 },
                 {
@@ -8029,6 +7996,114 @@
                             "description": "Stage at wich to begin intercepting requests. Default is Request.",
                             "optional": true,
                             "$ref": "InterceptionStage"
+                        }
+                    ]
+                },
+                {
+                    "id": "SignedExchangeSignature",
+                    "description": "Information about a signed exchange signature.\nhttps://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "label",
+                            "description": "Signed exchange signature label.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "integrity",
+                            "description": "Signed exchange signature integrity.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "certUrl",
+                            "description": "Signed exchange signature cert Url.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "validityUrl",
+                            "description": "Signed exchange signature validity Url.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "date",
+                            "description": "Signed exchange signature date.",
+                            "type": "integer"
+                        },
+                        {
+                            "name": "expires",
+                            "description": "Signed exchange signature expires.",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                {
+                    "id": "SignedExchangeHeader",
+                    "description": "Information about a signed exchange header.\nhttps://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "requestUrl",
+                            "description": "Signed exchange request URL.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "requestMethod",
+                            "description": "Signed exchange request method.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "responseCode",
+                            "description": "Signed exchange response code.",
+                            "type": "integer"
+                        },
+                        {
+                            "name": "responseHeaders",
+                            "description": "Signed exchange response headers.",
+                            "$ref": "Headers"
+                        },
+                        {
+                            "name": "signatures",
+                            "description": "Signed exchange response signature.",
+                            "type": "array",
+                            "items": {
+                                "$ref": "SignedExchangeSignature"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "SignedExchangeInfo",
+                    "description": "Information about a signed exchange response.",
+                    "experimental": true,
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "outerResponse",
+                            "description": "The outer response of signed HTTP exchange which was received from network.",
+                            "$ref": "Response"
+                        },
+                        {
+                            "name": "header",
+                            "description": "Information about the signed exchange header.",
+                            "optional": true,
+                            "$ref": "SignedExchangeHeader"
+                        },
+                        {
+                            "name": "securityDetails",
+                            "description": "Security details for the signed exchange header.",
+                            "optional": true,
+                            "$ref": "SecurityDetails"
+                        },
+                        {
+                            "name": "errors",
+                            "description": "Errors occurred while handling the signed exchagne.",
+                            "optional": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
                         }
                     ]
                 }
@@ -8876,6 +8951,23 @@
                     ]
                 },
                 {
+                    "name": "signedExchangeReceived",
+                    "description": "Fired when a signed exchange was received over the network",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "requestId",
+                            "description": "Request identifier.",
+                            "$ref": "RequestId"
+                        },
+                        {
+                            "name": "info",
+                            "description": "Information about the signed exchange response.",
+                            "$ref": "SignedExchangeInfo"
+                        }
+                    ]
+                },
+                {
                     "name": "responseReceived",
                     "description": "Fired when HTTP response is available.",
                     "parameters": [
@@ -9467,6 +9559,7 @@
                         "EventSource",
                         "WebSocket",
                         "Manifest",
+                        "SignedExchange",
                         "Other"
                     ]
                 },
@@ -12035,6 +12128,21 @@
                             "name": "browserContextId",
                             "description": "The id of the context created.",
                             "$ref": "BrowserContextID"
+                        }
+                    ]
+                },
+                {
+                    "name": "getBrowserContexts",
+                    "description": "Returns all browser contexts created with `Target.createBrowserContext` method.",
+                    "experimental": true,
+                    "returns": [
+                        {
+                            "name": "browserContextIds",
+                            "description": "An array of browser context ids.",
+                            "type": "array",
+                            "items": {
+                                "$ref": "BrowserContextID"
+                            }
                         }
                     ]
                 },

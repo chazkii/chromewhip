@@ -385,6 +385,57 @@ class RequestPattern(ChromeTypeBase):
         self.interceptionStage = interceptionStage
 
 
+# SignedExchangeSignature: Information about a signed exchange signature.https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
+class SignedExchangeSignature(ChromeTypeBase):
+    def __init__(self,
+                 label: Union['str'],
+                 integrity: Union['str'],
+                 certUrl: Union['str'],
+                 validityUrl: Union['str'],
+                 date: Union['int'],
+                 expires: Union['int'],
+                 ):
+
+        self.label = label
+        self.integrity = integrity
+        self.certUrl = certUrl
+        self.validityUrl = validityUrl
+        self.date = date
+        self.expires = expires
+
+
+# SignedExchangeHeader: Information about a signed exchange header.https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
+class SignedExchangeHeader(ChromeTypeBase):
+    def __init__(self,
+                 requestUrl: Union['str'],
+                 requestMethod: Union['str'],
+                 responseCode: Union['int'],
+                 responseHeaders: Union['Headers'],
+                 signatures: Union['[SignedExchangeSignature]'],
+                 ):
+
+        self.requestUrl = requestUrl
+        self.requestMethod = requestMethod
+        self.responseCode = responseCode
+        self.responseHeaders = responseHeaders
+        self.signatures = signatures
+
+
+# SignedExchangeInfo: Information about a signed exchange response.
+class SignedExchangeInfo(ChromeTypeBase):
+    def __init__(self,
+                 outerResponse: Union['Response'],
+                 header: Optional['SignedExchangeHeader'] = None,
+                 securityDetails: Optional['SecurityDetails'] = None,
+                 errors: Optional['[]'] = None,
+                 ):
+
+        self.outerResponse = outerResponse
+        self.header = header
+        self.securityDetails = securityDetails
+        self.errors = errors
+
+
 class Network(PayloadMixin):
     """ Network domain allows tracking network activities of the page. It exposes information about http,
 file, data and other requests and responses, their headers, bodies, timing, etc.
@@ -1013,7 +1064,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['eventId', 'requestId']
+    hashable = ['requestId', 'eventId']
     is_hashable = True
 
     def __init__(self,
@@ -1040,7 +1091,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, eventId, requestId):
+    def build_hash(cls, requestId, eventId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1130,7 +1181,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['frameId', 'interceptionId']
+    hashable = ['interceptionId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1181,7 +1232,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.responseHeaders = responseHeaders
 
     @classmethod
-    def build_hash(cls, frameId, interceptionId):
+    def build_hash(cls, interceptionId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1216,7 +1267,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['requestId', 'loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1267,7 +1318,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, requestId, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1307,10 +1358,37 @@ class ResourceChangedPriorityEvent(BaseEvent):
         return h
 
 
+class SignedExchangeReceivedEvent(BaseEvent):
+
+    js_name = 'Network.signedExchangeReceived'
+    hashable = ['requestId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 info: Union['SignedExchangeInfo', dict],
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(info, dict):
+            info = SignedExchangeInfo(**info)
+        self.info = info
+
+    @classmethod
+    def build_hash(cls, requestId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['requestId', 'loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1341,7 +1419,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, requestId, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
