@@ -9,7 +9,7 @@ chdir(here)
 
 def readme():
     try:
-        with open(path.join(here, 'README.md')) as f:
+        with open(path.join(here, 'README.md'), encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         return ""
