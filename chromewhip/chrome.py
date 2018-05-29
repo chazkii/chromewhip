@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import logging
+import datetime
 from typing import Optional
 
 import aiohttp
@@ -10,7 +11,7 @@ import websockets.protocol
 
 from chromewhip import helpers
 from chromewhip.base import SyncAdder
-from chromewhip.protocol import page, runtime, target, input, inspector, browser, accessibility
+from chromewhip.protocol import page, runtime, target, input, inspector, browser, accessibility, network, dom
 
 TIMEOUT_S = 25
 MAX_PAYLOAD_SIZE_BYTES = 2 ** 23
@@ -29,13 +30,63 @@ class ProtocolError(ChromewhipException):
     pass
 
 
+class DevToolsTraceEntry(object):
+    def __init__(self, direction, message):
+        self.timestamp = datetime.datetime.now()
+        self.direction = direction
+        self.message = message
+
+class DevToolsTraceLog(object):
+    TX = 'tx'
+    RX = 'rx'
+
+    def __init__(self):
+        self._entries = []
+
+    def rx(self, message):
+        self._entries.append(DevToolsTraceEntry(DevToolsTraceLog.RX, message))
+
+    def tx(self, message):
+        self._entries.append(DevToolsTraceEntry(DevToolsTraceLog.TX, message))
+
+    @property
+    def entries(self):
+        return self._entries
+
+    # def saveHar(self, filestream):
+    #     # page_loads = []
+    #     # requests = []
+    #     # for idx_entry, entry in enumerate(self._entries):
+    #     #     if entry.direction == DevToolsTrace.RX:
+    #     #         # Locate all page load events that completed
+    #     #         if 'method' in entry.message:
+    #     #
+    #     #             if entry.message['method'] == 'Page.frameStartedLoading':
+    #     #                 ''
+    #     #         pass
+    #
+    #     pages = dict()
+    #
+    #     entries = []
+    #
+    #     # TODO populate browser information
+    #     # browser = dict()
+    #
+    #     creator = dict(name='Chromewhip', version='0.1', comment='https://github.com/Cosive/chromewhip')
+    #     har = dict(log=dict(version='1.2', creator=creator, pages=pages, entries=entries))
+
+    def save(self, filestream):
+        json.dump(self._entries, filestream, cls=helpers.ChromewhipJSONEncoder)
+
+
 class JSScriptError(ChromewhipException):
     pass
 
+import asyncio
 
 class ChromeTab(metaclass=SyncAdder):
 
-    def __init__(self, title, url, ws_uri, tab_id):
+    def __init__(self, title, url, ws_uri, tab_id, enable_trace=False):
         self.id_ = tab_id
         self._title = title
         self._url = url
@@ -54,15 +105,17 @@ class ChromeTab(metaclass=SyncAdder):
         self._send_log = logging.getLogger('chromewhip.chrome.ChromeTab.send_handler')
         self._recv_log = logging.getLogger('chromewhip.chrome.ChromeTab.recv_handler')
 
+        self._devtools_trace = enable_trace and DevToolsTraceLog() or None
+
     @classmethod
-    async def create_from_json(cls, json_, host, port):
+    async def create_from_json(cls, json_, host, port, enable_trace=False):
         ws_url = json_.get('webSocketDebuggerUrl')
         if not ws_url:
             tab_id = json_['id']
             ws_url = 'ws://{}:{}/devtools/page/{}'.format(host,
                                                           port,
                                                           tab_id)
-        t = cls(json_['title'], json_['url'],  ws_url, json_['id'])
+        t = cls(json_['title'], json_['url'],  ws_url, json_['id'], enable_trace=enable_trace)
         await t.connect()
         return t
 
@@ -70,6 +123,10 @@ class ChromeTab(metaclass=SyncAdder):
         self._ws = await websockets.connect(self._ws_uri, max_size=MAX_PAYLOAD_SIZE_BYTES)  # 16MB
         self._recv_task = asyncio.ensure_future(self.recv_handler())
         self._log.info('Connected to Chrome tab %s' % self._ws_uri)
+
+        if self._devtools_trace:
+            # TODO disable when appropriate
+            await self.enable_network_events()
 
     async def disconnect(self):
         self._log.debug("Disconnecting tab...")
@@ -92,6 +149,9 @@ class ChromeTab(metaclass=SyncAdder):
                     self._recv_log.error('Missing message, may have been a connection timeout...')
                     continue
                 result = json.loads(result)
+
+                if self._devtools_trace:
+                    self._devtools_trace.rx(result)
 
                 if not isinstance(result, dict):
                     self._recv_log.error('decoded messages is of type "%s" and = "%s"' % (type(result), result))
@@ -141,7 +201,7 @@ class ChromeTab(metaclass=SyncAdder):
                 raise ValueError('%s is not expected type %s, instead is %s' % (v, type_, type(v)))
         return result
 
-    async def _send(self, request, recv_validator=None, input_event_cls=None, trigger_event_cls=None):
+    async def _send(self, request, recv_validator=None, input_event_cls=None, trigger_event_cls=None, timeout=0):
         """
         TODO:
         * clean up of stale events in payloads and asyncio event stores
@@ -157,6 +217,8 @@ class ChromeTab(metaclass=SyncAdder):
         ack_event = asyncio.Event()
         self._ack_events[self._message_id] = ack_event
 
+        timeout = timeout or TIMEOUT_S
+
         if input_event_cls:
             if not input_event_cls.is_hashable:
                 raise ValueError('Input event class "%s" as not hashable' % input_event_cls.__name__)
@@ -171,13 +233,16 @@ class ChromeTab(metaclass=SyncAdder):
         result = {'ack': None, 'event': None}
 
         try:
+            if self._devtools_trace:
+                self._devtools_trace.tx(request)
             msg = json.dumps(request, cls=helpers.ChromewhipJSONEncoder)
+
             self._send_log.info('Sending command = %s' % msg)
             self._current_task = asyncio.ensure_future(self._ws.send(msg))
-            await asyncio.wait_for(self._current_task, timeout=TIMEOUT_S)  # send
+            await asyncio.wait_for(self._current_task, timeout=timeout)  # send
 
             self._send_log.debug('Waiting for ack event set for id=%s' % request['id'])
-            await asyncio.wait_for(ack_event.wait(), timeout=TIMEOUT_S)  # recv
+            await asyncio.wait_for(ack_event.wait(), timeout=timeout)  # recv
             self._send_log.debug('Received ack event set for id=%s' % request['id'])
 
             ack_payload = self._ack_payloads.get(request['id'])
@@ -211,7 +276,7 @@ class ChromeTab(metaclass=SyncAdder):
                 hash_input_dict = {}
                 if not event:
                     self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
-                    await asyncio.wait_for(input_event.wait(), timeout=TIMEOUT_S)  # recv
+                    await asyncio.wait_for(input_event.wait(), timeout=timeout)  # recv
                     event = self._event_payloads.get(hash_)
 
                 params = event.hash_().split(':')[-1].split(',')
@@ -234,7 +299,7 @@ class ChromeTab(metaclass=SyncAdder):
                     self._send_log.debug('Waiting for event with hash "%s"...' % hash_)
                     trigger_event = asyncio.Event()
                     self._trigger_events[hash_] = trigger_event
-                    await asyncio.wait_for(trigger_event.wait(), timeout=TIMEOUT_S)  # recv
+                    await asyncio.wait_for(trigger_event.wait(), timeout=timeout)  # recv
                     event = self._event_payloads.get(hash_)
                 result['event'] = event
 
@@ -276,8 +341,11 @@ class ChromeTab(metaclass=SyncAdder):
     async def enable_page_events(self):
         return await self._send(*page.Page.enable())
 
-    async def send_command(self, command, input_event_type=None, await_on_event_type=None):
-        return await self._send(*command, input_event_cls=input_event_type, trigger_event_cls=await_on_event_type)
+    async def enable_network_events(self):
+        return await self._send(*network.Network.enable())
+
+    async def send_command(self, command, input_event_type=None, await_on_event_type=None, timeout=0):
+        return await self._send(*command, input_event_cls=input_event_type, trigger_event_cls=await_on_event_type, timeout=timeout)
 
     async def html(self):
         result = await self.evaluate('document.documentElement.outerHTML')
@@ -288,12 +356,12 @@ class ChromeTab(metaclass=SyncAdder):
         base64_data = result['ack']['result']['data']
         return base64.b64decode(base64_data)
 
-    async def go(self, url):
+    async def go(self, url, timeout=0):
         """
         Navigate the tab to the URL
         """
         return await self.send_command(page.Page.navigate(url),
-                                       await_on_event_type=page.FrameStoppedLoadingEvent)
+                                       await_on_event_type=page.FrameStoppedLoadingEvent, timeout=timeout)
 
     async def evaluate(self, javascript):
         """
@@ -325,16 +393,16 @@ class Chrome(metaclass=SyncAdder):
         self.is_connected = False
         self._log = logging.getLogger('chromewhip.chrome.Chrome')
 
-    async def connect(self):
+    async def connect(self, enable_trace=False):
         """ Get all open browser tabs that are pages tabs
         """
         if not self.is_connected:
             try:
-                await asyncio.wait_for(self.attempt_tab_fetch(), timeout=5)
+                await asyncio.wait_for(self.attempt_tab_fetch(enable_trace=enable_trace), timeout=5)
             except TimeoutError:
                 self._log.error('Unable to fetch tabs! Timeout')
 
-    async def attempt_tab_fetch(self):
+    async def attempt_tab_fetch(self, enable_trace=False):
         async with aiohttp.ClientSession() as session:
             async with session.get(self._url + '/json') as resp:
                 tabs = []
@@ -342,7 +410,7 @@ class Chrome(metaclass=SyncAdder):
                 if not len(data):
                     self._log.warning('Empty data, will attempt to reconnect until able to get pages.')
                 for tab in filter(lambda x: x['type'] == 'page', data):
-                    t = await ChromeTab.create_from_json(tab, self._host, self._port)
+                    t = await ChromeTab.create_from_json(tab, self._host, self._port, enable_trace=enable_trace)
                     tabs.append(t)
                 self._tabs = tabs
                 self._log.debug("Connected to Chrome! Found {} tabs".format(len(self._tabs)))
