@@ -113,6 +113,32 @@ class Target(PayloadMixin):
         )
 
     @classmethod
+    def exposeDevToolsProtocol(cls,
+                               targetId: Union['TargetID'],
+                               bindingName: Optional['str'] = None,
+                               ):
+        """Inject object to the target's main frame that provides a communication
+channel with browser target.
+
+Injected object will be available as `window[bindingName]`.
+
+The object has the follwing API:
+- `binding.send(json)` - a method to send messages over the remote debugging protocol
+- `binding.onmessage = json => handleMessage(json)` - a callback that will be called for the protocol notifications and command responses.
+        :param targetId: 
+        :type targetId: TargetID
+        :param bindingName: Binding name, 'cdp' if not specified.
+        :type bindingName: str
+        """
+        return (
+            cls.build_send_payload("exposeDevToolsProtocol", {
+                "targetId": targetId,
+                "bindingName": bindingName,
+            }),
+            None
+        )
+
+    @classmethod
     def createBrowserContext(cls):
         """Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
 one.
@@ -448,6 +474,37 @@ class TargetDestroyedEvent(BaseEvent):
         if isinstance(targetId, dict):
             targetId = TargetID(**targetId)
         self.targetId = targetId
+
+    @classmethod
+    def build_hash(cls, targetId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class TargetCrashedEvent(BaseEvent):
+
+    js_name = 'Target.targetCrashed'
+    hashable = ['targetId']
+    is_hashable = True
+
+    def __init__(self,
+                 targetId: Union['TargetID', dict],
+                 status: Union['str', dict],
+                 errorCode: Union['int', dict],
+                 ):
+        if isinstance(targetId, dict):
+            targetId = TargetID(**targetId)
+        self.targetId = targetId
+        if isinstance(status, dict):
+            status = str(**status)
+        self.status = status
+        if isinstance(errorCode, dict):
+            errorCode = int(**errorCode)
+        self.errorCode = errorCode
 
     @classmethod
     def build_hash(cls, targetId):

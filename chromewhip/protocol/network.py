@@ -94,6 +94,7 @@ class Request(ChromeTypeBase):
                  headers: Union['Headers'],
                  initialPriority: Union['ResourcePriority'],
                  referrerPolicy: Union['str'],
+                 urlFragment: Optional['str'] = None,
                  postData: Optional['str'] = None,
                  hasPostData: Optional['bool'] = None,
                  mixedContentType: Optional['Security.MixedContentType'] = None,
@@ -101,6 +102,7 @@ class Request(ChromeTypeBase):
                  ):
 
         self.url = url
+        self.urlFragment = urlFragment
         self.method = method
         self.headers = headers
         self.postData = postData
@@ -389,19 +391,25 @@ class RequestPattern(ChromeTypeBase):
 class SignedExchangeSignature(ChromeTypeBase):
     def __init__(self,
                  label: Union['str'],
+                 signature: Union['str'],
                  integrity: Union['str'],
-                 certUrl: Union['str'],
                  validityUrl: Union['str'],
                  date: Union['int'],
                  expires: Union['int'],
+                 certUrl: Optional['str'] = None,
+                 certSha256: Optional['str'] = None,
+                 certificates: Optional['[]'] = None,
                  ):
 
         self.label = label
+        self.signature = signature
         self.integrity = integrity
         self.certUrl = certUrl
+        self.certSha256 = certSha256
         self.validityUrl = validityUrl
         self.date = date
         self.expires = expires
+        self.certificates = certificates
 
 
 # SignedExchangeHeader: Information about a signed exchange header.https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
@@ -421,13 +429,29 @@ class SignedExchangeHeader(ChromeTypeBase):
         self.signatures = signatures
 
 
+# SignedExchangeErrorField: Field type for a signed exchange related error.
+SignedExchangeErrorField = str
+
+# SignedExchangeError: Information about a signed exchange response.
+class SignedExchangeError(ChromeTypeBase):
+    def __init__(self,
+                 message: Union['str'],
+                 signatureIndex: Optional['int'] = None,
+                 errorField: Optional['SignedExchangeErrorField'] = None,
+                 ):
+
+        self.message = message
+        self.signatureIndex = signatureIndex
+        self.errorField = errorField
+
+
 # SignedExchangeInfo: Information about a signed exchange response.
 class SignedExchangeInfo(ChromeTypeBase):
     def __init__(self,
                  outerResponse: Union['Response'],
                  header: Optional['SignedExchangeHeader'] = None,
                  securityDetails: Optional['SecurityDetails'] = None,
-                 errors: Optional['[]'] = None,
+                 errors: Optional['[SignedExchangeError]'] = None,
                  ):
 
         self.outerResponse = outerResponse
@@ -1012,14 +1036,22 @@ continueInterceptedRequest call.
     @classmethod
     def setUserAgentOverride(cls,
                              userAgent: Union['str'],
+                             acceptLanguage: Optional['str'] = None,
+                             platform: Optional['str'] = None,
                              ):
         """Allows overriding user agent with the given string.
         :param userAgent: User agent to use.
         :type userAgent: str
+        :param acceptLanguage: Browser langugage to emulate.
+        :type acceptLanguage: str
+        :param platform: The platform navigator.platform should return.
+        :type platform: str
         """
         return (
             cls.build_send_payload("setUserAgentOverride", {
                 "userAgent": userAgent,
+                "acceptLanguage": acceptLanguage,
+                "platform": platform,
             }),
             None
         )
@@ -1064,7 +1096,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1091,7 +1123,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1153,7 +1185,7 @@ class LoadingFinishedEvent(BaseEvent):
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
                  encodedDataLength: Union['float', dict],
-                 blockedCrossSiteDocument: Union['bool', dict, None] = None,
+                 shouldReportCorbBlocking: Union['bool', dict, None] = None,
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
@@ -1164,9 +1196,9 @@ class LoadingFinishedEvent(BaseEvent):
         if isinstance(encodedDataLength, dict):
             encodedDataLength = float(**encodedDataLength)
         self.encodedDataLength = encodedDataLength
-        if isinstance(blockedCrossSiteDocument, dict):
-            blockedCrossSiteDocument = bool(**blockedCrossSiteDocument)
-        self.blockedCrossSiteDocument = blockedCrossSiteDocument
+        if isinstance(shouldReportCorbBlocking, dict):
+            shouldReportCorbBlocking = bool(**shouldReportCorbBlocking)
+        self.shouldReportCorbBlocking = shouldReportCorbBlocking
 
     @classmethod
     def build_hash(cls, requestId):
@@ -1267,7 +1299,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1318,7 +1350,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1388,7 +1420,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1419,7 +1451,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

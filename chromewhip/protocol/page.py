@@ -207,6 +207,38 @@ class Viewport(ChromeTypeBase):
         self.scale = scale
 
 
+# FontFamilies: Generic font families collection.
+class FontFamilies(ChromeTypeBase):
+    def __init__(self,
+                 standard: Optional['str'] = None,
+                 fixed: Optional['str'] = None,
+                 serif: Optional['str'] = None,
+                 sansSerif: Optional['str'] = None,
+                 cursive: Optional['str'] = None,
+                 fantasy: Optional['str'] = None,
+                 pictograph: Optional['str'] = None,
+                 ):
+
+        self.standard = standard
+        self.fixed = fixed
+        self.serif = serif
+        self.sansSerif = sansSerif
+        self.cursive = cursive
+        self.fantasy = fantasy
+        self.pictograph = pictograph
+
+
+# FontSizes: Default font sizes.
+class FontSizes(ChromeTypeBase):
+    def __init__(self,
+                 standard: Optional['int'] = None,
+                 fixed: Optional['int'] = None,
+                 ):
+
+        self.standard = standard
+        self.fixed = fixed
+
+
 class Page(PayloadMixin):
     """ Actions and events related to the inspected page belong to the page domain.
     """
@@ -918,6 +950,36 @@ autosizing and more.
         )
 
     @classmethod
+    def setFontFamilies(cls,
+                        fontFamilies: Union['FontFamilies'],
+                        ):
+        """Set generic font families.
+        :param fontFamilies: Specifies font families to set. If a font family is not specified, it won't be changed.
+        :type fontFamilies: FontFamilies
+        """
+        return (
+            cls.build_send_payload("setFontFamilies", {
+                "fontFamilies": fontFamilies,
+            }),
+            None
+        )
+
+    @classmethod
+    def setFontSizes(cls,
+                     fontSizes: Union['FontSizes'],
+                     ):
+        """Set default font sizes.
+        :param fontSizes: Specifies font sizes to set. If a font size is not specified, it won't be changed.
+        :type fontSizes: FontSizes
+        """
+        return (
+            cls.build_send_payload("setFontSizes", {
+                "fontSizes": fontSizes,
+            }),
+            None
+        )
+
+    @classmethod
     def setDocumentContent(cls,
                            frameId: Union['FrameId'],
                            html: Union['str'],
@@ -1125,7 +1187,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1144,7 +1206,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

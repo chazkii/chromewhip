@@ -47,6 +47,7 @@ class DOMNode(ChromeTypeBase):
                  isClickable: Optional['bool'] = None,
                  eventListeners: Optional['[DOMDebugger.EventListener]'] = None,
                  currentSourceURL: Optional['str'] = None,
+                 originURL: Optional['str'] = None,
                  ):
 
         self.nodeType = nodeType
@@ -76,6 +77,7 @@ class DOMNode(ChromeTypeBase):
         self.isClickable = isClickable
         self.eventListeners = eventListeners
         self.currentSourceURL = currentSourceURL
+        self.originURL = originURL
 
 
 # InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
@@ -133,6 +135,26 @@ class NameValue(ChromeTypeBase):
 class DOMSnapshot(PayloadMixin):
     """ This domain facilitates obtaining document snapshots with DOM, layout, and style information.
     """
+    @classmethod
+    def disable(cls):
+        """Disables DOM snapshot agent for the given page.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables DOM snapshot agent for the given page.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
     @classmethod
     def getSnapshot(cls,
                     computedStyleWhitelist: Union['[]'],

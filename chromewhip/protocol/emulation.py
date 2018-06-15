@@ -174,6 +174,36 @@ change is not observed by the page, e.g. viewport-relative elements do not chang
         )
 
     @classmethod
+    def setScrollbarsHidden(cls,
+                            hidden: Union['bool'],
+                            ):
+        """
+        :param hidden: Whether scrollbars should be always hidden.
+        :type hidden: bool
+        """
+        return (
+            cls.build_send_payload("setScrollbarsHidden", {
+                "hidden": hidden,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDocumentCookieDisabled(cls,
+                                  disabled: Union['bool'],
+                                  ):
+        """
+        :param disabled: Whether document.coookie API should be disabled.
+        :type disabled: bool
+        """
+        return (
+            cls.build_send_payload("setDocumentCookieDisabled", {
+                "disabled": disabled,
+            }),
+            None
+        )
+
+    @classmethod
     def setEmitTouchEventsForMouse(cls,
                                    enabled: Union['bool'],
                                    configuration: Optional['str'] = None,
@@ -352,6 +382,29 @@ on Android.
             cls.build_send_payload("setVisibleSize", {
                 "width": width,
                 "height": height,
+            }),
+            None
+        )
+
+    @classmethod
+    def setUserAgentOverride(cls,
+                             userAgent: Union['str'],
+                             acceptLanguage: Optional['str'] = None,
+                             platform: Optional['str'] = None,
+                             ):
+        """Allows overriding user agent with the given string.
+        :param userAgent: User agent to use.
+        :type userAgent: str
+        :param acceptLanguage: Browser langugage to emulate.
+        :type acceptLanguage: str
+        :param platform: The platform navigator.platform should return.
+        :type platform: str
+        """
+        return (
+            cls.build_send_payload("setUserAgentOverride", {
+                "userAgent": userAgent,
+                "acceptLanguage": acceptLanguage,
+                "platform": platform,
             }),
             None
         )
