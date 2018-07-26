@@ -16,13 +16,13 @@ def readme():
 setup(
     name='chromewhip',
 
-    version='0.2.9',
+    version='0.2.10',
 
     description='asyncio driver + HTTP server for Chrome devtools protocol',
     long_description=readme(),
     # The project's main homepage.
     url='https://github.com/chuckus/chromewhip',
-    download_url='https://github.com/chuckus/chromewhip/archive/v0.2.9.tar.gz',
+    download_url='https://github.com/chuckus/chromewhip/archive/v0.2.10.tar.gz',
 
     # Author details
     author='Charlie Smith',
