@@ -1164,6 +1164,51 @@ https://github.com/WICG/web-lifecycle/
             None
         )
 
+    @classmethod
+    def setProduceCompilationCache(cls,
+                                   enabled: Union['bool'],
+                                   ):
+        """Forces compilation cache to be generated for every subresource script.
+        :param enabled: 
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setProduceCompilationCache", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def addCompilationCache(cls,
+                            url: Union['str'],
+                            data: Union['str'],
+                            ):
+        """Seeds compilation cache for given url. Compilation cache does not survive
+cross-process navigation.
+        :param url: 
+        :type url: str
+        :param data: Base64-encoded data
+        :type data: str
+        """
+        return (
+            cls.build_send_payload("addCompilationCache", {
+                "url": url,
+                "data": data,
+            }),
+            None
+        )
+
+    @classmethod
+    def clearCompilationCache(cls):
+        """Clears seeded compilation cache.
+        """
+        return (
+            cls.build_send_payload("clearCompilationCache", {
+            }),
+            None
+        )
+
 
 
 class DomContentEventFiredEvent(BaseEvent):
@@ -1187,7 +1232,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1206,7 +1251,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1616,6 +1661,28 @@ class WindowOpenEvent(BaseEvent):
         if isinstance(userGesture, dict):
             userGesture = bool(**userGesture)
         self.userGesture = userGesture
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class CompilationCacheProducedEvent(BaseEvent):
+
+    js_name = 'Page.compilationCacheProduced'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 url: Union['str', dict],
+                 data: Union['str', dict],
+                 ):
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+        if isinstance(data, dict):
+            data = str(**data)
+        self.data = data
 
     @classmethod
     def build_hash(cls):

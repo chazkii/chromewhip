@@ -127,16 +127,20 @@ class Browser(PayloadMixin):
     @classmethod
     def getHistograms(cls,
                       query: Optional['str'] = None,
+                      delta: Optional['bool'] = None,
                       ):
         """Get Chrome histograms.
         :param query: Requested substring in name. Only histograms which have query as a
 substring in their name are extracted. An empty or absent query returns
 all histograms.
         :type query: str
+        :param delta: If true, retrieve delta since last call.
+        :type delta: bool
         """
         return (
             cls.build_send_payload("getHistograms", {
                 "query": query,
+                "delta": delta,
             }),
             cls.convert_payload({
                 "histograms": {
@@ -149,14 +153,18 @@ all histograms.
     @classmethod
     def getHistogram(cls,
                      name: Union['str'],
+                     delta: Optional['bool'] = None,
                      ):
         """Get a Chrome histogram by name.
         :param name: Requested histogram name.
         :type name: str
+        :param delta: If true, retrieve delta since last call.
+        :type delta: bool
         """
         return (
             cls.build_send_payload("getHistogram", {
                 "name": name,
+                "delta": delta,
             }),
             cls.convert_payload({
                 "histogram": {

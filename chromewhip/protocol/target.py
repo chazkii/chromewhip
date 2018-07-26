@@ -75,14 +75,33 @@ class Target(PayloadMixin):
     @classmethod
     def attachToTarget(cls,
                        targetId: Union['TargetID'],
+                       flatten: Optional['bool'] = None,
                        ):
         """Attaches to the target with given id.
         :param targetId: 
         :type targetId: TargetID
+        :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+        :type flatten: bool
         """
         return (
             cls.build_send_payload("attachToTarget", {
                 "targetId": targetId,
+                "flatten": flatten,
+            }),
+            cls.convert_payload({
+                "sessionId": {
+                    "class": SessionID,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def attachToBrowserTarget(cls):
+        """Attaches to the browser target, only uses flat sessionId mode.
+        """
+        return (
+            cls.build_send_payload("attachToBrowserTarget", {
             }),
             cls.convert_payload({
                 "sessionId": {
@@ -243,7 +262,7 @@ beforeunload hooks.
 
     @classmethod
     def getTargetInfo(cls,
-                      targetId: Union['TargetID'],
+                      targetId: Optional['TargetID'] = None,
                       ):
         """Returns information about a target.
         :param targetId: 

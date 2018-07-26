@@ -40,8 +40,6 @@ class DOMNode(ChromeTypeBase):
                  systemId: Optional['str'] = None,
                  frameId: Optional['Page.FrameId'] = None,
                  contentDocumentIndex: Optional['int'] = None,
-                 importedDocumentIndex: Optional['int'] = None,
-                 templateContentIndex: Optional['int'] = None,
                  pseudoType: Optional['DOM.PseudoType'] = None,
                  shadowRootType: Optional['DOM.ShadowRootType'] = None,
                  isClickable: Optional['bool'] = None,
@@ -70,8 +68,6 @@ class DOMNode(ChromeTypeBase):
         self.systemId = systemId
         self.frameId = frameId
         self.contentDocumentIndex = contentDocumentIndex
-        self.importedDocumentIndex = importedDocumentIndex
-        self.templateContentIndex = templateContentIndex
         self.pseudoType = pseudoType
         self.shadowRootType = shadowRootType
         self.isClickable = isClickable
@@ -130,6 +126,140 @@ class NameValue(ChromeTypeBase):
 
         self.name = name
         self.value = value
+
+
+# StringIndex: Index of the string in the strings table.
+StringIndex = int
+
+# ArrayOfStrings: Index of the string in the strings table.
+ArrayOfStrings = [StringIndex]
+
+# RareStringData: Data that is only present on rare nodes.
+class RareStringData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 value: Union['[StringIndex]'],
+                 ):
+
+        self.index = index
+        self.value = value
+
+
+# RareBooleanData: 
+class RareBooleanData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 ):
+
+        self.index = index
+
+
+# RareIntegerData: 
+class RareIntegerData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 value: Union['[]'],
+                 ):
+
+        self.index = index
+        self.value = value
+
+
+# Rectangle: 
+Rectangle = [float]
+
+# DocumentSnapshot: Document snapshot.
+class DocumentSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 documentURL: Union['StringIndex'],
+                 baseURL: Union['StringIndex'],
+                 contentLanguage: Union['StringIndex'],
+                 encodingName: Union['StringIndex'],
+                 publicId: Union['StringIndex'],
+                 systemId: Union['StringIndex'],
+                 frameId: Union['StringIndex'],
+                 nodes: Union['NodeTreeSnapshot'],
+                 layout: Union['LayoutTreeSnapshot'],
+                 textBoxes: Union['TextBoxSnapshot'],
+                 ):
+
+        self.documentURL = documentURL
+        self.baseURL = baseURL
+        self.contentLanguage = contentLanguage
+        self.encodingName = encodingName
+        self.publicId = publicId
+        self.systemId = systemId
+        self.frameId = frameId
+        self.nodes = nodes
+        self.layout = layout
+        self.textBoxes = textBoxes
+
+
+# NodeTreeSnapshot: Table containing nodes.
+class NodeTreeSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 parentIndex: Optional['[]'] = None,
+                 nodeType: Optional['[]'] = None,
+                 nodeName: Optional['[StringIndex]'] = None,
+                 nodeValue: Optional['[StringIndex]'] = None,
+                 backendNodeId: Optional['[DOM.BackendNodeId]'] = None,
+                 attributes: Optional['[ArrayOfStrings]'] = None,
+                 textValue: Optional['RareStringData'] = None,
+                 inputValue: Optional['RareStringData'] = None,
+                 inputChecked: Optional['RareBooleanData'] = None,
+                 optionSelected: Optional['RareBooleanData'] = None,
+                 contentDocumentIndex: Optional['RareIntegerData'] = None,
+                 pseudoType: Optional['RareStringData'] = None,
+                 isClickable: Optional['RareBooleanData'] = None,
+                 currentSourceURL: Optional['RareStringData'] = None,
+                 originURL: Optional['RareStringData'] = None,
+                 ):
+
+        self.parentIndex = parentIndex
+        self.nodeType = nodeType
+        self.nodeName = nodeName
+        self.nodeValue = nodeValue
+        self.backendNodeId = backendNodeId
+        self.attributes = attributes
+        self.textValue = textValue
+        self.inputValue = inputValue
+        self.inputChecked = inputChecked
+        self.optionSelected = optionSelected
+        self.contentDocumentIndex = contentDocumentIndex
+        self.pseudoType = pseudoType
+        self.isClickable = isClickable
+        self.currentSourceURL = currentSourceURL
+        self.originURL = originURL
+
+
+# LayoutTreeSnapshot: Details of an element in the DOM tree with a LayoutObject.
+class LayoutTreeSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 nodeIndex: Union['[]'],
+                 styles: Union['[ArrayOfStrings]'],
+                 bounds: Union['[Rectangle]'],
+                 text: Union['[StringIndex]'],
+                 ):
+
+        self.nodeIndex = nodeIndex
+        self.styles = styles
+        self.bounds = bounds
+        self.text = text
+
+
+# TextBoxSnapshot: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
+class TextBoxSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 layoutIndex: Union['[]'],
+                 bounds: Union['[Rectangle]'],
+                 start: Union['[]'],
+                 length: Union['[]'],
+                 ):
+
+        self.layoutIndex = layoutIndex
+        self.bounds = bounds
+        self.start = start
+        self.length = length
 
 
 class DOMSnapshot(PayloadMixin):
@@ -193,6 +323,33 @@ flattened.
                 },
                 "computedStyles": {
                     "class": [ComputedStyle],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def captureSnapshot(cls,
+                        computedStyles: Union['[]'],
+                        ):
+        """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+template contents, and imported documents) in a flattened array, as well as layout and
+white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+flattened.
+        :param computedStyles: Whitelist of computed styles to return.
+        :type computedStyles: []
+        """
+        return (
+            cls.build_send_payload("captureSnapshot", {
+                "computedStyles": computedStyles,
+            }),
+            cls.convert_payload({
+                "documents": {
+                    "class": [DocumentSnapshot],
+                    "optional": False
+                },
+                "strings": {
+                    "class": [],
                     "optional": False
                 },
             })
