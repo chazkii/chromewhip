@@ -16,10 +16,8 @@ from chromewhip.protocol import debugger as Debugger
 from chromewhip.protocol import dom as DOM
 from chromewhip.protocol import network as Network
 from chromewhip.protocol import runtime as Runtime
+from chromewhip.protocol import runtime as Runtime
 from chromewhip.protocol import emulation as Emulation
-
-# ResourceType: Resource type as it was perceived by the rendering engine.
-ResourceType = str
 
 # FrameId: Unique frame identifier.
 FrameId = str
@@ -51,7 +49,7 @@ class Frame(ChromeTypeBase):
 class FrameResource(ChromeTypeBase):
     def __init__(self,
                  url: Union['str'],
-                 type: Union['ResourceType'],
+                 type: Union['Network.ResourceType'],
                  mimeType: Union['str'],
                  lastModified: Optional['Network.TimeSinceEpoch'] = None,
                  contentSize: Optional['float'] = None,
@@ -1209,6 +1207,25 @@ cross-process navigation.
             None
         )
 
+    @classmethod
+    def generateTestReport(cls,
+                           message: Union['str'],
+                           group: Optional['str'] = None,
+                           ):
+        """Generates a report for testing.
+        :param message: Message to be displayed in the report.
+        :type message: str
+        :param group: Specifies the endpoint group to deliver the report to.
+        :type group: str
+        """
+        return (
+            cls.build_send_payload("generateTestReport", {
+                "message": message,
+                "group": group,
+            }),
+            None
+        )
+
 
 
 class DomContentEventFiredEvent(BaseEvent):
@@ -1232,7 +1249,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1251,7 +1268,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1511,7 +1528,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1534,7 +1551,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

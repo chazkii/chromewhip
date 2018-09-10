@@ -14,6 +14,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 log = logging.getLogger(__name__)
 from chromewhip.protocol import dom as DOM
 from chromewhip.protocol import debugger as Debugger
+from chromewhip.protocol import runtime as Runtime
 
 # DOMBreakpointType: DOM breakpoint type.
 DOMBreakpointType = str

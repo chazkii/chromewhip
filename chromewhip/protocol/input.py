@@ -116,6 +116,22 @@ modifiers, keyboard layout, etc (e.g., 'AltGr') (default: "").
         )
 
     @classmethod
+    def insertText(cls,
+                   text: Union['str'],
+                   ):
+        """This method emulates inserting text that doesn't come from a key press,
+for example an emoji keyboard or an IME.
+        :param text: The text to insert.
+        :type text: str
+        """
+        return (
+            cls.build_send_payload("insertText", {
+                "text": text,
+            }),
+            None
+        )
+
+    @classmethod
     def dispatchMouseEvent(cls,
                            type: Union['str'],
                            x: Union['float'],

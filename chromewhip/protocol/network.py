@@ -17,6 +17,9 @@ from chromewhip.protocol import runtime as Runtime
 from chromewhip.protocol import security as Security
 from chromewhip.protocol import page as Page
 
+# ResourceType: Resource type as it was perceived by the rendering engine.
+ResourceType = str
+
 # LoaderId: Unique loader identifier.
 LoaderId = str
 
@@ -265,7 +268,7 @@ class WebSocketFrame(ChromeTypeBase):
 class CachedResource(ChromeTypeBase):
     def __init__(self,
                  url: Union['str'],
-                 type: Union['Page.ResourceType'],
+                 type: Union['ResourceType'],
                  bodySize: Union['float'],
                  response: Optional['Response'] = None,
                  ):
@@ -378,7 +381,7 @@ InterceptionStage = str
 class RequestPattern(ChromeTypeBase):
     def __init__(self,
                  urlPattern: Optional['str'] = None,
-                 resourceType: Optional['Page.ResourceType'] = None,
+                 resourceType: Optional['ResourceType'] = None,
                  interceptionStage: Optional['InterceptionStage'] = None,
                  ):
 
@@ -1096,7 +1099,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1123,7 +1126,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1141,7 +1144,7 @@ class LoadingFailedEvent(BaseEvent):
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 type: Union['Page.ResourceType', dict],
+                 type: Union['ResourceType', dict],
                  errorText: Union['str', dict],
                  canceled: Union['bool', dict, None] = None,
                  blockedReason: Union['BlockedReason', dict, None] = None,
@@ -1153,7 +1156,7 @@ class LoadingFailedEvent(BaseEvent):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
         if isinstance(type, dict):
-            type = Page.ResourceType(**type)
+            type = ResourceType(**type)
         self.type = type
         if isinstance(errorText, dict):
             errorText = str(**errorText)
@@ -1220,7 +1223,7 @@ class RequestInterceptedEvent(BaseEvent):
                  interceptionId: Union['InterceptionId', dict],
                  request: Union['Request', dict],
                  frameId: Union['Page.FrameId', dict],
-                 resourceType: Union['Page.ResourceType', dict],
+                 resourceType: Union['ResourceType', dict],
                  isNavigationRequest: Union['bool', dict],
                  isDownload: Union['bool', dict, None] = None,
                  redirectUrl: Union['str', dict, None] = None,
@@ -1239,7 +1242,7 @@ class RequestInterceptedEvent(BaseEvent):
             frameId = Page.FrameId(**frameId)
         self.frameId = frameId
         if isinstance(resourceType, dict):
-            resourceType = Page.ResourceType(**resourceType)
+            resourceType = ResourceType(**resourceType)
         self.resourceType = resourceType
         if isinstance(isNavigationRequest, dict):
             isNavigationRequest = bool(**isNavigationRequest)
@@ -1299,7 +1302,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1311,7 +1314,7 @@ class RequestWillBeSentEvent(BaseEvent):
                  wallTime: Union['TimeSinceEpoch', dict],
                  initiator: Union['Initiator', dict],
                  redirectResponse: Union['Response', dict, None] = None,
-                 type: Union['Page.ResourceType', dict, None] = None,
+                 type: Union['ResourceType', dict, None] = None,
                  frameId: Union['Page.FrameId', dict, None] = None,
                  hasUserGesture: Union['bool', dict, None] = None,
                  ):
@@ -1340,7 +1343,7 @@ class RequestWillBeSentEvent(BaseEvent):
             redirectResponse = Response(**redirectResponse)
         self.redirectResponse = redirectResponse
         if isinstance(type, dict):
-            type = Page.ResourceType(**type)
+            type = ResourceType(**type)
         self.type = type
         if isinstance(frameId, dict):
             frameId = Page.FrameId(**frameId)
@@ -1350,7 +1353,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1420,14 +1423,14 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'requestId', 'frameId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
                  loaderId: Union['LoaderId', dict],
                  timestamp: Union['MonotonicTime', dict],
-                 type: Union['Page.ResourceType', dict],
+                 type: Union['ResourceType', dict],
                  response: Union['Response', dict],
                  frameId: Union['Page.FrameId', dict, None] = None,
                  ):
@@ -1441,7 +1444,7 @@ class ResponseReceivedEvent(BaseEvent):
             timestamp = MonotonicTime(**timestamp)
         self.timestamp = timestamp
         if isinstance(type, dict):
-            type = Page.ResourceType(**type)
+            type = ResourceType(**type)
         self.type = type
         if isinstance(response, dict):
             response = Response(**response)
@@ -1451,7 +1454,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, requestId, frameId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

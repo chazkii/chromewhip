@@ -46,6 +46,8 @@ class DOMNode(ChromeTypeBase):
                  eventListeners: Optional['[DOMDebugger.EventListener]'] = None,
                  currentSourceURL: Optional['str'] = None,
                  originURL: Optional['str'] = None,
+                 scrollOffsetX: Optional['float'] = None,
+                 scrollOffsetY: Optional['float'] = None,
                  ):
 
         self.nodeType = nodeType
@@ -74,6 +76,8 @@ class DOMNode(ChromeTypeBase):
         self.eventListeners = eventListeners
         self.currentSourceURL = currentSourceURL
         self.originURL = originURL
+        self.scrollOffsetX = scrollOffsetX
+        self.scrollOffsetY = scrollOffsetY
 
 
 # InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
@@ -98,6 +102,7 @@ class LayoutTreeNode(ChromeTypeBase):
                  inlineTextNodes: Optional['[InlineTextBox]'] = None,
                  styleIndex: Optional['int'] = None,
                  paintOrder: Optional['int'] = None,
+                 isStackingContext: Optional['bool'] = None,
                  ):
 
         self.domNodeIndex = domNodeIndex
@@ -106,6 +111,7 @@ class LayoutTreeNode(ChromeTypeBase):
         self.inlineTextNodes = inlineTextNodes
         self.styleIndex = styleIndex
         self.paintOrder = paintOrder
+        self.isStackingContext = isStackingContext
 
 
 # ComputedStyle: A subset of the full ComputedStyle as defined by the request whitelist.
@@ -181,6 +187,8 @@ class DocumentSnapshot(ChromeTypeBase):
                  nodes: Union['NodeTreeSnapshot'],
                  layout: Union['LayoutTreeSnapshot'],
                  textBoxes: Union['TextBoxSnapshot'],
+                 scrollOffsetX: Optional['float'] = None,
+                 scrollOffsetY: Optional['float'] = None,
                  ):
 
         self.documentURL = documentURL
@@ -193,6 +201,8 @@ class DocumentSnapshot(ChromeTypeBase):
         self.nodes = nodes
         self.layout = layout
         self.textBoxes = textBoxes
+        self.scrollOffsetX = scrollOffsetX
+        self.scrollOffsetY = scrollOffsetY
 
 
 # NodeTreeSnapshot: Table containing nodes.
@@ -239,12 +249,14 @@ class LayoutTreeSnapshot(ChromeTypeBase):
                  styles: Union['[ArrayOfStrings]'],
                  bounds: Union['[Rectangle]'],
                  text: Union['[StringIndex]'],
+                 stackingContexts: Union['RareBooleanData'],
                  ):
 
         self.nodeIndex = nodeIndex
         self.styles = styles
         self.bounds = bounds
         self.text = text
+        self.stackingContexts = stackingContexts
 
 
 # TextBoxSnapshot: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.

@@ -36,6 +36,9 @@ class Bounds(ChromeTypeBase):
         self.windowState = windowState
 
 
+# PermissionType: 
+PermissionType = str
+
 # Bucket: Chrome histogram bucket.
 class Bucket(ChromeTypeBase):
     def __init__(self,
@@ -68,11 +71,59 @@ class Browser(PayloadMixin):
     """ The Browser domain defines methods and events for browser managing.
     """
     @classmethod
+    def grantPermissions(cls,
+                         origin: Union['str'],
+                         permissions: Union['[PermissionType]'],
+                         browserContextId: Optional['Target.BrowserContextID'] = None,
+                         ):
+        """Grant specific permissions to the given origin and reject all others.
+        :param origin: 
+        :type origin: str
+        :param permissions: 
+        :type permissions: [PermissionType]
+        :param browserContextId: BrowserContext to override permissions. When omitted, default browser context is used.
+        :type browserContextId: Target.BrowserContextID
+        """
+        return (
+            cls.build_send_payload("grantPermissions", {
+                "origin": origin,
+                "permissions": permissions,
+                "browserContextId": browserContextId,
+            }),
+            None
+        )
+
+    @classmethod
+    def resetPermissions(cls,
+                         browserContextId: Optional['Target.BrowserContextID'] = None,
+                         ):
+        """Reset all permission management for all origins.
+        :param browserContextId: BrowserContext to reset permissions. When omitted, default browser context is used.
+        :type browserContextId: Target.BrowserContextID
+        """
+        return (
+            cls.build_send_payload("resetPermissions", {
+                "browserContextId": browserContextId,
+            }),
+            None
+        )
+
+    @classmethod
     def close(cls):
         """Close browser gracefully.
         """
         return (
             cls.build_send_payload("close", {
+            }),
+            None
+        )
+
+    @classmethod
+    def crash(cls):
+        """Crashes browser on the main thread.
+        """
+        return (
+            cls.build_send_payload("crash", {
             }),
             None
         )

@@ -322,6 +322,7 @@ beforeunload hooks.
     def setAutoAttach(cls,
                       autoAttach: Union['bool'],
                       waitForDebuggerOnStart: Union['bool'],
+                      flatten: Optional['bool'] = None,
                       ):
         """Controls whether to automatically attach to new targets which are considered to be related to
 this one. When turned on, attaches to all existing related targets as well. When turned off,
@@ -331,11 +332,14 @@ automatically detaches from all currently attached targets.
         :param waitForDebuggerOnStart: Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
 to run paused targets.
         :type waitForDebuggerOnStart: bool
+        :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+        :type flatten: bool
         """
         return (
             cls.build_send_payload("setAutoAttach", {
                 "autoAttach": autoAttach,
                 "waitForDebuggerOnStart": waitForDebuggerOnStart,
+                "flatten": flatten,
             }),
             None
         )
@@ -408,7 +412,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -423,7 +427,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -435,7 +439,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -454,7 +458,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
