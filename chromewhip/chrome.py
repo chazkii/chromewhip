@@ -75,8 +75,11 @@ class DevToolsTraceLog(object):
     #     creator = dict(name='Chromewhip', version='0.1', comment='https://github.com/Cosive/chromewhip')
     #     har = dict(log=dict(version='1.2', creator=creator, pages=pages, entries=entries))
 
-    def save(self, filestream):
-        json.dump(self._entries, filestream, cls=helpers.ChromewhipJSONEncoder)
+    def dumps(self, **kwargs):
+        return json.dumps([{'id': idx, 'timestamp': e.timestamp.isoformat(), 'direction': e.direction, 'payload': e.message} for idx, e in enumerate(self._entries)], cls=helpers.ChromewhipJSONEncoder, **kwargs)
+
+    def dump(self, filestream, **kwargs):
+        json.dump([{'id': idx, 'timestamp': e.timestamp.isoformat(), 'direction': e.direction, 'payload': e.message} for idx, e in enumerate(self._entries)], filestream, cls=helpers.ChromewhipJSONEncoder, **kwargs)
 
 
 class JSScriptError(ChromewhipException):
@@ -106,6 +109,10 @@ class ChromeTab(metaclass=SyncAdder):
         self._recv_log = logging.getLogger('chromewhip.chrome.ChromeTab.recv_handler')
 
         self._devtools_trace = enable_trace and DevToolsTraceLog() or None
+
+    @property
+    def devtools_trace(self):
+        return self._devtools_trace
 
     @classmethod
     async def create_from_json(cls, json_, host, port, enable_trace=False):
