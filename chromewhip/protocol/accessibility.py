@@ -124,6 +124,27 @@ class Accessibility(PayloadMixin):
     """ 
     """
     @classmethod
+    def disable(cls):
+        """Disables the accessibility domain.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
+This turns on accessibility for the page, which can impact performance until accessibility is disabled.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+    @classmethod
     def getPartialAXTree(cls,
                          nodeId: Optional['DOM.NodeId'] = None,
                          backendNodeId: Optional['DOM.BackendNodeId'] = None,
@@ -146,6 +167,21 @@ class Accessibility(PayloadMixin):
                 "backendNodeId": backendNodeId,
                 "objectId": objectId,
                 "fetchRelatives": fetchRelatives,
+            }),
+            cls.convert_payload({
+                "nodes": {
+                    "class": [AXNode],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getFullAXTree(cls):
+        """Fetches the entire accessibility tree
+        """
+        return (
+            cls.build_send_payload("getFullAXTree", {
             }),
             cls.convert_payload({
                 "nodes": {

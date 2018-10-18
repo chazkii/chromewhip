@@ -210,10 +210,14 @@
                     "enum": [
                         "busy",
                         "disabled",
+                        "editable",
+                        "focusable",
+                        "focused",
                         "hidden",
                         "hiddenRoot",
                         "invalid",
                         "keyshortcuts",
+                        "settable",
                         "roledescription",
                         "live",
                         "atomic",
@@ -322,6 +326,14 @@
             ],
             "commands": [
                 {
+                    "name": "disable",
+                    "description": "Disables the accessibility domain."
+                },
+                {
+                    "name": "enable",
+                    "description": "Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.\nThis turns on accessibility for the page, which can impact performance until accessibility is disabled."
+                },
+                {
                     "name": "getPartialAXTree",
                     "description": "Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.",
                     "experimental": true,
@@ -355,6 +367,20 @@
                         {
                             "name": "nodes",
                             "description": "The `Accessibility.AXNode` for this DOM node, if it exists, plus its ancestors, siblings and\nchildren, if requested.",
+                            "type": "array",
+                            "items": {
+                                "$ref": "AXNode"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "getFullAXTree",
+                    "description": "Fetches the entire accessibility tree",
+                    "experimental": true,
+                    "returns": [
+                        {
+                            "name": "nodes",
                             "type": "array",
                             "items": {
                                 "$ref": "AXNode"
@@ -1011,6 +1037,7 @@
                         "accessibilityEvents",
                         "audioCapture",
                         "backgroundSync",
+                        "backgroundFetch",
                         "clipboardRead",
                         "clipboardWrite",
                         "durableStorage",
@@ -3348,7 +3375,7 @@
                 },
                 {
                     "name": "getNodeForLocation",
-                    "description": "Returns node id at given location.",
+                    "description": "Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is\neither returned or not.",
                     "experimental": true,
                     "parameters": [
                         {
@@ -3370,8 +3397,14 @@
                     ],
                     "returns": [
                         {
+                            "name": "backendNodeId",
+                            "description": "Resulting node.",
+                            "$ref": "BackendNodeId"
+                        },
+                        {
                             "name": "nodeId",
-                            "description": "Id of the node at given coordinates.",
+                            "description": "Id of the node at given coordinates, only when enabled.",
+                            "optional": true,
                             "$ref": "NodeId"
                         }
                     ]
@@ -3893,7 +3926,14 @@
                     ],
                     "returns": [
                         {
+                            "name": "backendNodeId",
+                            "description": "Resulting node.",
+                            "$ref": "BackendNodeId"
+                        },
+                        {
                             "name": "nodeId",
+                            "description": "Id of the node at given coordinates, only when enabled.",
+                            "optional": true,
                             "$ref": "NodeId"
                         }
                     ]
@@ -5494,6 +5534,18 @@
                     "name": "resetPageScaleFactor",
                     "description": "Requests that page scale factor is reset to initial values.",
                     "experimental": true
+                },
+                {
+                    "name": "setFocusEmulationEnabled",
+                    "description": "Enables or disables simulating a focused and active page.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "enabled",
+                            "description": "Whether to enable to disable focus emulation.",
+                            "type": "boolean"
+                        }
+                    ]
                 },
                 {
                     "name": "setCPUThrottlingRate",
@@ -10735,6 +10787,13 @@
                         {
                             "name": "source",
                             "type": "string"
+                        },
+                        {
+                            "name": "worldName",
+                            "description": "If specified, creates an isolated world with the given name and evaluates given script in it.\nThis world name will be used as the ExecutionContextDescription::name when the corresponding\nevent is emitted.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "string"
                         }
                     ],
                     "returns": [
@@ -12002,6 +12061,22 @@
                 {
                     "name": "enable",
                     "description": "Enable collecting and reporting metrics."
+                },
+                {
+                    "name": "setTimeDomain",
+                    "description": "Sets time domain to use for collecting and reporting duration metrics.\nNote that this must be called before enabling metrics collection. Calling\nthis method while metrics collection is enabled returns an error.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "timeDomain",
+                            "description": "Time domain",
+                            "type": "string",
+                            "enum": [
+                                "timeTicks",
+                                "threadTicks"
+                            ]
+                        }
+                    ]
                 },
                 {
                     "name": "getMetrics",

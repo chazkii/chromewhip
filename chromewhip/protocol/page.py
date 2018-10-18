@@ -263,14 +263,20 @@ class Page(PayloadMixin):
     @classmethod
     def addScriptToEvaluateOnNewDocument(cls,
                                          source: Union['str'],
+                                         worldName: Optional['str'] = None,
                                          ):
         """Evaluates given script in every frame upon creation (before loading frame's scripts).
         :param source: 
         :type source: str
+        :param worldName: If specified, creates an isolated world with the given name and evaluates given script in it.
+This world name will be used as the ExecutionContextDescription::name when the corresponding
+event is emitted.
+        :type worldName: str
         """
         return (
             cls.build_send_payload("addScriptToEvaluateOnNewDocument", {
                 "source": source,
+                "worldName": worldName,
             }),
             cls.convert_payload({
                 "identifier": {
@@ -1249,7 +1255,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1268,7 +1274,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1528,7 +1534,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1551,7 +1557,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

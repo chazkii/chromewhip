@@ -48,6 +48,23 @@ class Performance(PayloadMixin):
         )
 
     @classmethod
+    def setTimeDomain(cls,
+                      timeDomain: Union['str'],
+                      ):
+        """Sets time domain to use for collecting and reporting duration metrics.
+Note that this must be called before enabling metrics collection. Calling
+this method while metrics collection is enabled returns an error.
+        :param timeDomain: Time domain
+        :type timeDomain: str
+        """
+        return (
+            cls.build_send_payload("setTimeDomain", {
+                "timeDomain": timeDomain,
+            }),
+            None
+        )
+
+    @classmethod
     def getMetrics(cls):
         """Retrieve current values of run-time metrics.
         """

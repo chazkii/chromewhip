@@ -79,6 +79,21 @@ class Emulation(PayloadMixin):
         )
 
     @classmethod
+    def setFocusEmulationEnabled(cls,
+                                 enabled: Union['bool'],
+                                 ):
+        """Enables or disables simulating a focused and active page.
+        :param enabled: Whether to enable to disable focus emulation.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setFocusEmulationEnabled", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
     def setCPUThrottlingRate(cls,
                              rate: Union['float'],
                              ):

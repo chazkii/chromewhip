@@ -461,7 +461,8 @@ entire subtree or provide an integer larger than 0.
                            y: Union['int'],
                            includeUserAgentShadowDOM: Optional['bool'] = None,
                            ):
-        """Returns node id at given location.
+        """Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
+either returned or not.
         :param x: X coordinate.
         :type x: int
         :param y: Y coordinate.
@@ -476,9 +477,13 @@ entire subtree or provide an integer larger than 0.
                 "includeUserAgentShadowDOM": includeUserAgentShadowDOM,
             }),
             cls.convert_payload({
+                "backendNodeId": {
+                    "class": BackendNodeId,
+                    "optional": False
+                },
                 "nodeId": {
                     "class": NodeId,
-                    "optional": False
+                    "optional": True
                 },
             })
         )
@@ -1043,9 +1048,13 @@ $x functions).
                 "frameId": frameId,
             }),
             cls.convert_payload({
+                "backendNodeId": {
+                    "class": BackendNodeId,
+                    "optional": False
+                },
                 "nodeId": {
                     "class": NodeId,
-                    "optional": False
+                    "optional": True
                 },
             })
         )
@@ -1167,7 +1176,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['previousNodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'previousNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1186,7 +1195,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, previousNodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, previousNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1370,7 +1379,7 @@ class SetChildNodesEvent(BaseEvent):
 class ShadowRootPoppedEvent(BaseEvent):
 
     js_name = 'Dom.shadowRootPopped'
-    hashable = ['rootId', 'hostId']
+    hashable = ['hostId', 'rootId']
     is_hashable = True
 
     def __init__(self,
@@ -1385,7 +1394,7 @@ class ShadowRootPoppedEvent(BaseEvent):
         self.rootId = rootId
 
     @classmethod
-    def build_hash(cls, rootId, hostId):
+    def build_hash(cls, hostId, rootId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
