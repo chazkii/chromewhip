@@ -43,6 +43,19 @@ class GPUInfo(ChromeTypeBase):
         self.driverBugWorkarounds = driverBugWorkarounds
 
 
+# ProcessInfo: Represents process info.
+class ProcessInfo(ChromeTypeBase):
+    def __init__(self,
+                 type: Union['str'],
+                 id: Union['int'],
+                 cpuTime: Union['float'],
+                 ):
+
+        self.type = type
+        self.id = id
+        self.cpuTime = cpuTime
+
+
 class SystemInfo(PayloadMixin):
     """ The SystemInfo domain defines methods and events for querying low-level system information.
     """
@@ -68,6 +81,21 @@ class SystemInfo(PayloadMixin):
                 },
                 "commandLine": {
                     "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getProcessInfo(cls):
+        """Returns information about all running processes.
+        """
+        return (
+            cls.build_send_payload("getProcessInfo", {
+            }),
+            cls.convert_payload({
+                "processInfo": {
+                    "class": [ProcessInfo],
                     "optional": False
                 },
             })

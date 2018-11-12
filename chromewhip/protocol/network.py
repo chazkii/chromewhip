@@ -1302,7 +1302,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'requestId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1353,7 +1353,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, requestId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1423,7 +1423,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'requestId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1454,7 +1454,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, requestId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

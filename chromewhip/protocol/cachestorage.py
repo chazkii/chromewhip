@@ -16,6 +16,9 @@ log = logging.getLogger(__name__)
 # CacheId: Unique identifier of the Cache object.
 CacheId = str
 
+# CachedResponseType: type of HTTP response cached
+CachedResponseType = str
+
 # DataEntry: Data entry.
 class DataEntry(ChromeTypeBase):
     def __init__(self,
@@ -25,6 +28,7 @@ class DataEntry(ChromeTypeBase):
                  responseTime: Union['float'],
                  responseStatus: Union['int'],
                  responseStatusText: Union['str'],
+                 responseType: Union['CachedResponseType'],
                  responseHeaders: Union['[Header]'],
                  ):
 
@@ -34,6 +38,7 @@ class DataEntry(ChromeTypeBase):
         self.responseTime = responseTime
         self.responseStatus = responseStatus
         self.responseStatusText = responseStatusText
+        self.responseType = responseType
         self.responseHeaders = responseHeaders
 
 

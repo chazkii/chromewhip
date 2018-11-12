@@ -51,17 +51,11 @@ class RemoteObject(ChromeTypeBase):
 class CustomPreview(ChromeTypeBase):
     def __init__(self,
                  header: Union['str'],
-                 hasBody: Union['bool'],
-                 formatterObjectId: Union['RemoteObjectId'],
-                 bindRemoteObjectFunctionId: Union['RemoteObjectId'],
-                 configObjectId: Optional['RemoteObjectId'] = None,
+                 bodyGetterId: Optional['RemoteObjectId'] = None,
                  ):
 
         self.header = header
-        self.hasBody = hasBody
-        self.formatterObjectId = formatterObjectId
-        self.bindRemoteObjectFunctionId = bindRemoteObjectFunctionId
-        self.configObjectId = configObjectId
+        self.bodyGetterId = bodyGetterId
 
 
 # ObjectPreview: Object containing abbreviated remote object value.

@@ -40,3 +40,4 @@ import chromewhip.protocol.target
 import chromewhip.protocol.tethering
 import chromewhip.protocol.tracing
 import chromewhip.protocol.testing
+import chromewhip.protocol.fetch

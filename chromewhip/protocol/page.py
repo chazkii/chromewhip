@@ -329,6 +329,27 @@ event is emitted.
         )
 
     @classmethod
+    def captureSnapshot(cls,
+                        format: Optional['str'] = None,
+                        ):
+        """Returns a snapshot of the page as a string. For MHTML format, the serialization includes
+iframes, shadow DOM, external resources, and element-inline styles.
+        :param format: Format (defaults to mhtml).
+        :type format: str
+        """
+        return (
+            cls.build_send_payload("captureSnapshot", {
+                "format": format,
+            }),
+            cls.convert_payload({
+                "data": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def clearDeviceMetricsOverride(cls):
         """Clears the overriden device metrics.
         """
@@ -1534,7 +1555,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1557,7 +1578,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
