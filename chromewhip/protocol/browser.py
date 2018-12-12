@@ -247,10 +247,10 @@ all histograms.
 
     @classmethod
     def getWindowForTarget(cls,
-                           targetId: Union['Target.TargetID'],
+                           targetId: Optional['Target.TargetID'] = None,
                            ):
         """Get the browser window that contains the devtools target.
-        :param targetId: Devtools agent host id.
+        :param targetId: Devtools agent host id. If called as a part of the session, associated targetId is used.
         :type targetId: Target.TargetID
         """
         return (
@@ -285,6 +285,25 @@ with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
             cls.build_send_payload("setWindowBounds", {
                 "windowId": windowId,
                 "bounds": bounds,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDockTile(cls,
+                    badgeLabel: Optional['str'] = None,
+                    image: Optional['str'] = None,
+                    ):
+        """Set dock tile details, platform-specific.
+        :param badgeLabel: 
+        :type badgeLabel: str
+        :param image: Png encoded image.
+        :type image: str
+        """
+        return (
+            cls.build_send_payload("setDockTile", {
+                "badgeLabel": badgeLabel,
+                "image": image,
             }),
             None
         )

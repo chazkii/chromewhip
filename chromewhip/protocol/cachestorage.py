@@ -138,7 +138,7 @@ class CacheStorage(PayloadMixin):
                               requestURL: Union['str'],
                               ):
         """Fetches cache entry.
-        :param cacheId: Id of cache that contains the enty.
+        :param cacheId: Id of cache that contains the entry.
         :type cacheId: CacheId
         :param requestURL: URL spec of the request.
         :type requestURL: str
@@ -161,6 +161,7 @@ class CacheStorage(PayloadMixin):
                        cacheId: Union['CacheId'],
                        skipCount: Union['int'],
                        pageSize: Union['int'],
+                       pathFilter: Optional['str'] = None,
                        ):
         """Requests data from cache.
         :param cacheId: ID of cache to get entries from.
@@ -169,12 +170,15 @@ class CacheStorage(PayloadMixin):
         :type skipCount: int
         :param pageSize: Number of records to fetch.
         :type pageSize: int
+        :param pathFilter: If present, only return the entries containing this substring in the path
+        :type pathFilter: str
         """
         return (
             cls.build_send_payload("requestEntries", {
                 "cacheId": cacheId,
                 "skipCount": skipCount,
                 "pageSize": pageSize,
+                "pathFilter": pathFilter,
             }),
             cls.convert_payload({
                 "cacheDataEntries": {

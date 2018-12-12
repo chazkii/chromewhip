@@ -311,6 +311,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         )
 
     @classmethod
+    def setShowHitTestBorders(cls,
+                              show: Union['bool'],
+                              ):
+        """Requests that backend shows hit-test borders on layers
+        :param show: True for showing hit-test borders
+        :type show: bool
+        """
+        return (
+            cls.build_send_payload("setShowHitTestBorders", {
+                "show": show,
+            }),
+            None
+        )
+
+    @classmethod
     def setShowViewportSizeOnResize(cls,
                                     show: Union['bool'],
                                     ):

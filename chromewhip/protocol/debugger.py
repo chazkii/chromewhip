@@ -367,19 +367,6 @@ of scripts is used as end of range.
         )
 
     @classmethod
-    def scheduleStepIntoAsync(cls):
-        """This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and
-Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled
-before next pause. Returns success when async task is actually scheduled, returns error if no
-task were scheduled or another scheduleStepIntoAsync was called.
-        """
-        return (
-            cls.build_send_payload("scheduleStepIntoAsync", {
-            }),
-            None
-        )
-
-    @classmethod
     def searchInContent(cls,
                         scriptId: Union['Runtime.ScriptId'],
                         query: Union['str'],
@@ -774,7 +761,7 @@ class BreakpointResolvedEvent(BaseEvent):
 class PausedEvent(BaseEvent):
 
     js_name = 'Debugger.paused'
-    hashable = ['asyncCallStackTraceId', 'asyncStackTraceId']
+    hashable = ['asyncStackTraceId', 'asyncCallStackTraceId']
     is_hashable = True
 
     def __init__(self,
@@ -809,7 +796,7 @@ class PausedEvent(BaseEvent):
         self.asyncCallStackTraceId = asyncCallStackTraceId
 
     @classmethod
-    def build_hash(cls, asyncCallStackTraceId, asyncStackTraceId):
+    def build_hash(cls, asyncStackTraceId, asyncCallStackTraceId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

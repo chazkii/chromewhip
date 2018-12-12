@@ -1280,7 +1280,8 @@
                     "parameters": [
                         {
                             "name": "targetId",
-                            "description": "Devtools agent host id.",
+                            "description": "Devtools agent host id. If called as a part of the session, associated targetId is used.",
+                            "optional": true,
                             "$ref": "Target.TargetID"
                         }
                     ],
@@ -1311,6 +1312,24 @@
                             "name": "bounds",
                             "description": "New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined\nwith 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.",
                             "$ref": "Bounds"
+                        }
+                    ]
+                },
+                {
+                    "name": "setDockTile",
+                    "description": "Set dock tile details, platform-specific.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "badgeLabel",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "image",
+                            "description": "Png encoded image.",
+                            "optional": true,
+                            "type": "string"
                         }
                     ]
                 }
@@ -2667,7 +2686,7 @@
                     "parameters": [
                         {
                             "name": "cacheId",
-                            "description": "Id of cache that contains the enty.",
+                            "description": "Id of cache that contains the entry.",
                             "$ref": "CacheId"
                         },
                         {
@@ -2702,6 +2721,12 @@
                             "name": "pageSize",
                             "description": "Number of records to fetch.",
                             "type": "integer"
+                        },
+                        {
+                            "name": "pathFilter",
+                            "description": "If present, only return the entries containing this substring in the path",
+                            "optional": true,
+                            "type": "string"
                         }
                     ],
                     "returns": [
@@ -8395,22 +8420,22 @@
                 },
                 {
                     "id": "WebSocketFrame",
-                    "description": "WebSocket frame data.",
+                    "description": "WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.",
                     "type": "object",
                     "properties": [
                         {
                             "name": "opcode",
-                            "description": "WebSocket frame opcode.",
+                            "description": "WebSocket message opcode.",
                             "type": "number"
                         },
                         {
                             "name": "mask",
-                            "description": "WebSocke frame mask.",
+                            "description": "WebSocket message mask.",
                             "type": "boolean"
                         },
                         {
                             "name": "payloadData",
-                            "description": "WebSocke frame payload data.",
+                            "description": "WebSocket message payload data.",
                             "type": "string"
                         }
                     ]
@@ -9150,7 +9175,7 @@
                     "returns": [
                         {
                             "name": "postData",
-                            "description": "Base64-encoded request body.",
+                            "description": "Request body string, omitting files from multipart requests",
                             "type": "string"
                         }
                     ]
@@ -9814,7 +9839,7 @@
                 },
                 {
                     "name": "webSocketFrameError",
-                    "description": "Fired when WebSocket frame error occurs.",
+                    "description": "Fired when WebSocket message error occurs.",
                     "parameters": [
                         {
                             "name": "requestId",
@@ -9828,14 +9853,14 @@
                         },
                         {
                             "name": "errorMessage",
-                            "description": "WebSocket frame error message.",
+                            "description": "WebSocket error message.",
                             "type": "string"
                         }
                     ]
                 },
                 {
                     "name": "webSocketFrameReceived",
-                    "description": "Fired when WebSocket frame is received.",
+                    "description": "Fired when WebSocket message is received.",
                     "parameters": [
                         {
                             "name": "requestId",
@@ -9856,7 +9881,7 @@
                 },
                 {
                     "name": "webSocketFrameSent",
-                    "description": "Fired when WebSocket frame is sent.",
+                    "description": "Fired when WebSocket message is sent.",
                     "parameters": [
                         {
                             "name": "requestId",
@@ -10240,6 +10265,17 @@
                         {
                             "name": "show",
                             "description": "True for showing scroll bottleneck rects",
+                            "type": "boolean"
+                        }
+                    ]
+                },
+                {
+                    "name": "setShowHitTestBorders",
+                    "description": "Requests that backend shows hit-test borders on layers",
+                    "parameters": [
+                        {
+                            "name": "show",
+                            "description": "True for showing hit-test borders",
                             "type": "boolean"
                         }
                     ]
