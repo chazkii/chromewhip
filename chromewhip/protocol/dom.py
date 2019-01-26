@@ -948,6 +948,27 @@ successfully.
         )
 
     @classmethod
+    def getFileInfo(cls,
+                    objectId: Union['Runtime.RemoteObjectId'],
+                    ):
+        """Returns file information for the given
+File wrapper.
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("getFileInfo", {
+                "objectId": objectId,
+            }),
+            cls.convert_payload({
+                "path": {
+                    "class": str,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setInspectedNode(cls,
                          nodeId: Union['NodeId'],
                          ):
@@ -1207,7 +1228,7 @@ class ChildNodeInsertedEvent(BaseEvent):
 class ChildNodeRemovedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeRemoved'
-    hashable = ['nodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'nodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1222,7 +1243,7 @@ class ChildNodeRemovedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, nodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, nodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1325,7 +1346,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['pseudoElementId', 'parentId']
+    hashable = ['parentId', 'pseudoElementId']
     is_hashable = True
 
     def __init__(self,
@@ -1340,7 +1361,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, pseudoElementId, parentId):
+    def build_hash(cls, parentId, pseudoElementId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

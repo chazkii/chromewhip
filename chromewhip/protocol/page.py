@@ -177,6 +177,7 @@ class VisualViewport(ChromeTypeBase):
                  clientWidth: Union['float'],
                  clientHeight: Union['float'],
                  scale: Union['float'],
+                 zoom: Optional['float'] = None,
                  ):
 
         self.offsetX = offsetX
@@ -186,6 +187,7 @@ class VisualViewport(ChromeTypeBase):
         self.clientWidth = clientWidth
         self.clientHeight = clientHeight
         self.scale = scale
+        self.zoom = zoom
 
 
 # Viewport: Viewport for capturing screenshot.
@@ -544,6 +546,16 @@ information in the `cookies` field.
         )
 
     @classmethod
+    def resetNavigationHistory(cls):
+        """Resets navigation history for the current page.
+        """
+        return (
+            cls.build_send_payload("resetNavigationHistory", {
+            }),
+            None
+        )
+
+    @classmethod
     def getResourceContent(cls,
                            frameId: Union['FrameId'],
                            url: Union['str'],
@@ -794,16 +806,6 @@ Argument will be ignored if reloading dataURL origin.
         return (
             cls.build_send_payload("removeScriptToEvaluateOnNewDocument", {
                 "identifier": identifier,
-            }),
-            None
-        )
-
-    @classmethod
-    def requestAppBanner(cls):
-        """
-        """
-        return (
-            cls.build_send_payload("requestAppBanner", {
             }),
             None
         )
@@ -1253,6 +1255,16 @@ cross-process navigation.
             None
         )
 
+    @classmethod
+    def waitForDebugger(cls):
+        """Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
+        """
+        return (
+            cls.build_send_payload("waitForDebugger", {
+            }),
+            None
+        )
+
 
 
 class DomContentEventFiredEvent(BaseEvent):
@@ -1555,7 +1567,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1578,7 +1590,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

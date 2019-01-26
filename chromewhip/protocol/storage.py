@@ -38,7 +38,7 @@ class Storage(PayloadMixin):
         """Clears storage for origin.
         :param origin: Security origin.
         :type origin: str
-        :param storageTypes: Comma separated origin names.
+        :param storageTypes: Comma separated list of StorageType to clear.
         :type storageTypes: str
         """
         return (

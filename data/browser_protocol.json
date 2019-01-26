@@ -205,7 +205,7 @@
                 },
                 {
                     "id": "AXPropertyName",
-                    "description": "Values of AXProperty name: from 'busy' to 'roledescription' - states which apply to every AX\nnode, from 'live' to 'root' - attributes which apply to nodes in live regions, from\n'autocomplete' to 'valuetext' - attributes which apply to widgets, from 'checked' to 'selected'\n- states which apply to widgets, from 'activedescendant' to 'owns' - relationships between\nelements other than parent/child/sibling.",
+                    "description": "Values of AXProperty name:\n- from 'busy' to 'roledescription': states which apply to every AX node\n- from 'live' to 'root': attributes which apply to nodes in live regions\n- from 'autocomplete' to 'valuetext': attributes which apply to widgets\n- from 'checked' to 'selected': states which apply to widgets\n- from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.",
                     "type": "string",
                     "enum": [
                         "busy",
@@ -2123,12 +2123,6 @@
                             "description": "The computed font weight for this node, as a CSS computed value string (e.g. 'normal' or\n'100').",
                             "optional": true,
                             "type": "string"
-                        },
-                        {
-                            "name": "computedBodyFontSize",
-                            "description": "The computed font size for the document body, as a computed CSS value string (e.g. '16px').",
-                            "optional": true,
-                            "type": "string"
                         }
                     ]
                 },
@@ -2742,6 +2736,83 @@
                             "name": "hasMore",
                             "description": "If true, there are more entries to fetch in the given range.",
                             "type": "boolean"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "domain": "Cast",
+            "description": "A domain for interacting with Cast, Presentation API, and Remote Playback API\nfunctionalities.",
+            "experimental": true,
+            "commands": [
+                {
+                    "name": "enable",
+                    "description": "Starts observing for sinks that can be used for tab mirroring, and if set,\nsinks compatible with |presentationUrl| as well. When sinks are found, a\n|sinksUpdated| event is fired.\nAlso starts observing for issue messages. When an issue is added or removed,\nan |issueUpdated| event is fired.",
+                    "parameters": [
+                        {
+                            "name": "presentationUrl",
+                            "optional": true,
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "disable",
+                    "description": "Stops observing for sinks and issues."
+                },
+                {
+                    "name": "setSinkToUse",
+                    "description": "Sets a sink to be used when the web page requests the browser to choose a\nsink via Presentation API, Remote Playback API, or Cast SDK.",
+                    "parameters": [
+                        {
+                            "name": "sinkName",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "startTabMirroring",
+                    "description": "Starts mirroring the tab to the sink.",
+                    "parameters": [
+                        {
+                            "name": "sinkName",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "stopCasting",
+                    "description": "Stops the active Cast session on the sink.",
+                    "parameters": [
+                        {
+                            "name": "sinkName",
+                            "type": "string"
+                        }
+                    ]
+                }
+            ],
+            "events": [
+                {
+                    "name": "sinksUpdated",
+                    "description": "This is fired whenever the list of available sinks changes. A sink is a\ndevice or a software surface that you can cast to.",
+                    "parameters": [
+                        {
+                            "name": "sinkNames",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "issueUpdated",
+                    "description": "This is fired whenever the outstanding issue/error message changes.\n|issueMessage| is empty if there is no issue.",
+                    "parameters": [
+                        {
+                            "name": "issueMessage",
+                            "type": "string"
                         }
                     ]
                 }
@@ -3882,6 +3953,24 @@
                             "description": "JavaScript object id of the node wrapper.",
                             "optional": true,
                             "$ref": "Runtime.RemoteObjectId"
+                        }
+                    ]
+                },
+                {
+                    "name": "getFileInfo",
+                    "description": "Returns file information for the given\nFile wrapper.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "objectId",
+                            "description": "JavaScript object id of the node wrapper.",
+                            "$ref": "Runtime.RemoteObjectId"
+                        }
+                    ],
+                    "returns": [
+                        {
+                            "name": "path",
+                            "type": "string"
                         }
                     ]
                 },
@@ -6144,8 +6233,8 @@
                         },
                         {
                             "name": "version",
-                            "description": "Database version.",
-                            "type": "integer"
+                            "description": "Database version (type is not 'integer', as the standard\nrequires the version number to be 'unsigned long long')",
+                            "type": "number"
                         },
                         {
                             "name": "objectStores",
@@ -6734,8 +6823,16 @@
                                 "none",
                                 "left",
                                 "middle",
-                                "right"
+                                "right",
+                                "back",
+                                "forward"
                             ]
+                        },
+                        {
+                            "name": "buttons",
+                            "description": "A number indicating which buttons are pressed on the mouse when a mouse event is triggered.\nLeft=1, Right=2, Middle=4, Back=8, Forward=16, None=0.",
+                            "optional": true,
+                            "type": "integer"
                         },
                         {
                             "name": "clickCount",
@@ -6754,6 +6851,16 @@
                             "description": "Y delta in CSS pixels for mouse wheel event (default: 0).",
                             "optional": true,
                             "type": "number"
+                        },
+                        {
+                            "name": "pointerType",
+                            "description": "Pointer type (default: \"mouse\").",
+                            "optional": true,
+                            "type": "string",
+                            "enum": [
+                                "mouse",
+                                "pen"
+                            ]
                         }
                     ]
                 },
@@ -8435,7 +8542,7 @@
                         },
                         {
                             "name": "payloadData",
-                            "description": "WebSocket message payload data.",
+                            "description": "WebSocket message payload data.\nIf the opcode is 1, this is a text message and payloadData is a UTF-8 string.\nIf the opcode isn't 1, then payloadData is a base64 encoded string representing binary data.",
                             "type": "string"
                         }
                     ]
@@ -9971,6 +10078,12 @@
                             "type": "boolean"
                         },
                         {
+                            "name": "showStyles",
+                            "description": "Whether the node styles in the tooltip (default: false).",
+                            "optional": true,
+                            "type": "boolean"
+                        },
+                        {
                             "name": "showRulers",
                             "description": "Whether the rulers should be shown (default: false).",
                             "optional": true,
@@ -9979,11 +10092,6 @@
                         {
                             "name": "showExtensionLines",
                             "description": "Whether the extension lines from node to the rulers should be shown (default: false).",
-                            "optional": true,
-                            "type": "boolean"
-                        },
-                        {
-                            "name": "displayAsMaterial",
                             "optional": true,
                             "type": "boolean"
                         },
@@ -10330,7 +10438,7 @@
                     "parameters": [
                         {
                             "name": "viewport",
-                            "description": "Viewport to capture, in CSS.",
+                            "description": "Viewport to capture, in device independent pixels (dip).",
                             "$ref": "Page.Viewport"
                         }
                     ]
@@ -10708,6 +10816,12 @@
                             "name": "scale",
                             "description": "Scale relative to the ideal viewport (size at width=device-width).",
                             "type": "number"
+                        },
+                        {
+                            "name": "zoom",
+                            "description": "Page zoom factor (CSS to device independent pixels ratio).",
+                            "optional": true,
+                            "type": "number"
                         }
                     ]
                 },
@@ -10718,22 +10832,22 @@
                     "properties": [
                         {
                             "name": "x",
-                            "description": "X offset in CSS pixels.",
+                            "description": "X offset in device independent pixels (dip).",
                             "type": "number"
                         },
                         {
                             "name": "y",
-                            "description": "Y offset in CSS pixels",
+                            "description": "Y offset in device independent pixels (dip).",
                             "type": "number"
                         },
                         {
                             "name": "width",
-                            "description": "Rectangle width in CSS pixels",
+                            "description": "Rectangle width in device independent pixels (dip).",
                             "type": "number"
                         },
                         {
                             "name": "height",
-                            "description": "Rectangle height in CSS pixels",
+                            "description": "Rectangle height in device independent pixels (dip).",
                             "type": "number"
                         },
                         {
@@ -11096,6 +11210,10 @@
                     ]
                 },
                 {
+                    "name": "resetNavigationHistory",
+                    "description": "Resets navigation history for the current page."
+                },
+                {
                     "name": "getResourceContent",
                     "description": "Returns content of the given resource.",
                     "experimental": true,
@@ -11354,10 +11472,6 @@
                             "$ref": "ScriptIdentifier"
                         }
                     ]
-                },
-                {
-                    "name": "requestAppBanner",
-                    "experimental": true
                 },
                 {
                     "name": "screencastFrameAck",
@@ -11790,6 +11904,11 @@
                             "type": "string"
                         }
                     ]
+                },
+                {
+                    "name": "waitForDebugger",
+                    "description": "Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.",
+                    "experimental": true
                 }
             ],
             "events": [
@@ -12764,7 +12883,7 @@
                         },
                         {
                             "name": "storageTypes",
-                            "description": "Comma separated origin names.",
+                            "description": "Comma separated list of StorageType to clear.",
                             "type": "string"
                         }
                     ]

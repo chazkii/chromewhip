@@ -20,9 +20,9 @@ from chromewhip.protocol import runtime as Runtime
 class HighlightConfig(ChromeTypeBase):
     def __init__(self,
                  showInfo: Optional['bool'] = None,
+                 showStyles: Optional['bool'] = None,
                  showRulers: Optional['bool'] = None,
                  showExtensionLines: Optional['bool'] = None,
-                 displayAsMaterial: Optional['bool'] = None,
                  contentColor: Optional['DOM.RGBA'] = None,
                  paddingColor: Optional['DOM.RGBA'] = None,
                  borderColor: Optional['DOM.RGBA'] = None,
@@ -35,9 +35,9 @@ class HighlightConfig(ChromeTypeBase):
                  ):
 
         self.showInfo = showInfo
+        self.showStyles = showStyles
         self.showRulers = showRulers
         self.showExtensionLines = showExtensionLines
-        self.displayAsMaterial = displayAsMaterial
         self.contentColor = contentColor
         self.paddingColor = paddingColor
         self.borderColor = borderColor

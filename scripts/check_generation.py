@@ -13,6 +13,7 @@ import chromewhip.protocol.audits
 import chromewhip.protocol.browser
 import chromewhip.protocol.css
 import chromewhip.protocol.cachestorage
+import chromewhip.protocol.cast
 import chromewhip.protocol.dom
 import chromewhip.protocol.domdebugger
 import chromewhip.protocol.domsnapshot

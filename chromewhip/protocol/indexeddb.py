@@ -18,7 +18,7 @@ from chromewhip.protocol import runtime as Runtime
 class DatabaseWithObjectStores(ChromeTypeBase):
     def __init__(self,
                  name: Union['str'],
-                 version: Union['int'],
+                 version: Union['float'],
                  objectStores: Union['[ObjectStore]'],
                  ):
 

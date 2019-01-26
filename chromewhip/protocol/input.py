@@ -139,9 +139,11 @@ for example an emoji keyboard or an IME.
                            modifiers: Optional['int'] = None,
                            timestamp: Optional['TimeSinceEpoch'] = None,
                            button: Optional['str'] = None,
+                           buttons: Optional['int'] = None,
                            clickCount: Optional['int'] = None,
                            deltaX: Optional['float'] = None,
                            deltaY: Optional['float'] = None,
+                           pointerType: Optional['str'] = None,
                            ):
         """Dispatches a mouse event to the page.
         :param type: Type of the mouse event.
@@ -158,12 +160,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
         :type timestamp: TimeSinceEpoch
         :param button: Mouse button (default: "none").
         :type button: str
+        :param buttons: A number indicating which buttons are pressed on the mouse when a mouse event is triggered.
+Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
+        :type buttons: int
         :param clickCount: Number of times the mouse button was clicked (default: 0).
         :type clickCount: int
         :param deltaX: X delta in CSS pixels for mouse wheel event (default: 0).
         :type deltaX: float
         :param deltaY: Y delta in CSS pixels for mouse wheel event (default: 0).
         :type deltaY: float
+        :param pointerType: Pointer type (default: "mouse").
+        :type pointerType: str
         """
         return (
             cls.build_send_payload("dispatchMouseEvent", {
@@ -173,9 +180,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
                 "modifiers": modifiers,
                 "timestamp": timestamp,
                 "button": button,
+                "buttons": buttons,
                 "clickCount": clickCount,
                 "deltaX": deltaX,
                 "deltaY": deltaY,
+                "pointerType": pointerType,
             }),
             None
         )
