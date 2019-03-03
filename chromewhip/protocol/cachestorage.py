@@ -136,17 +136,21 @@ class CacheStorage(PayloadMixin):
     def requestCachedResponse(cls,
                               cacheId: Union['CacheId'],
                               requestURL: Union['str'],
+                              requestHeaders: Union['[Header]'],
                               ):
         """Fetches cache entry.
         :param cacheId: Id of cache that contains the entry.
         :type cacheId: CacheId
         :param requestURL: URL spec of the request.
         :type requestURL: str
+        :param requestHeaders: headers of the request.
+        :type requestHeaders: [Header]
         """
         return (
             cls.build_send_payload("requestCachedResponse", {
                 "cacheId": cacheId,
                 "requestURL": requestURL,
+                "requestHeaders": requestHeaders,
             }),
             cls.convert_payload({
                 "response": {

@@ -256,6 +256,35 @@ class IndexedDB(PayloadMixin):
         )
 
     @classmethod
+    def getKeyGeneratorCurrentNumber(cls,
+                                     securityOrigin: Union['str'],
+                                     databaseName: Union['str'],
+                                     objectStoreName: Union['str'],
+                                     ):
+        """Gets the auto increment number of an object store. Only meaningful
+when objectStore.autoIncrement is true.
+        :param securityOrigin: Security origin.
+        :type securityOrigin: str
+        :param databaseName: Database name.
+        :type databaseName: str
+        :param objectStoreName: Object store name.
+        :type objectStoreName: str
+        """
+        return (
+            cls.build_send_payload("getKeyGeneratorCurrentNumber", {
+                "securityOrigin": securityOrigin,
+                "databaseName": databaseName,
+                "objectStoreName": objectStoreName,
+            }),
+            cls.convert_payload({
+                "currentNumber": {
+                    "class": float,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def requestDatabase(cls,
                         securityOrigin: Union['str'],
                         databaseName: Union['str'],

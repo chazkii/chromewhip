@@ -129,6 +129,16 @@ class Browser(PayloadMixin):
         )
 
     @classmethod
+    def crashGpuProcess(cls):
+        """Crashes GPU process.
+        """
+        return (
+            cls.build_send_payload("crashGpuProcess", {
+            }),
+            None
+        )
+
+    @classmethod
     def getVersion(cls):
         """Returns version information.
         """

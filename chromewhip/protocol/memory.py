@@ -92,6 +92,16 @@ class Memory(PayloadMixin):
         )
 
     @classmethod
+    def forciblyPurgeJavaScriptMemory(cls):
+        """Simulate OomIntervention by purging V8 memory.
+        """
+        return (
+            cls.build_send_payload("forciblyPurgeJavaScriptMemory", {
+            }),
+            None
+        )
+
+    @classmethod
     def setPressureNotificationsSuppressed(cls,
                                            suppressed: Union['bool'],
                                            ):

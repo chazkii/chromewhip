@@ -30,7 +30,6 @@ class HighlightConfig(ChromeTypeBase):
                  eventTargetColor: Optional['DOM.RGBA'] = None,
                  shapeColor: Optional['DOM.RGBA'] = None,
                  shapeMarginColor: Optional['DOM.RGBA'] = None,
-                 selectorList: Optional['str'] = None,
                  cssGridColor: Optional['DOM.RGBA'] = None,
                  ):
 
@@ -45,7 +44,6 @@ class HighlightConfig(ChromeTypeBase):
         self.eventTargetColor = eventTargetColor
         self.shapeColor = shapeColor
         self.shapeMarginColor = shapeMarginColor
-        self.selectorList = selectorList
         self.cssGridColor = cssGridColor
 
 
@@ -134,6 +132,7 @@ class Overlay(PayloadMixin):
                       nodeId: Optional['DOM.NodeId'] = None,
                       backendNodeId: Optional['DOM.BackendNodeId'] = None,
                       objectId: Optional['Runtime.RemoteObjectId'] = None,
+                      selector: Optional['str'] = None,
                       ):
         """Highlights DOM node with given id or with the given JavaScript object wrapper. Either nodeId or
 objectId must be specified.
@@ -145,6 +144,8 @@ objectId must be specified.
         :type backendNodeId: DOM.BackendNodeId
         :param objectId: JavaScript object id of the node to be highlighted.
         :type objectId: Runtime.RemoteObjectId
+        :param selector: Selectors to highlight relevant nodes.
+        :type selector: str
         """
         return (
             cls.build_send_payload("highlightNode", {
@@ -152,6 +153,7 @@ objectId must be specified.
                 "nodeId": nodeId,
                 "backendNodeId": backendNodeId,
                 "objectId": objectId,
+                "selector": selector,
             }),
             None
         )
@@ -231,6 +233,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
             cls.build_send_payload("setInspectMode", {
                 "mode": mode,
                 "highlightConfig": highlightConfig,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowAdHighlights(cls,
+                            show: Union['bool'],
+                            ):
+        """Highlights owner element of all frames detected to be ads.
+        :param show: True for showing ad highlights
+        :type show: bool
+        """
+        return (
+            cls.build_send_payload("setShowAdHighlights", {
+                "show": show,
             }),
             None
         )
@@ -415,6 +432,20 @@ class ScreenshotRequestedEvent(BaseEvent):
         if isinstance(viewport, dict):
             viewport = Page.Viewport(**viewport)
         self.viewport = viewport
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class InspectModeCanceledEvent(BaseEvent):
+
+    js_name = 'Overlay.inspectModeCanceled'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
 
     @classmethod
     def build_hash(cls):

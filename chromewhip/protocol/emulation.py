@@ -426,24 +426,6 @@ on Android.
 
 
 
-class VirtualTimeAdvancedEvent(BaseEvent):
-
-    js_name = 'Emulation.virtualTimeAdvanced'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 virtualTimeElapsed: Union['float', dict],
-                 ):
-        if isinstance(virtualTimeElapsed, dict):
-            virtualTimeElapsed = float(**virtualTimeElapsed)
-        self.virtualTimeElapsed = virtualTimeElapsed
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
 class VirtualTimeBudgetExpiredEvent(BaseEvent):
 
     js_name = 'Emulation.virtualTimeBudgetExpired'
@@ -452,24 +434,6 @@ class VirtualTimeBudgetExpiredEvent(BaseEvent):
 
     def __init__(self):
         pass
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class VirtualTimePausedEvent(BaseEvent):
-
-    js_name = 'Emulation.virtualTimePaused'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 virtualTimeElapsed: Union['float', dict],
-                 ):
-        if isinstance(virtualTimeElapsed, dict):
-            virtualTimeElapsed = float(**virtualTimeElapsed)
-        self.virtualTimeElapsed = virtualTimeElapsed
 
     @classmethod
     def build_hash(cls):

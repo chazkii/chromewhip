@@ -849,6 +849,7 @@ nodes that form the path from the node to the root are also sent to the client a
                     nodeId: Optional['NodeId'] = None,
                     backendNodeId: Optional['DOM.BackendNodeId'] = None,
                     objectGroup: Optional['str'] = None,
+                    executionContextId: Optional['Runtime.ExecutionContextId'] = None,
                     ):
         """Resolves the JavaScript node object for a given NodeId or BackendNodeId.
         :param nodeId: Id of the node to resolve.
@@ -857,12 +858,15 @@ nodes that form the path from the node to the root are also sent to the client a
         :type backendNodeId: DOM.BackendNodeId
         :param objectGroup: Symbolic group name that can be used to release multiple objects.
         :type objectGroup: str
+        :param executionContextId: Execution context in which to resolve the node.
+        :type executionContextId: Runtime.ExecutionContextId
         """
         return (
             cls.build_send_payload("resolveNode", {
                 "nodeId": nodeId,
                 "backendNodeId": backendNodeId,
                 "objectGroup": objectGroup,
+                "executionContextId": executionContextId,
             }),
             cls.convert_payload({
                 "object": {
@@ -1197,7 +1201,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['previousNodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'previousNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1216,7 +1220,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, previousNodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, previousNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1400,7 +1404,7 @@ class SetChildNodesEvent(BaseEvent):
 class ShadowRootPoppedEvent(BaseEvent):
 
     js_name = 'Dom.shadowRootPopped'
-    hashable = ['rootId', 'hostId']
+    hashable = ['hostId', 'rootId']
     is_hashable = True
 
     def __init__(self,
@@ -1415,7 +1419,7 @@ class ShadowRootPoppedEvent(BaseEvent):
         self.rootId = rootId
 
     @classmethod
-    def build_hash(cls, rootId, hostId):
+    def build_hash(cls, hostId, rootId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
