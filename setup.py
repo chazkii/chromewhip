@@ -40,7 +40,7 @@ setup(
 
         'License :: OSI Approved :: MIT License',
 
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     # What does your project relate to?
@@ -59,8 +59,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'aiohttp==2.2.0', 'websockets==3.3', 'beautifulsoup4==4.6.0', 'lxml==3.8.0',
-        'pyyaml==3.12', 'Pillow==4.2.1'
+        'aiohttp==3.5.4', 'websockets==7.0', 'beautifulsoup4==4.7.1', 'lxml==4.3.3',
+        'pyyaml==5.1', 'Pillow==6.0.0'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -68,7 +68,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['Jinja2==2.9.6', 'jsonpatch==1.16'],
+        'dev': ['Jinja2==2.10.1', 'jsonpatch==1.23'],
         'test': ['pytest-asyncio==0.10.0'],
     },
 
