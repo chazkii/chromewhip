@@ -10,6 +10,7 @@ import chromewhip.protocol.accessibility
 import chromewhip.protocol.animation
 import chromewhip.protocol.applicationcache
 import chromewhip.protocol.audits
+import chromewhip.protocol.backgroundservice
 import chromewhip.protocol.browser
 import chromewhip.protocol.css
 import chromewhip.protocol.cachestorage
@@ -40,5 +41,4 @@ import chromewhip.protocol.systeminfo
 import chromewhip.protocol.target
 import chromewhip.protocol.tethering
 import chromewhip.protocol.tracing
-import chromewhip.protocol.testing
 import chromewhip.protocol.fetch

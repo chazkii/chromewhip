@@ -1022,7 +1022,7 @@ default domain and path values of the created cookie.
     def setRequestInterception(cls,
                                patterns: Union['[RequestPattern]'],
                                ):
-        """Sets the requests to intercept that match a the provided patterns and optionally resource types.
+        """Sets the requests to intercept that match the provided patterns and optionally resource types.
         :param patterns: Requests matching any of these patterns will be forwarded and wait for the corresponding
 continueInterceptedRequest call.
         :type patterns: [RequestPattern]
@@ -1097,7 +1097,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1124,7 +1124,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1214,7 +1214,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['interceptionId', 'frameId']
+    hashable = ['interceptionId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1229,6 +1229,7 @@ class RequestInterceptedEvent(BaseEvent):
                  responseErrorReason: Union['ErrorReason', dict, None] = None,
                  responseStatusCode: Union['int', dict, None] = None,
                  responseHeaders: Union['Headers', dict, None] = None,
+                 requestId: Union['RequestId', dict, None] = None,
                  ):
         if isinstance(interceptionId, dict):
             interceptionId = InterceptionId(**interceptionId)
@@ -1263,9 +1264,12 @@ class RequestInterceptedEvent(BaseEvent):
         if isinstance(responseHeaders, dict):
             responseHeaders = Headers(**responseHeaders)
         self.responseHeaders = responseHeaders
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
 
     @classmethod
-    def build_hash(cls, interceptionId, frameId):
+    def build_hash(cls, interceptionId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1300,7 +1304,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'requestId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1351,7 +1355,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, requestId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1421,7 +1425,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'loaderId', 'frameId']
+    hashable = ['frameId', 'requestId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1452,7 +1456,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, loaderId, frameId):
+    def build_hash(cls, frameId, requestId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

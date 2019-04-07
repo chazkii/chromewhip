@@ -13,10 +13,13 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
+# RegistrationID: 
+RegistrationID = str
+
 # ServiceWorkerRegistration: ServiceWorker registration.
 class ServiceWorkerRegistration(ChromeTypeBase):
     def __init__(self,
-                 registrationId: Union['str'],
+                 registrationId: Union['RegistrationID'],
                  scopeURL: Union['str'],
                  isDeleted: Union['bool'],
                  ):
@@ -36,7 +39,7 @@ ServiceWorkerVersionStatus = str
 class ServiceWorkerVersion(ChromeTypeBase):
     def __init__(self,
                  versionId: Union['str'],
-                 registrationId: Union['str'],
+                 registrationId: Union['RegistrationID'],
                  scriptURL: Union['str'],
                  runningStatus: Union['ServiceWorkerVersionRunningStatus'],
                  status: Union['ServiceWorkerVersionStatus'],
@@ -61,7 +64,7 @@ class ServiceWorkerVersion(ChromeTypeBase):
 class ServiceWorkerErrorMessage(ChromeTypeBase):
     def __init__(self,
                  errorMessage: Union['str'],
-                 registrationId: Union['str'],
+                 registrationId: Union['RegistrationID'],
                  versionId: Union['str'],
                  sourceURL: Union['str'],
                  lineNumber: Union['int'],
@@ -82,14 +85,14 @@ class ServiceWorker(PayloadMixin):
     @classmethod
     def deliverPushMessage(cls,
                            origin: Union['str'],
-                           registrationId: Union['str'],
+                           registrationId: Union['RegistrationID'],
                            data: Union['str'],
                            ):
         """
         :param origin: 
         :type origin: str
         :param registrationId: 
-        :type registrationId: str
+        :type registrationId: RegistrationID
         :param data: 
         :type data: str
         """
@@ -115,7 +118,7 @@ class ServiceWorker(PayloadMixin):
     @classmethod
     def dispatchSyncEvent(cls,
                           origin: Union['str'],
-                          registrationId: Union['str'],
+                          registrationId: Union['RegistrationID'],
                           tag: Union['str'],
                           lastChance: Union['bool'],
                           ):
@@ -123,7 +126,7 @@ class ServiceWorker(PayloadMixin):
         :param origin: 
         :type origin: str
         :param registrationId: 
-        :type registrationId: str
+        :type registrationId: RegistrationID
         :param tag: 
         :type tag: str
         :param lastChance: 

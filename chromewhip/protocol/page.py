@@ -239,6 +239,9 @@ class FontSizes(ChromeTypeBase):
         self.fixed = fixed
 
 
+# ClientNavigationReason: 
+ClientNavigationReason = str
+
 class Page(PayloadMixin):
     """ Actions and events related to the inspected page belong to the page domain.
     """
@@ -1397,6 +1400,37 @@ class FrameResizedEvent(BaseEvent):
     @classmethod
     def build_hash(cls):
         raise ValueError('Unable to build hash for non-hashable type')
+
+
+class FrameRequestedNavigationEvent(BaseEvent):
+
+    js_name = 'Page.frameRequestedNavigation'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 reason: Union['ClientNavigationReason', dict],
+                 url: Union['str', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(reason, dict):
+            reason = ClientNavigationReason(**reason)
+        self.reason = reason
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+
+    @classmethod
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class FrameScheduledNavigationEvent(BaseEvent):

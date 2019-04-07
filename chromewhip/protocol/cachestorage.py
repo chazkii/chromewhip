@@ -189,8 +189,8 @@ class CacheStorage(PayloadMixin):
                     "class": [DataEntry],
                     "optional": False
                 },
-                "hasMore": {
-                    "class": bool,
+                "returnCount": {
+                    "class": float,
                     "optional": False
                 },
             })

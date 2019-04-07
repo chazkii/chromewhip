@@ -357,21 +357,6 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
             None
         )
 
-    @classmethod
-    def setSuspended(cls,
-                     suspended: Union['bool'],
-                     ):
-        """
-        :param suspended: Whether overlay should be suspended and not consume any resources until resumed.
-        :type suspended: bool
-        """
-        return (
-            cls.build_send_payload("setSuspended", {
-                "suspended": suspended,
-            }),
-            None
-        )
-
 
 
 class InspectNodeRequestedEvent(BaseEvent):

@@ -971,6 +971,153 @@
             ]
         },
         {
+            "domain": "BackgroundService",
+            "description": "Defines events for background web platform features.",
+            "experimental": true,
+            "types": [
+                {
+                    "id": "ServiceName",
+                    "description": "The Background Service that will be associated with the commands/events.\nEvery Background Service operates independently, but they share the same\nAPI.",
+                    "type": "string",
+                    "enum": [
+                        "backgroundFetch",
+                        "backgroundSync"
+                    ]
+                },
+                {
+                    "id": "EventMetadata",
+                    "description": "A key-value pair for additional event information to pass along.",
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "key",
+                            "type": "string"
+                        },
+                        {
+                            "name": "value",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "id": "BackgroundServiceEvent",
+                    "type": "object",
+                    "properties": [
+                        {
+                            "name": "timestamp",
+                            "description": "Timestamp of the event (in seconds).",
+                            "$ref": "Network.TimeSinceEpoch"
+                        },
+                        {
+                            "name": "origin",
+                            "description": "The origin this event belongs to.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "serviceWorkerRegistrationId",
+                            "description": "The Service Worker ID that initiated the event.",
+                            "$ref": "ServiceWorker.RegistrationID"
+                        },
+                        {
+                            "name": "service",
+                            "description": "The Background Service this event belongs to.",
+                            "$ref": "ServiceName"
+                        },
+                        {
+                            "name": "eventName",
+                            "description": "A description of the event.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "instanceId",
+                            "description": "An identifier that groups related events together.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "eventMetadata",
+                            "description": "A list of event-specific information.",
+                            "type": "array",
+                            "items": {
+                                "$ref": "EventMetadata"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "commands": [
+                {
+                    "name": "startObserving",
+                    "description": "Enables event updates for the service.",
+                    "parameters": [
+                        {
+                            "name": "service",
+                            "$ref": "ServiceName"
+                        }
+                    ]
+                },
+                {
+                    "name": "stopObserving",
+                    "description": "Disables event updates for the service.",
+                    "parameters": [
+                        {
+                            "name": "service",
+                            "$ref": "ServiceName"
+                        }
+                    ]
+                },
+                {
+                    "name": "setRecording",
+                    "description": "Set the recording state for the service.",
+                    "parameters": [
+                        {
+                            "name": "shouldRecord",
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "service",
+                            "$ref": "ServiceName"
+                        }
+                    ]
+                },
+                {
+                    "name": "clearEvents",
+                    "description": "Clears all stored data for the service.",
+                    "parameters": [
+                        {
+                            "name": "service",
+                            "$ref": "ServiceName"
+                        }
+                    ]
+                }
+            ],
+            "events": [
+                {
+                    "name": "recordingStateChanged",
+                    "description": "Called when the recording state for the service has been updated.",
+                    "parameters": [
+                        {
+                            "name": "isRecording",
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "service",
+                            "$ref": "ServiceName"
+                        }
+                    ]
+                },
+                {
+                    "name": "backgroundServiceEventReceived",
+                    "description": "Called with all existing backgroundServiceEvents when enabled, and all new\nevents afterwards if enabled and recording.",
+                    "parameters": [
+                        {
+                            "name": "backgroundServiceEvent",
+                            "$ref": "BackgroundServiceEvent"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "domain": "Browser",
             "description": "The Browser domain defines methods and events for browser managing.",
             "types": [
@@ -2747,9 +2894,9 @@
                             }
                         },
                         {
-                            "name": "hasMore",
-                            "description": "If true, there are more entries to fetch in the given range.",
-                            "type": "boolean"
+                            "name": "returnCount",
+                            "description": "Count of returned entries from this storage. If pathFilter is empty, it\nis the count of all entries from this storage.",
+                            "type": "number"
                         }
                     ]
                 }
@@ -6555,8 +6702,8 @@
                     ]
                 },
                 {
-                    "name": "getKeyGeneratorCurrentNumber",
-                    "description": "Gets the auto increment number of an object store. Only meaningful\nwhen objectStore.autoIncrement is true.",
+                    "name": "getMetadata",
+                    "description": "Gets metadata of an object store",
                     "parameters": [
                         {
                             "name": "securityOrigin",
@@ -6576,8 +6723,13 @@
                     ],
                     "returns": [
                         {
-                            "name": "currentNumber",
-                            "description": "the current value of key generator, to become the next inserted\nkey into the object store.",
+                            "name": "entriesCount",
+                            "description": "the entries count",
+                            "type": "number"
+                        },
+                        {
+                            "name": "keyGeneratorValue",
+                            "description": "the current value of key generator, to become the next inserted\nkey into the object store. Valid if objectStore.autoIncrement\nis true.",
                             "type": "number"
                         }
                     ]
@@ -9549,7 +9701,7 @@
                 },
                 {
                     "name": "setRequestInterception",
-                    "description": "Sets the requests to intercept that match a the provided patterns and optionally resource types.",
+                    "description": "Sets the requests to intercept that match the provided patterns and optionally resource types.",
                     "experimental": true,
                     "parameters": [
                         {
@@ -9774,6 +9926,12 @@
                             "description": "Response headers if intercepted at the response stage or if redirect occurred while\nintercepting request or auth retry occurred.",
                             "optional": true,
                             "$ref": "Headers"
+                        },
+                        {
+                            "name": "requestId",
+                            "description": "If the intercepted request had a corresponding requestWillBeSent event fired for it, then\nthis requestId will be the same as the requestId present in the requestWillBeSent event.",
+                            "optional": true,
+                            "$ref": "RequestId"
                         }
                     ]
                 },
@@ -10175,6 +10333,7 @@
                         "searchForNode",
                         "searchForUAShadowDOM",
                         "captureAreaScreenshot",
+                        "showDistances",
                         "none"
                     ]
                 }
@@ -10430,16 +10589,6 @@
                         {
                             "name": "show",
                             "description": "Whether to paint size or not.",
-                            "type": "boolean"
-                        }
-                    ]
-                },
-                {
-                    "name": "setSuspended",
-                    "parameters": [
-                        {
-                            "name": "suspended",
-                            "description": "Whether overlay should be suspended and not consume any resources until resumed.",
                             "type": "boolean"
                         }
                     ]
@@ -10964,6 +11113,20 @@
                             "optional": true,
                             "type": "integer"
                         }
+                    ]
+                },
+                {
+                    "id": "ClientNavigationReason",
+                    "experimental": true,
+                    "type": "string",
+                    "enum": [
+                        "formSubmissionGet",
+                        "formSubmissionPost",
+                        "httpHeaderRefresh",
+                        "scriptInitiated",
+                        "metaTagRefresh",
+                        "pageBlockInterstitial",
+                        "reload"
                     ]
                 }
             ],
@@ -11985,7 +12148,7 @@
                 {
                     "name": "frameClearedScheduledNavigation",
                     "description": "Fired when frame no longer has a scheduled navigation.",
-                    "experimental": true,
+                    "deprecated": true,
                     "parameters": [
                         {
                             "name": "frameId",
@@ -12021,9 +12184,31 @@
                     "experimental": true
                 },
                 {
+                    "name": "frameRequestedNavigation",
+                    "description": "Fired when a renderer-initiated navigation is requested.\nNavigation may still be cancelled after the event is issued.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "frameId",
+                            "description": "Id of the frame that has scheduled a navigation.",
+                            "$ref": "FrameId"
+                        },
+                        {
+                            "name": "reason",
+                            "description": "The reason for the navigation.",
+                            "$ref": "ClientNavigationReason"
+                        },
+                        {
+                            "name": "url",
+                            "description": "The destination URL for the requested navigation.",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
                     "name": "frameScheduledNavigation",
                     "description": "Fired when frame schedules a potential navigation.",
-                    "experimental": true,
+                    "deprecated": true,
                     "parameters": [
                         {
                             "name": "frameId",
@@ -12433,6 +12618,7 @@
                 {
                     "id": "InsecureContentStatus",
                     "description": "Information about insecure content on the page.",
+                    "deprecated": true,
                     "type": "object",
                     "properties": [
                         {
@@ -12581,6 +12767,7 @@
                         {
                             "name": "insecureContentStatus",
                             "description": "Information about insecure content on the page.",
+                            "deprecated": true,
                             "$ref": "InsecureContentStatus"
                         },
                         {
@@ -12598,13 +12785,17 @@
             "experimental": true,
             "types": [
                 {
+                    "id": "RegistrationID",
+                    "type": "string"
+                },
+                {
                     "id": "ServiceWorkerRegistration",
                     "description": "ServiceWorker registration.",
                     "type": "object",
                     "properties": [
                         {
                             "name": "registrationId",
-                            "type": "string"
+                            "$ref": "RegistrationID"
                         },
                         {
                             "name": "scopeURL",
@@ -12649,7 +12840,7 @@
                         },
                         {
                             "name": "registrationId",
-                            "type": "string"
+                            "$ref": "RegistrationID"
                         },
                         {
                             "name": "scriptURL",
@@ -12701,7 +12892,7 @@
                         },
                         {
                             "name": "registrationId",
-                            "type": "string"
+                            "$ref": "RegistrationID"
                         },
                         {
                             "name": "versionId",
@@ -12732,7 +12923,7 @@
                         },
                         {
                             "name": "registrationId",
-                            "type": "string"
+                            "$ref": "RegistrationID"
                         },
                         {
                             "name": "data",
@@ -12752,7 +12943,7 @@
                         },
                         {
                             "name": "registrationId",
-                            "type": "string"
+                            "$ref": "RegistrationID"
                         },
                         {
                             "name": "tag",
@@ -13803,6 +13994,15 @@
                     ]
                 },
                 {
+                    "id": "StreamFormat",
+                    "description": "Data format of a trace. Can be either the legacy JSON format or the\nprotocol buffer format. Note that the JSON format will be deprecated soon.",
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "proto"
+                    ]
+                },
+                {
                     "id": "StreamCompression",
                     "description": "Compression type to use for traces returned via streams.",
                     "type": "string",
@@ -13893,6 +14093,12 @@
                             ]
                         },
                         {
+                            "name": "streamFormat",
+                            "description": "Trace data format to use. This only applies when using `ReturnAsStream`\ntransfer mode (defaults to `json`).",
+                            "optional": true,
+                            "$ref": "StreamFormat"
+                        },
+                        {
                             "name": "streamCompression",
                             "description": "Compression format to use. This only applies when using `ReturnAsStream`\ntransfer mode (defaults to `none`)",
                             "optional": true,
@@ -13954,37 +14160,16 @@
                             "$ref": "IO.StreamHandle"
                         },
                         {
+                            "name": "traceFormat",
+                            "description": "Trace data format of returned stream.",
+                            "optional": true,
+                            "$ref": "StreamFormat"
+                        },
+                        {
                             "name": "streamCompression",
                             "description": "Compression format of returned stream.",
                             "optional": true,
                             "$ref": "StreamCompression"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "domain": "Testing",
-            "description": "Testing domain is a dumping ground for the capabilities requires for browser or app testing that do not fit other\ndomains.",
-            "experimental": true,
-            "dependencies": [
-                "Page"
-            ],
-            "commands": [
-                {
-                    "name": "generateTestReport",
-                    "description": "Generates a report for testing.",
-                    "parameters": [
-                        {
-                            "name": "message",
-                            "description": "Message to be displayed in the report.",
-                            "type": "string"
-                        },
-                        {
-                            "name": "group",
-                            "description": "Specifies the endpoint group to deliver the report to.",
-                            "optional": true,
-                            "type": "string"
                         }
                     ]
                 }
@@ -14336,6 +14521,12 @@
                             "items": {
                                 "$ref": "HeaderEntry"
                             }
+                        },
+                        {
+                            "name": "networkId",
+                            "description": "If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,\nthen this networkId will be the same as the requestId present in the requestWillBeSent event.",
+                            "optional": true,
+                            "$ref": "RequestId"
                         }
                     ]
                 },

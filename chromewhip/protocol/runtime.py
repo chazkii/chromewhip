@@ -143,6 +143,17 @@ class InternalPropertyDescriptor(ChromeTypeBase):
         self.value = value
 
 
+# PrivatePropertyDescriptor: Object private field descriptor.
+class PrivatePropertyDescriptor(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['RemoteObject'],
+                 ):
+
+        self.name = name
+        self.value = value
+
+
 # CallArgument: Represents function call argument. Either remote object id `objectId`, primitive `value`,unserializable primitive value or neither of (for undefined) them should be specified.
 class CallArgument(ChromeTypeBase):
     def __init__(self,
@@ -562,6 +573,10 @@ returned either.
                 },
                 "internalProperties": {
                     "class": [InternalPropertyDescriptor],
+                    "optional": True
+                },
+                "privateProperties": {
+                    "class": [PrivatePropertyDescriptor],
                     "optional": True
                 },
                 "exceptionDetails": {

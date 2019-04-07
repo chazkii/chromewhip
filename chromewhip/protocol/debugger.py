@@ -144,12 +144,18 @@ breakpoints, stepping through execution, exploring stack traces, etc.
         )
 
     @classmethod
-    def enable(cls):
+    def enable(cls,
+               maxScriptsCacheSize: Optional['float'] = None,
+               ):
         """Enables debugger for the given page. Clients should not assume that the debugging has been
 enabled until the result for this command is received.
+        :param maxScriptsCacheSize: The maximum size in bytes of collected scripts (not referenced by other heap objects)
+the debugger can hold. Puts no limit if paramter is omitted.
+        :type maxScriptsCacheSize: float
         """
         return (
             cls.build_send_payload("enable", {
+                "maxScriptsCacheSize": maxScriptsCacheSize,
             }),
             cls.convert_payload({
                 "debuggerId": {
@@ -761,7 +767,7 @@ class BreakpointResolvedEvent(BaseEvent):
 class PausedEvent(BaseEvent):
 
     js_name = 'Debugger.paused'
-    hashable = ['asyncCallStackTraceId', 'asyncStackTraceId']
+    hashable = ['asyncStackTraceId', 'asyncCallStackTraceId']
     is_hashable = True
 
     def __init__(self,
@@ -796,7 +802,7 @@ class PausedEvent(BaseEvent):
         self.asyncCallStackTraceId = asyncCallStackTraceId
 
     @classmethod
-    def build_hash(cls, asyncCallStackTraceId, asyncStackTraceId):
+    def build_hash(cls, asyncStackTraceId, asyncCallStackTraceId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

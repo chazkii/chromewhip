@@ -1,7 +1,7 @@
 language: python
 python:
-  - "3.6"
-dist: trusty
+  - "3.7"
+dist: xenial
 #addons:
 #  chrome: stable
 #before_install:
