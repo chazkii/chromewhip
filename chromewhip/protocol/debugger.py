@@ -489,6 +489,26 @@ breakpoint if this expression evaluates to true.
         )
 
     @classmethod
+    def setInstrumentationBreakpoint(cls,
+                                     instrumentation: Union['str'],
+                                     ):
+        """Sets instrumentation breakpoint.
+        :param instrumentation: Instrumentation name.
+        :type instrumentation: str
+        """
+        return (
+            cls.build_send_payload("setInstrumentationBreakpoint", {
+                "instrumentation": instrumentation,
+            }),
+            cls.convert_payload({
+                "breakpointId": {
+                    "class": BreakpointId,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setBreakpointByUrl(cls,
                            lineNumber: Union['int'],
                            url: Optional['str'] = None,
@@ -828,7 +848,7 @@ class ResumedEvent(BaseEvent):
 class ScriptFailedToParseEvent(BaseEvent):
 
     js_name = 'Debugger.scriptFailedToParse'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -891,7 +911,7 @@ class ScriptFailedToParseEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -903,7 +923,7 @@ class ScriptFailedToParseEvent(BaseEvent):
 class ScriptParsedEvent(BaseEvent):
 
     js_name = 'Debugger.scriptParsed'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -970,7 +990,7 @@ class ScriptParsedEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

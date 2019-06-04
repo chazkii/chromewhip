@@ -381,6 +381,22 @@ Note any previous deferred policy change is superseded.
         )
 
     @classmethod
+    def setTimezoneOverride(cls,
+                            timezoneId: Union['str'],
+                            ):
+        """Overrides default host system timezone with the specified one.
+        :param timezoneId: The timezone identifier. If empty, disables the override and
+restores default host system timezone.
+        :type timezoneId: str
+        """
+        return (
+            cls.build_send_payload("setTimezoneOverride", {
+                "timezoneId": timezoneId,
+            }),
+            None
+        )
+
+    @classmethod
     def setVisibleSize(cls,
                        width: Union['int'],
                        height: Union['int'],

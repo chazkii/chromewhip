@@ -242,7 +242,7 @@ class NodeTreeSnapshot(ChromeTypeBase):
         self.originURL = originURL
 
 
-# LayoutTreeSnapshot: Details of an element in the DOM tree with a LayoutObject.
+# LayoutTreeSnapshot: Table of details of an element in the DOM tree with a LayoutObject.
 class LayoutTreeSnapshot(ChromeTypeBase):
     def __init__(self,
                  nodeIndex: Union['[]'],
@@ -259,7 +259,7 @@ class LayoutTreeSnapshot(ChromeTypeBase):
         self.stackingContexts = stackingContexts
 
 
-# TextBoxSnapshot: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
+# TextBoxSnapshot: Table of details of the post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
 class TextBoxSnapshot(ChromeTypeBase):
     def __init__(self,
                  layoutIndex: Union['[]'],

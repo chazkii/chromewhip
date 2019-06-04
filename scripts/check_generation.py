@@ -42,3 +42,5 @@ import chromewhip.protocol.target
 import chromewhip.protocol.tethering
 import chromewhip.protocol.tracing
 import chromewhip.protocol.fetch
+import chromewhip.protocol.webaudio
+import chromewhip.protocol.webauthn

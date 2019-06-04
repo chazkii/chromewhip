@@ -195,6 +195,8 @@ one.
                      height: Optional['int'] = None,
                      browserContextId: Optional['BrowserContextID'] = None,
                      enableBeginFrameControl: Optional['bool'] = None,
+                     newWindow: Optional['bool'] = None,
+                     background: Optional['bool'] = None,
                      ):
         """Creates a new page.
         :param url: The initial URL the page will be navigated to.
@@ -208,6 +210,11 @@ one.
         :param enableBeginFrameControl: Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
 not supported on MacOS yet, false by default).
         :type enableBeginFrameControl: bool
+        :param newWindow: Whether to create a new Window or Tab (chrome-only, false by default).
+        :type newWindow: bool
+        :param background: Whether to create the target in background or foreground (chrome-only,
+false by default).
+        :type background: bool
         """
         return (
             cls.build_send_payload("createTarget", {
@@ -216,6 +223,8 @@ not supported on MacOS yet, false by default).
                 "height": height,
                 "browserContextId": browserContextId,
                 "enableBeginFrameControl": enableBeginFrameControl,
+                "newWindow": newWindow,
+                "background": background,
             }),
             cls.convert_payload({
                 "targetId": {
@@ -412,7 +421,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -427,7 +436,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -439,7 +448,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -458,7 +467,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

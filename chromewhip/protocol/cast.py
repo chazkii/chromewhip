@@ -13,6 +13,19 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
+# Sink: 
+class Sink(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 id: Union['str'],
+                 session: Optional['str'] = None,
+                 ):
+
+        self.name = name
+        self.id = id
+        self.session = session
+
+
 class Cast(PayloadMixin):
     """ A domain for interacting with Cast, Presentation API, and Remote Playback API
 functionalities.
@@ -101,11 +114,11 @@ class SinksUpdatedEvent(BaseEvent):
     is_hashable = False
 
     def __init__(self,
-                 sinkNames: Union['[]', dict],
+                 sinks: Union['[Sink]', dict],
                  ):
-        if isinstance(sinkNames, dict):
-            sinkNames = [](**sinkNames)
-        self.sinkNames = sinkNames
+        if isinstance(sinks, dict):
+            sinks = [Sink](**sinks)
+        self.sinks = sinks
 
     @classmethod
     def build_hash(cls):

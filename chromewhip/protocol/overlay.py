@@ -76,14 +76,18 @@ class Overlay(PayloadMixin):
     @classmethod
     def getHighlightObjectForTest(cls,
                                   nodeId: Union['DOM.NodeId'],
+                                  includeDistance: Optional['bool'] = None,
                                   ):
         """For testing.
         :param nodeId: Id of the node to get highlight object for.
         :type nodeId: DOM.NodeId
+        :param includeDistance: Whether to include distance info.
+        :type includeDistance: bool
         """
         return (
             cls.build_send_payload("getHighlightObjectForTest", {
                 "nodeId": nodeId,
+                "includeDistance": includeDistance,
             }),
             cls.convert_payload({
                 "highlight": {

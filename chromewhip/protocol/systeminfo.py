@@ -20,12 +20,16 @@ class GPUDevice(ChromeTypeBase):
                  deviceId: Union['float'],
                  vendorString: Union['str'],
                  deviceString: Union['str'],
+                 driverVendor: Union['str'],
+                 driverVersion: Union['str'],
                  ):
 
         self.vendorId = vendorId
         self.deviceId = deviceId
         self.vendorString = vendorString
         self.deviceString = deviceString
+        self.driverVendor = driverVendor
+        self.driverVersion = driverVersion
 
 
 # GPUInfo: Provides information about the GPU(s) on the system.

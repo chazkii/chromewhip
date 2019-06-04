@@ -476,6 +476,21 @@ option, use with caution.
         )
 
     @classmethod
+    def getInstallabilityErrors(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("getInstallabilityErrors", {
+            }),
+            cls.convert_payload({
+                "errors": {
+                    "class": [],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def getCookies(cls):
         """Returns all browser cookies. Depending on the backend support, will return detailed cookie
 information in the `cookies` field.
@@ -1291,7 +1306,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1310,7 +1325,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1514,6 +1529,33 @@ class FrameStoppedLoadingEvent(BaseEvent):
         return h
 
 
+class DownloadWillBeginEvent(BaseEvent):
+
+    js_name = 'Page.downloadWillBegin'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 url: Union['str', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+
+    @classmethod
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
 class InterstitialHiddenEvent(BaseEvent):
 
     js_name = 'Page.interstitialHidden'
@@ -1601,7 +1643,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['loaderId', 'frameId']
+    hashable = ['frameId', 'loaderId']
     is_hashable = True
 
     def __init__(self,
@@ -1624,7 +1666,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, loaderId, frameId):
+    def build_hash(cls, frameId, loaderId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
