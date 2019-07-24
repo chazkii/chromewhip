@@ -323,6 +323,36 @@ class Cookie(ChromeTypeBase):
         self.sameSite = sameSite
 
 
+# SetCookieBlockedReason: Types of reasons why a cookie may not be stored from a response.
+SetCookieBlockedReason = str
+
+# CookieBlockedReason: Types of reasons why a cookie may not be sent with a request.
+CookieBlockedReason = str
+
+# BlockedSetCookieWithReason: A cookie which was not stored from a response with the corresponding reason.
+class BlockedSetCookieWithReason(ChromeTypeBase):
+    def __init__(self,
+                 blockedReason: Union['SetCookieBlockedReason'],
+                 cookieLine: Union['str'],
+                 cookie: Optional['Cookie'] = None,
+                 ):
+
+        self.blockedReason = blockedReason
+        self.cookieLine = cookieLine
+        self.cookie = cookie
+
+
+# BlockedCookieWithReason: A cookie with was not sent with a request with the corresponding reason.
+class BlockedCookieWithReason(ChromeTypeBase):
+    def __init__(self,
+                 blockedReason: Union['CookieBlockedReason'],
+                 cookie: Union['Cookie'],
+                 ):
+
+        self.blockedReason = blockedReason
+        self.cookie = cookie
+
+
 # CookieParam: Cookie parameter object
 class CookieParam(ChromeTypeBase):
     def __init__(self,
@@ -424,12 +454,14 @@ class SignedExchangeHeader(ChromeTypeBase):
                  responseCode: Union['int'],
                  responseHeaders: Union['Headers'],
                  signatures: Union['[SignedExchangeSignature]'],
+                 headerIntegrity: Union['str'],
                  ):
 
         self.requestUrl = requestUrl
         self.responseCode = responseCode
         self.responseHeaders = responseHeaders
         self.signatures = signatures
+        self.headerIntegrity = headerIntegrity
 
 
 # SignedExchangeErrorField: Field type for a signed exchange related error.
@@ -547,6 +579,7 @@ file, data and other requests and responses, their headers, bodies, timing, etc.
 modifications, or blocks it, or completes it with the provided response bytes. If a network
 fetch occurs as a result which encounters a redirect an additional Network.requestIntercepted
 event will be sent with the same InterceptionId.
+Deprecated, use Fetch.continueRequest, Fetch.fulfillRequest and Fetch.failRequest instead.
         :param interceptionId: 
         :type interceptionId: InterceptionId
         :param errorReason: If set this causes the request to fail with the given reason. Passing `Aborted` for requests
@@ -1025,6 +1058,7 @@ default domain and path values of the created cookie.
                                patterns: Union['[RequestPattern]'],
                                ):
         """Sets the requests to intercept that match the provided patterns and optionally resource types.
+Deprecated, please use Fetch.enable instead.
         :param patterns: Requests matching any of these patterns will be forwarded and wait for the corresponding
 continueInterceptedRequest call.
         :type patterns: [RequestPattern]
@@ -1099,7 +1133,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['eventId', 'requestId']
+    hashable = ['requestId', 'eventId']
     is_hashable = True
 
     def __init__(self,
@@ -1126,7 +1160,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, eventId, requestId):
+    def build_hash(cls, requestId, eventId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1216,7 +1250,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['frameId', 'interceptionId', 'requestId']
+    hashable = ['requestId', 'interceptionId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1271,7 +1305,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.requestId = requestId
 
     @classmethod
-    def build_hash(cls, frameId, interceptionId, requestId):
+    def build_hash(cls, requestId, interceptionId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1306,7 +1340,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['frameId', 'loaderId', 'requestId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1357,7 +1391,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, frameId, loaderId, requestId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1427,7 +1461,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['frameId', 'loaderId', 'requestId']
+    hashable = ['loaderId', 'requestId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1458,7 +1492,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, frameId, loaderId, requestId):
+    def build_hash(cls, loaderId, requestId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1673,6 +1707,72 @@ class WebSocketWillSendHandshakeRequestEvent(BaseEvent):
         if isinstance(request, dict):
             request = WebSocketRequest(**request)
         self.request = request
+
+    @classmethod
+    def build_hash(cls, requestId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class RequestWillBeSentExtraInfoEvent(BaseEvent):
+
+    js_name = 'Network.requestWillBeSentExtraInfo'
+    hashable = ['requestId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 blockedCookies: Union['[BlockedCookieWithReason]', dict],
+                 headers: Union['Headers', dict],
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(blockedCookies, dict):
+            blockedCookies = [BlockedCookieWithReason](**blockedCookies)
+        self.blockedCookies = blockedCookies
+        if isinstance(headers, dict):
+            headers = Headers(**headers)
+        self.headers = headers
+
+    @classmethod
+    def build_hash(cls, requestId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class ResponseReceivedExtraInfoEvent(BaseEvent):
+
+    js_name = 'Network.responseReceivedExtraInfo'
+    hashable = ['requestId']
+    is_hashable = True
+
+    def __init__(self,
+                 requestId: Union['RequestId', dict],
+                 blockedCookies: Union['[BlockedSetCookieWithReason]', dict],
+                 headers: Union['Headers', dict],
+                 headersText: Union['str', dict, None] = None,
+                 ):
+        if isinstance(requestId, dict):
+            requestId = RequestId(**requestId)
+        self.requestId = requestId
+        if isinstance(blockedCookies, dict):
+            blockedCookies = [BlockedSetCookieWithReason](**blockedCookies)
+        self.blockedCookies = blockedCookies
+        if isinstance(headers, dict):
+            headers = Headers(**headers)
+        self.headers = headers
+        if isinstance(headersText, dict):
+            headersText = str(**headersText)
+        self.headersText = headersText
 
     @classmethod
     def build_hash(cls, requestId):

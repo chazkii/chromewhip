@@ -77,17 +77,21 @@ class Overlay(PayloadMixin):
     def getHighlightObjectForTest(cls,
                                   nodeId: Union['DOM.NodeId'],
                                   includeDistance: Optional['bool'] = None,
+                                  includeStyle: Optional['bool'] = None,
                                   ):
         """For testing.
         :param nodeId: Id of the node to get highlight object for.
         :type nodeId: DOM.NodeId
         :param includeDistance: Whether to include distance info.
         :type includeDistance: bool
+        :param includeStyle: Whether to include style info.
+        :type includeStyle: bool
         """
         return (
             cls.build_send_payload("getHighlightObjectForTest", {
                 "nodeId": nodeId,
                 "includeDistance": includeDistance,
+                "includeStyle": includeStyle,
             }),
             cls.convert_payload({
                 "highlight": {
@@ -311,6 +315,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         """
         return (
             cls.build_send_payload("setShowPaintRects", {
+                "result": result,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowLayoutShiftRegions(cls,
+                                  result: Union['bool'],
+                                  ):
+        """Requests that backend shows layout shift regions
+        :param result: True for showing layout shift regions
+        :type result: bool
+        """
+        return (
+            cls.build_send_payload("setShowLayoutShiftRegions", {
                 "result": result,
             }),
             None

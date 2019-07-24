@@ -13,6 +13,47 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
+# AuthenticatorId: 
+AuthenticatorId = str
+
+# AuthenticatorProtocol: 
+AuthenticatorProtocol = str
+
+# AuthenticatorTransport: 
+AuthenticatorTransport = str
+
+# VirtualAuthenticatorOptions: 
+class VirtualAuthenticatorOptions(ChromeTypeBase):
+    def __init__(self,
+                 protocol: Union['AuthenticatorProtocol'],
+                 transport: Union['AuthenticatorTransport'],
+                 hasResidentKey: Union['bool'],
+                 hasUserVerification: Union['bool'],
+                 automaticPresenceSimulation: Optional['bool'] = None,
+                 ):
+
+        self.protocol = protocol
+        self.transport = transport
+        self.hasResidentKey = hasResidentKey
+        self.hasUserVerification = hasUserVerification
+        self.automaticPresenceSimulation = automaticPresenceSimulation
+
+
+# Credential: 
+class Credential(ChromeTypeBase):
+    def __init__(self,
+                 credentialId: Union['str'],
+                 rpIdHash: Union['str'],
+                 privateKey: Union['str'],
+                 signCount: Union['int'],
+                 ):
+
+        self.credentialId = credentialId
+        self.rpIdHash = rpIdHash
+        self.privateKey = privateKey
+        self.signCount = signCount
+
+
 class WebAuthn(PayloadMixin):
     """ This domain allows configuring virtual authenticators to test the WebAuthn
 API.
@@ -34,6 +75,115 @@ retrieval with a virtual authenticator.
         """
         return (
             cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def addVirtualAuthenticator(cls,
+                                options: Union['VirtualAuthenticatorOptions'],
+                                ):
+        """Creates and adds a virtual authenticator.
+        :param options: 
+        :type options: VirtualAuthenticatorOptions
+        """
+        return (
+            cls.build_send_payload("addVirtualAuthenticator", {
+                "options": options,
+            }),
+            cls.convert_payload({
+                "authenticatorId": {
+                    "class": AuthenticatorId,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def removeVirtualAuthenticator(cls,
+                                   authenticatorId: Union['AuthenticatorId'],
+                                   ):
+        """Removes the given authenticator.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        """
+        return (
+            cls.build_send_payload("removeVirtualAuthenticator", {
+                "authenticatorId": authenticatorId,
+            }),
+            None
+        )
+
+    @classmethod
+    def addCredential(cls,
+                      authenticatorId: Union['AuthenticatorId'],
+                      credential: Union['Credential'],
+                      ):
+        """Adds the credential to the specified authenticator.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        :param credential: 
+        :type credential: Credential
+        """
+        return (
+            cls.build_send_payload("addCredential", {
+                "authenticatorId": authenticatorId,
+                "credential": credential,
+            }),
+            None
+        )
+
+    @classmethod
+    def getCredentials(cls,
+                       authenticatorId: Union['AuthenticatorId'],
+                       ):
+        """Returns all the credentials stored in the given virtual authenticator.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        """
+        return (
+            cls.build_send_payload("getCredentials", {
+                "authenticatorId": authenticatorId,
+            }),
+            cls.convert_payload({
+                "credentials": {
+                    "class": [Credential],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def clearCredentials(cls,
+                         authenticatorId: Union['AuthenticatorId'],
+                         ):
+        """Clears all the credentials from the specified device.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        """
+        return (
+            cls.build_send_payload("clearCredentials", {
+                "authenticatorId": authenticatorId,
+            }),
+            None
+        )
+
+    @classmethod
+    def setUserVerified(cls,
+                        authenticatorId: Union['AuthenticatorId'],
+                        isUserVerified: Union['bool'],
+                        ):
+        """Sets whether User Verification succeeds or fails for an authenticator.
+The default is true.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        :param isUserVerified: 
+        :type isUserVerified: bool
+        """
+        return (
+            cls.build_send_payload("setUserVerified", {
+                "authenticatorId": authenticatorId,
+                "isUserVerified": isUserVerified,
             }),
             None
         )

@@ -22,15 +22,19 @@ ContextType = str
 # ContextState: Enum of AudioContextState from the spec
 ContextState = str
 
-# ContextRealtimeData: Fields in AudioContext that change in real-time. These are not updatedon OfflineAudioContext.
+# ContextRealtimeData: Fields in AudioContext that change in real-time.
 class ContextRealtimeData(ChromeTypeBase):
     def __init__(self,
-                 currentTime: Optional['float'] = None,
-                 renderCapacity: Optional['float'] = None,
+                 currentTime: Union['float'],
+                 renderCapacity: Union['float'],
+                 callbackIntervalMean: Union['float'],
+                 callbackIntervalVariance: Union['float'],
                  ):
 
         self.currentTime = currentTime
         self.renderCapacity = renderCapacity
+        self.callbackIntervalMean = callbackIntervalMean
+        self.callbackIntervalVariance = callbackIntervalVariance
 
 
 # BaseAudioContext: Protocol object for BaseAudioContext

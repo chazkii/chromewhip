@@ -14,6 +14,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 log = logging.getLogger(__name__)
 from chromewhip.protocol import debugger as Debugger
 from chromewhip.protocol import dom as DOM
+from chromewhip.protocol import io as IO
 from chromewhip.protocol import network as Network
 from chromewhip.protocol import runtime as Runtime
 from chromewhip.protocol import runtime as Runtime
@@ -32,6 +33,7 @@ class Frame(ChromeTypeBase):
                  mimeType: Union['str'],
                  parentId: Optional['str'] = None,
                  name: Optional['str'] = None,
+                 urlFragment: Optional['str'] = None,
                  unreachableUrl: Optional['str'] = None,
                  ):
 
@@ -40,6 +42,7 @@ class Frame(ChromeTypeBase):
         self.loaderId = loaderId
         self.name = name
         self.url = url
+        self.urlFragment = urlFragment
         self.securityOrigin = securityOrigin
         self.mimeType = mimeType
         self.unreachableUrl = unreachableUrl
@@ -708,6 +711,7 @@ dialog.
                    headerTemplate: Optional['str'] = None,
                    footerTemplate: Optional['str'] = None,
                    preferCSSPageSize: Optional['bool'] = None,
+                   transferMode: Optional['str'] = None,
                    ):
         """Print page as PDF.
         :param landscape: Paper orientation. Defaults to false.
@@ -751,6 +755,8 @@ For example, `<span class=title></span>` would generate span containing the titl
         :param preferCSSPageSize: Whether or not to prefer page size as defined by css. Defaults to false,
 in which case the content will be scaled to fit the paper size.
         :type preferCSSPageSize: bool
+        :param transferMode: return as stream
+        :type transferMode: str
         """
         return (
             cls.build_send_payload("printToPDF", {
@@ -769,11 +775,16 @@ in which case the content will be scaled to fit the paper size.
                 "headerTemplate": headerTemplate,
                 "footerTemplate": footerTemplate,
                 "preferCSSPageSize": preferCSSPageSize,
+                "transferMode": transferMode,
             }),
             cls.convert_payload({
                 "data": {
                     "class": str,
                     "optional": False
+                },
+                "stream": {
+                    "class": IO.StreamHandle,
+                    "optional": True
                 },
             })
         )
@@ -1283,6 +1294,43 @@ cross-process navigation.
             None
         )
 
+    @classmethod
+    def setInterceptFileChooserDialog(cls,
+                                      enabled: Union['bool'],
+                                      ):
+        """Intercept file chooser requests and transfer control to protocol clients.
+When file chooser interception is enabled, native file chooser dialog is not shown.
+Instead, a protocol event `Page.fileChooserOpened` is emitted.
+File chooser can be handled with `page.handleFileChooser` command.
+        :param enabled: 
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setInterceptFileChooserDialog", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def handleFileChooser(cls,
+                          action: Union['str'],
+                          files: Optional['[]'] = None,
+                          ):
+        """Accepts or cancels an intercepted file chooser dialog.
+        :param action: 
+        :type action: str
+        :param files: Array of absolute file paths to set, only respected with `accept` action.
+        :type files: []
+        """
+        return (
+            cls.build_send_payload("handleFileChooser", {
+                "action": action,
+                "files": files,
+            }),
+            None
+        )
+
 
 
 class DomContentEventFiredEvent(BaseEvent):
@@ -1303,10 +1351,28 @@ class DomContentEventFiredEvent(BaseEvent):
         raise ValueError('Unable to build hash for non-hashable type')
 
 
+class FileChooserOpenedEvent(BaseEvent):
+
+    js_name = 'Page.fileChooserOpened'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 mode: Union['str', dict],
+                 ):
+        if isinstance(mode, dict):
+            mode = str(**mode)
+        self.mode = mode
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1325,7 +1391,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1643,7 +1709,7 @@ class JavascriptDialogOpeningEvent(BaseEvent):
 class LifecycleEventEvent(BaseEvent):
 
     js_name = 'Page.lifecycleEvent'
-    hashable = ['frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1666,7 +1732,7 @@ class LifecycleEventEvent(BaseEvent):
         self.timestamp = timestamp
 
     @classmethod
-    def build_hash(cls, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

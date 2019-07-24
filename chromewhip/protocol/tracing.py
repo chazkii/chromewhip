@@ -203,10 +203,14 @@ class TracingCompleteEvent(BaseEvent):
     is_hashable = False
 
     def __init__(self,
+                 dataLossOccurred: Union['bool', dict],
                  stream: Union['IO.StreamHandle', dict, None] = None,
                  traceFormat: Union['StreamFormat', dict, None] = None,
                  streamCompression: Union['StreamCompression', dict, None] = None,
                  ):
+        if isinstance(dataLossOccurred, dict):
+            dataLossOccurred = bool(**dataLossOccurred)
+        self.dataLossOccurred = dataLossOccurred
         if isinstance(stream, dict):
             stream = IO.StreamHandle(**stream)
         self.stream = stream

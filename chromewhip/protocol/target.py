@@ -421,7 +421,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['targetId', 'sessionId']
+    hashable = ['sessionId', 'targetId']
     is_hashable = True
 
     def __init__(self,
@@ -436,7 +436,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, targetId, sessionId):
+    def build_hash(cls, sessionId, targetId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -448,7 +448,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['targetId', 'sessionId']
+    hashable = ['sessionId', 'targetId']
     is_hashable = True
 
     def __init__(self,
@@ -467,7 +467,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, targetId, sessionId):
+    def build_hash(cls, sessionId, targetId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

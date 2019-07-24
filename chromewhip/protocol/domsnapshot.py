@@ -250,6 +250,9 @@ class LayoutTreeSnapshot(ChromeTypeBase):
                  bounds: Union['[Rectangle]'],
                  text: Union['[StringIndex]'],
                  stackingContexts: Union['RareBooleanData'],
+                 offsetRects: Optional['[Rectangle]'] = None,
+                 scrollRects: Optional['[Rectangle]'] = None,
+                 clientRects: Optional['[Rectangle]'] = None,
                  ):
 
         self.nodeIndex = nodeIndex
@@ -257,6 +260,9 @@ class LayoutTreeSnapshot(ChromeTypeBase):
         self.bounds = bounds
         self.text = text
         self.stackingContexts = stackingContexts
+        self.offsetRects = offsetRects
+        self.scrollRects = scrollRects
+        self.clientRects = clientRects
 
 
 # TextBoxSnapshot: Table of details of the post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
@@ -343,6 +349,7 @@ flattened.
     @classmethod
     def captureSnapshot(cls,
                         computedStyles: Union['[]'],
+                        includeDOMRects: Optional['bool'] = None,
                         ):
         """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
 template contents, and imported documents) in a flattened array, as well as layout and
@@ -350,10 +357,13 @@ white-listed computed style information for the nodes. Shadow DOM in the returne
 flattened.
         :param computedStyles: Whitelist of computed styles to return.
         :type computedStyles: []
+        :param includeDOMRects: Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
+        :type includeDOMRects: bool
         """
         return (
             cls.build_send_payload("captureSnapshot", {
                 "computedStyles": computedStyles,
+                "includeDOMRects": includeDOMRects,
             }),
             cls.convert_payload({
                 "documents": {
