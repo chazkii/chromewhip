@@ -44,3 +44,4 @@ import chromewhip.protocol.tracing
 import chromewhip.protocol.fetch
 import chromewhip.protocol.webaudio
 import chromewhip.protocol.webauthn
+import chromewhip.protocol.media

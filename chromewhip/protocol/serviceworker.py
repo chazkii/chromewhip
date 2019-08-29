@@ -143,6 +143,29 @@ class ServiceWorker(PayloadMixin):
         )
 
     @classmethod
+    def dispatchPeriodicSyncEvent(cls,
+                                  origin: Union['str'],
+                                  registrationId: Union['RegistrationID'],
+                                  tag: Union['str'],
+                                  ):
+        """
+        :param origin: 
+        :type origin: str
+        :param registrationId: 
+        :type registrationId: RegistrationID
+        :param tag: 
+        :type tag: str
+        """
+        return (
+            cls.build_send_payload("dispatchPeriodicSyncEvent", {
+                "origin": origin,
+                "registrationId": registrationId,
+                "tag": tag,
+            }),
+            None
+        )
+
+    @classmethod
     def enable(cls):
         """
         """

@@ -250,6 +250,7 @@ class LayoutTreeSnapshot(ChromeTypeBase):
                  bounds: Union['[Rectangle]'],
                  text: Union['[StringIndex]'],
                  stackingContexts: Union['RareBooleanData'],
+                 paintOrders: Optional['[]'] = None,
                  offsetRects: Optional['[Rectangle]'] = None,
                  scrollRects: Optional['[Rectangle]'] = None,
                  clientRects: Optional['[Rectangle]'] = None,
@@ -260,6 +261,7 @@ class LayoutTreeSnapshot(ChromeTypeBase):
         self.bounds = bounds
         self.text = text
         self.stackingContexts = stackingContexts
+        self.paintOrders = paintOrders
         self.offsetRects = offsetRects
         self.scrollRects = scrollRects
         self.clientRects = clientRects
@@ -349,6 +351,7 @@ flattened.
     @classmethod
     def captureSnapshot(cls,
                         computedStyles: Union['[]'],
+                        includePaintOrder: Optional['bool'] = None,
                         includeDOMRects: Optional['bool'] = None,
                         ):
         """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
@@ -357,12 +360,15 @@ white-listed computed style information for the nodes. Shadow DOM in the returne
 flattened.
         :param computedStyles: Whitelist of computed styles to return.
         :type computedStyles: []
+        :param includePaintOrder: Whether to include layout object paint orders into the snapshot.
+        :type includePaintOrder: bool
         :param includeDOMRects: Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
         :type includeDOMRects: bool
         """
         return (
             cls.build_send_payload("captureSnapshot", {
                 "computedStyles": computedStyles,
+                "includePaintOrder": includePaintOrder,
                 "includeDOMRects": includeDOMRects,
             }),
             cls.convert_payload({

@@ -39,6 +39,24 @@ class Bounds(ChromeTypeBase):
 # PermissionType: 
 PermissionType = str
 
+# PermissionSetting: 
+PermissionSetting = str
+
+# PermissionDescriptor: Definition of PermissionDescriptor defined in the Permissions API:https://w3c.github.io/permissions/#dictdef-permissiondescriptor.
+class PermissionDescriptor(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 sysex: Optional['bool'] = None,
+                 userVisibleOnly: Optional['bool'] = None,
+                 type: Optional['str'] = None,
+                 ):
+
+        self.name = name
+        self.sysex = sysex
+        self.userVisibleOnly = userVisibleOnly
+        self.type = type
+
+
 # Bucket: Chrome histogram bucket.
 class Bucket(ChromeTypeBase):
     def __init__(self,
@@ -70,6 +88,33 @@ class Histogram(ChromeTypeBase):
 class Browser(PayloadMixin):
     """ The Browser domain defines methods and events for browser managing.
     """
+    @classmethod
+    def setPermission(cls,
+                      origin: Union['str'],
+                      permission: Union['PermissionDescriptor'],
+                      setting: Union['PermissionSetting'],
+                      browserContextId: Optional['Target.TargetID'] = None,
+                      ):
+        """Set permission settings for given origin.
+        :param origin: Origin the permission applies to.
+        :type origin: str
+        :param permission: Descriptor of permission to override.
+        :type permission: PermissionDescriptor
+        :param setting: Setting of the permission.
+        :type setting: PermissionSetting
+        :param browserContextId: Context to override. When omitted, default browser context is used.
+        :type browserContextId: Target.TargetID
+        """
+        return (
+            cls.build_send_payload("setPermission", {
+                "origin": origin,
+                "permission": permission,
+                "setting": setting,
+                "browserContextId": browserContextId,
+            }),
+            None
+        )
+
     @classmethod
     def grantPermissions(cls,
                          origin: Union['str'],

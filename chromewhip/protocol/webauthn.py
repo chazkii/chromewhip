@@ -43,14 +43,18 @@ class VirtualAuthenticatorOptions(ChromeTypeBase):
 class Credential(ChromeTypeBase):
     def __init__(self,
                  credentialId: Union['str'],
-                 rpIdHash: Union['str'],
+                 isResidentCredential: Union['bool'],
                  privateKey: Union['str'],
                  signCount: Union['int'],
+                 rpId: Optional['str'] = None,
+                 userHandle: Optional['str'] = None,
                  ):
 
         self.credentialId = credentialId
-        self.rpIdHash = rpIdHash
+        self.isResidentCredential = isResidentCredential
+        self.rpId = rpId
         self.privateKey = privateKey
+        self.userHandle = userHandle
         self.signCount = signCount
 
 
@@ -134,6 +138,31 @@ retrieval with a virtual authenticator.
         )
 
     @classmethod
+    def getCredential(cls,
+                      authenticatorId: Union['AuthenticatorId'],
+                      credentialId: Union['str'],
+                      ):
+        """Returns a single credential stored in the given virtual authenticator that
+matches the credential ID.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        :param credentialId: 
+        :type credentialId: str
+        """
+        return (
+            cls.build_send_payload("getCredential", {
+                "authenticatorId": authenticatorId,
+                "credentialId": credentialId,
+            }),
+            cls.convert_payload({
+                "credential": {
+                    "class": Credential,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def getCredentials(cls,
                        authenticatorId: Union['AuthenticatorId'],
                        ):
@@ -151,6 +180,25 @@ retrieval with a virtual authenticator.
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def removeCredential(cls,
+                         authenticatorId: Union['AuthenticatorId'],
+                         credentialId: Union['str'],
+                         ):
+        """Removes a credential from the authenticator.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        :param credentialId: 
+        :type credentialId: str
+        """
+        return (
+            cls.build_send_payload("removeCredential", {
+                "authenticatorId": authenticatorId,
+                "credentialId": credentialId,
+            }),
+            None
         )
 
     @classmethod

@@ -787,7 +787,7 @@ class BreakpointResolvedEvent(BaseEvent):
 class PausedEvent(BaseEvent):
 
     js_name = 'Debugger.paused'
-    hashable = ['asyncStackTraceId', 'asyncCallStackTraceId']
+    hashable = ['asyncCallStackTraceId', 'asyncStackTraceId']
     is_hashable = True
 
     def __init__(self,
@@ -822,7 +822,7 @@ class PausedEvent(BaseEvent):
         self.asyncCallStackTraceId = asyncCallStackTraceId
 
     @classmethod
-    def build_hash(cls, asyncStackTraceId, asyncCallStackTraceId):
+    def build_hash(cls, asyncCallStackTraceId, asyncStackTraceId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

@@ -952,6 +952,41 @@ successfully.
         )
 
     @classmethod
+    def setNodeStackTracesEnabled(cls,
+                                  enable: Union['bool'],
+                                  ):
+        """Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
+        :param enable: Enable or disable.
+        :type enable: bool
+        """
+        return (
+            cls.build_send_payload("setNodeStackTracesEnabled", {
+                "enable": enable,
+            }),
+            None
+        )
+
+    @classmethod
+    def getNodeStackTraces(cls,
+                           nodeId: Union['NodeId'],
+                           ):
+        """Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
+        :param nodeId: Id of the node to get stack traces for.
+        :type nodeId: NodeId
+        """
+        return (
+            cls.build_send_payload("getNodeStackTraces", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "creation": {
+                    "class": Runtime.StackTrace,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
     def getFileInfo(cls,
                     objectId: Union['Runtime.RemoteObjectId'],
                     ):
@@ -1201,7 +1236,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['parentNodeId', 'previousNodeId']
+    hashable = ['previousNodeId', 'parentNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1220,7 +1255,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, parentNodeId, previousNodeId):
+    def build_hash(cls, previousNodeId, parentNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1232,7 +1267,7 @@ class ChildNodeInsertedEvent(BaseEvent):
 class ChildNodeRemovedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeRemoved'
-    hashable = ['parentNodeId', 'nodeId']
+    hashable = ['nodeId', 'parentNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1247,7 +1282,7 @@ class ChildNodeRemovedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, parentNodeId, nodeId):
+    def build_hash(cls, nodeId, parentNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1350,7 +1385,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['parentId', 'pseudoElementId']
+    hashable = ['pseudoElementId', 'parentId']
     is_hashable = True
 
     def __init__(self,
@@ -1365,7 +1400,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, parentId, pseudoElementId):
+    def build_hash(cls, pseudoElementId, parentId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1404,7 +1439,7 @@ class SetChildNodesEvent(BaseEvent):
 class ShadowRootPoppedEvent(BaseEvent):
 
     js_name = 'Dom.shadowRootPopped'
-    hashable = ['rootId', 'hostId']
+    hashable = ['hostId', 'rootId']
     is_hashable = True
 
     def __init__(self,
@@ -1419,7 +1454,7 @@ class ShadowRootPoppedEvent(BaseEvent):
         self.rootId = rootId
 
     @classmethod
-    def build_hash(cls, rootId, hostId):
+    def build_hash(cls, hostId, rootId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
