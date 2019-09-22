@@ -460,6 +460,7 @@ entire subtree or provide an integer larger than 0.
                            x: Union['int'],
                            y: Union['int'],
                            includeUserAgentShadowDOM: Optional['bool'] = None,
+                           ignorePointerEventsNone: Optional['bool'] = None,
                            ):
         """Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
 either returned or not.
@@ -469,16 +470,23 @@ either returned or not.
         :type y: int
         :param includeUserAgentShadowDOM: False to skip to the nearest non-UA shadow root ancestor (default: false).
         :type includeUserAgentShadowDOM: bool
+        :param ignorePointerEventsNone: Whether to ignore pointer-events: none on elements and hit test them.
+        :type ignorePointerEventsNone: bool
         """
         return (
             cls.build_send_payload("getNodeForLocation", {
                 "x": x,
                 "y": y,
                 "includeUserAgentShadowDOM": includeUserAgentShadowDOM,
+                "ignorePointerEventsNone": ignorePointerEventsNone,
             }),
             cls.convert_payload({
                 "backendNodeId": {
                     "class": BackendNodeId,
+                    "optional": False
+                },
+                "frameId": {
+                    "class": Page.FrameId,
                     "optional": False
                 },
                 "nodeId": {
@@ -1236,7 +1244,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['previousNodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'previousNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1255,7 +1263,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, previousNodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, previousNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1385,7 +1393,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['pseudoElementId', 'parentId']
+    hashable = ['parentId', 'pseudoElementId']
     is_hashable = True
 
     def __init__(self,
@@ -1400,7 +1408,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, pseudoElementId, parentId):
+    def build_hash(cls, parentId, pseudoElementId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1439,7 +1447,7 @@ class SetChildNodesEvent(BaseEvent):
 class ShadowRootPoppedEvent(BaseEvent):
 
     js_name = 'Dom.shadowRootPopped'
-    hashable = ['hostId', 'rootId']
+    hashable = ['rootId', 'hostId']
     is_hashable = True
 
     def __init__(self,
@@ -1454,7 +1462,7 @@ class ShadowRootPoppedEvent(BaseEvent):
         self.rootId = rootId
 
     @classmethod
-    def build_hash(cls, hostId, rootId):
+    def build_hash(cls, rootId, hostId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

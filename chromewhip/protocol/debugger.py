@@ -724,7 +724,7 @@ scope types are allowed. Other scopes could be manipulated manually.
                  breakOnAsyncCall: Optional['bool'] = None,
                  ):
         """Steps into the function call.
-        :param breakOnAsyncCall: Debugger will issue additional Debugger.paused notification if any async task is scheduled
+        :param breakOnAsyncCall: Debugger will pause on the execution of the first async task which was scheduled
 before next pause.
         :type breakOnAsyncCall: bool
         """
@@ -848,7 +848,7 @@ class ResumedEvent(BaseEvent):
 class ScriptFailedToParseEvent(BaseEvent):
 
     js_name = 'Debugger.scriptFailedToParse'
-    hashable = ['executionContextId', 'scriptId']
+    hashable = ['scriptId', 'executionContextId']
     is_hashable = True
 
     def __init__(self,
@@ -911,7 +911,7 @@ class ScriptFailedToParseEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, executionContextId, scriptId):
+    def build_hash(cls, scriptId, executionContextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -923,7 +923,7 @@ class ScriptFailedToParseEvent(BaseEvent):
 class ScriptParsedEvent(BaseEvent):
 
     js_name = 'Debugger.scriptParsed'
-    hashable = ['executionContextId', 'scriptId']
+    hashable = ['scriptId', 'executionContextId']
     is_hashable = True
 
     def __init__(self,
@@ -990,7 +990,7 @@ class ScriptParsedEvent(BaseEvent):
         self.stackTrace = stackTrace
 
     @classmethod
-    def build_hash(cls, executionContextId, scriptId):
+    def build_hash(cls, scriptId, executionContextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

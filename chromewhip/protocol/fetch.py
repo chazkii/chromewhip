@@ -133,7 +133,8 @@ expecting a call to continueWithAuth.
     def fulfillRequest(cls,
                        requestId: Union['RequestId'],
                        responseCode: Union['int'],
-                       responseHeaders: Union['[HeaderEntry]'],
+                       responseHeaders: Optional['[HeaderEntry]'] = None,
+                       binaryResponseHeaders: Optional['str'] = None,
                        body: Optional['str'] = None,
                        responsePhrase: Optional['str'] = None,
                        ):
@@ -144,10 +145,15 @@ expecting a call to continueWithAuth.
         :type responseCode: int
         :param responseHeaders: Response headers.
         :type responseHeaders: [HeaderEntry]
+        :param binaryResponseHeaders: Alternative way of specifying response headers as a \0-separated
+series of name: value pairs. Prefer the above method unless you
+need to represent some non-UTF8 values that can't be transmitted
+over the protocol as text.
+        :type binaryResponseHeaders: str
         :param body: A response body.
         :type body: str
         :param responsePhrase: A textual representation of responseCode.
-If absent, a standard phrase mathcing responseCode is used.
+If absent, a standard phrase matching responseCode is used.
         :type responsePhrase: str
         """
         return (
@@ -155,6 +161,7 @@ If absent, a standard phrase mathcing responseCode is used.
                 "requestId": requestId,
                 "responseCode": responseCode,
                 "responseHeaders": responseHeaders,
+                "binaryResponseHeaders": binaryResponseHeaders,
                 "body": body,
                 "responsePhrase": responsePhrase,
             }),
@@ -274,7 +281,7 @@ domain before body is received results in an undefined behavior.
 class RequestPausedEvent(BaseEvent):
 
     js_name = 'Fetch.requestPaused'
-    hashable = ['requestId', 'frameId', 'networkId']
+    hashable = ['networkId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -313,7 +320,7 @@ class RequestPausedEvent(BaseEvent):
         self.networkId = networkId
 
     @classmethod
-    def build_hash(cls, requestId, frameId, networkId):
+    def build_hash(cls, networkId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -325,7 +332,7 @@ class RequestPausedEvent(BaseEvent):
 class AuthRequiredEvent(BaseEvent):
 
     js_name = 'Fetch.authRequired'
-    hashable = ['requestId', 'frameId']
+    hashable = ['frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -352,7 +359,7 @@ class AuthRequiredEvent(BaseEvent):
         self.authChallenge = authChallenge
 
     @classmethod
-    def build_hash(cls, requestId, frameId):
+    def build_hash(cls, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

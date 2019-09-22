@@ -332,12 +332,12 @@ CookieBlockedReason = str
 # BlockedSetCookieWithReason: A cookie which was not stored from a response with the corresponding reason.
 class BlockedSetCookieWithReason(ChromeTypeBase):
     def __init__(self,
-                 blockedReason: Union['SetCookieBlockedReason'],
+                 blockedReasons: Union['[SetCookieBlockedReason]'],
                  cookieLine: Union['str'],
                  cookie: Optional['Cookie'] = None,
                  ):
 
-        self.blockedReason = blockedReason
+        self.blockedReasons = blockedReasons
         self.cookieLine = cookieLine
         self.cookie = cookie
 
@@ -345,11 +345,11 @@ class BlockedSetCookieWithReason(ChromeTypeBase):
 # BlockedCookieWithReason: A cookie with was not sent with a request with the corresponding reason.
 class BlockedCookieWithReason(ChromeTypeBase):
     def __init__(self,
-                 blockedReason: Union['CookieBlockedReason'],
+                 blockedReasons: Union['[CookieBlockedReason]'],
                  cookie: Union['Cookie'],
                  ):
 
-        self.blockedReason = blockedReason
+        self.blockedReasons = blockedReasons
         self.cookie = cookie
 
 
@@ -1133,7 +1133,7 @@ class DataReceivedEvent(BaseEvent):
 class EventSourceMessageReceivedEvent(BaseEvent):
 
     js_name = 'Network.eventSourceMessageReceived'
-    hashable = ['requestId', 'eventId']
+    hashable = ['eventId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1160,7 +1160,7 @@ class EventSourceMessageReceivedEvent(BaseEvent):
         self.data = data
 
     @classmethod
-    def build_hash(cls, requestId, eventId):
+    def build_hash(cls, eventId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1250,7 +1250,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['requestId', 'interceptionId', 'frameId']
+    hashable = ['interceptionId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1305,7 +1305,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.requestId = requestId
 
     @classmethod
-    def build_hash(cls, requestId, interceptionId, frameId):
+    def build_hash(cls, interceptionId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1340,7 +1340,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['requestId', 'frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1391,7 +1391,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, requestId, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1461,7 +1461,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['requestId', 'frameId', 'loaderId']
+    hashable = ['loaderId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1492,7 +1492,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, requestId, frameId, loaderId):
+    def build_hash(cls, loaderId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
