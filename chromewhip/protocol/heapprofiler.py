@@ -22,21 +22,38 @@ class SamplingHeapProfileNode(ChromeTypeBase):
     def __init__(self,
                  callFrame: Union['Runtime.CallFrame'],
                  selfSize: Union['float'],
+                 id: Union['int'],
                  children: Union['[SamplingHeapProfileNode]'],
                  ):
 
         self.callFrame = callFrame
         self.selfSize = selfSize
+        self.id = id
         self.children = children
 
 
-# SamplingHeapProfile: Profile.
+# SamplingHeapProfileSample: A single sample from a sampling profile.
+class SamplingHeapProfileSample(ChromeTypeBase):
+    def __init__(self,
+                 size: Union['float'],
+                 nodeId: Union['int'],
+                 ordinal: Union['float'],
+                 ):
+
+        self.size = size
+        self.nodeId = nodeId
+        self.ordinal = ordinal
+
+
+# SamplingHeapProfile: Sampling profile.
 class SamplingHeapProfile(ChromeTypeBase):
     def __init__(self,
                  head: Union['SamplingHeapProfileNode'],
+                 samples: Union['[SamplingHeapProfileSample]'],
                  ):
 
         self.head = head
+        self.samples = samples
 
 
 class HeapProfiler(PayloadMixin):

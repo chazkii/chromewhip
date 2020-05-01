@@ -18,7 +18,7 @@ from chromewhip.protocol import runtime as Runtime
 class DatabaseWithObjectStores(ChromeTypeBase):
     def __init__(self,
                  name: Union['str'],
-                 version: Union['int'],
+                 version: Union['float'],
                  objectStores: Union['[ObjectStore]'],
                  ):
 
@@ -250,6 +250,38 @@ class IndexedDB(PayloadMixin):
                 },
                 "hasMore": {
                     "class": bool,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getMetadata(cls,
+                    securityOrigin: Union['str'],
+                    databaseName: Union['str'],
+                    objectStoreName: Union['str'],
+                    ):
+        """Gets metadata of an object store
+        :param securityOrigin: Security origin.
+        :type securityOrigin: str
+        :param databaseName: Database name.
+        :type databaseName: str
+        :param objectStoreName: Object store name.
+        :type objectStoreName: str
+        """
+        return (
+            cls.build_send_payload("getMetadata", {
+                "securityOrigin": securityOrigin,
+                "databaseName": databaseName,
+                "objectStoreName": objectStoreName,
+            }),
+            cls.convert_payload({
+                "entriesCount": {
+                    "class": float,
+                    "optional": False
+                },
+                "keyGeneratorValue": {
+                    "class": float,
                     "optional": False
                 },
             })

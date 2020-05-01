@@ -90,7 +90,7 @@ class AXValue(ChromeTypeBase):
         self.sources = sources
 
 
-# AXPropertyName: Values of AXProperty name: from 'busy' to 'roledescription' - states which apply to every AXnode, from 'live' to 'root' - attributes which apply to nodes in live regions, from'autocomplete' to 'valuetext' - attributes which apply to widgets, from 'checked' to 'selected'- states which apply to widgets, from 'activedescendant' to 'owns' - relationships betweenelements other than parent/child/sibling.
+# AXPropertyName: Values of AXProperty name:- from 'busy' to 'roledescription': states which apply to every AX node- from 'live' to 'root': attributes which apply to nodes in live regions- from 'autocomplete' to 'valuetext': attributes which apply to widgets- from 'checked' to 'selected': states which apply to widgets- from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.
 AXPropertyName = str
 
 # AXNode: A node in the accessibility tree.
@@ -124,6 +124,27 @@ class Accessibility(PayloadMixin):
     """ 
     """
     @classmethod
+    def disable(cls):
+        """Disables the accessibility domain.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
+This turns on accessibility for the page, which can impact performance until accessibility is disabled.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+    @classmethod
     def getPartialAXTree(cls,
                          nodeId: Optional['DOM.NodeId'] = None,
                          backendNodeId: Optional['DOM.BackendNodeId'] = None,
@@ -146,6 +167,21 @@ class Accessibility(PayloadMixin):
                 "backendNodeId": backendNodeId,
                 "objectId": objectId,
                 "fetchRelatives": fetchRelatives,
+            }),
+            cls.convert_payload({
+                "nodes": {
+                    "class": [AXNode],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getFullAXTree(cls):
+        """Fetches the entire accessibility tree
+        """
+        return (
+            cls.build_send_payload("getFullAXTree", {
             }),
             cls.convert_payload({
                 "nodes": {

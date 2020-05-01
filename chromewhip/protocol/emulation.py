@@ -79,6 +79,21 @@ class Emulation(PayloadMixin):
         )
 
     @classmethod
+    def setFocusEmulationEnabled(cls,
+                                 enabled: Union['bool'],
+                                 ):
+        """Enables or disables simulating a focused and active page.
+        :param enabled: Whether to enable to disable focus emulation.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setFocusEmulationEnabled", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
     def setCPUThrottlingRate(cls,
                              rate: Union['float'],
                              ):
@@ -169,6 +184,36 @@ change is not observed by the page, e.g. viewport-relative elements do not chang
                 "dontSetVisibleSize": dontSetVisibleSize,
                 "screenOrientation": screenOrientation,
                 "viewport": viewport,
+            }),
+            None
+        )
+
+    @classmethod
+    def setScrollbarsHidden(cls,
+                            hidden: Union['bool'],
+                            ):
+        """
+        :param hidden: Whether scrollbars should be always hidden.
+        :type hidden: bool
+        """
+        return (
+            cls.build_send_payload("setScrollbarsHidden", {
+                "hidden": hidden,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDocumentCookieDisabled(cls,
+                                  disabled: Union['bool'],
+                                  ):
+        """
+        :param disabled: Whether document.coookie API should be disabled.
+        :type disabled: bool
+        """
+        return (
+            cls.build_send_payload("setDocumentCookieDisabled", {
+                "disabled": disabled,
             }),
             None
         )
@@ -336,6 +381,22 @@ Note any previous deferred policy change is superseded.
         )
 
     @classmethod
+    def setTimezoneOverride(cls,
+                            timezoneId: Union['str'],
+                            ):
+        """Overrides default host system timezone with the specified one.
+        :param timezoneId: The timezone identifier. If empty, disables the override and
+restores default host system timezone.
+        :type timezoneId: str
+        """
+        return (
+            cls.build_send_payload("setTimezoneOverride", {
+                "timezoneId": timezoneId,
+            }),
+            None
+        )
+
+    @classmethod
     def setVisibleSize(cls,
                        width: Union['int'],
                        height: Union['int'],
@@ -356,24 +417,29 @@ on Android.
             None
         )
 
-
-
-class VirtualTimeAdvancedEvent(BaseEvent):
-
-    js_name = 'Emulation.virtualTimeAdvanced'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 virtualTimeElapsed: Union['float', dict],
-                 ):
-        if isinstance(virtualTimeElapsed, dict):
-            virtualTimeElapsed = float(**virtualTimeElapsed)
-        self.virtualTimeElapsed = virtualTimeElapsed
-
     @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
+    def setUserAgentOverride(cls,
+                             userAgent: Union['str'],
+                             acceptLanguage: Optional['str'] = None,
+                             platform: Optional['str'] = None,
+                             ):
+        """Allows overriding user agent with the given string.
+        :param userAgent: User agent to use.
+        :type userAgent: str
+        :param acceptLanguage: Browser langugage to emulate.
+        :type acceptLanguage: str
+        :param platform: The platform navigator.platform should return.
+        :type platform: str
+        """
+        return (
+            cls.build_send_payload("setUserAgentOverride", {
+                "userAgent": userAgent,
+                "acceptLanguage": acceptLanguage,
+                "platform": platform,
+            }),
+            None
+        )
+
 
 
 class VirtualTimeBudgetExpiredEvent(BaseEvent):
@@ -384,24 +450,6 @@ class VirtualTimeBudgetExpiredEvent(BaseEvent):
 
     def __init__(self):
         pass
-
-    @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
-
-
-class VirtualTimePausedEvent(BaseEvent):
-
-    js_name = 'Emulation.virtualTimePaused'
-    hashable = []
-    is_hashable = False
-
-    def __init__(self,
-                 virtualTimeElapsed: Union['float', dict],
-                 ):
-        if isinstance(virtualTimeElapsed, dict):
-            virtualTimeElapsed = float(**virtualTimeElapsed)
-        self.virtualTimeElapsed = virtualTimeElapsed
 
     @classmethod
     def build_hash(cls):

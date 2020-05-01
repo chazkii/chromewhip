@@ -20,9 +20,10 @@ ENV TZ "UTC"
 RUN echo "${TZ}" > /etc/timezone \
   && dpkg-reconfigure --frontend noninteractive tzdata
 
-# RUN apt-get -y install python3.6 xvfb \
+# RUN apt-get -y install python3.7 xvfb \
 # TODO: remove once gui render.png working
-RUN apt-get -y install python3.6 python3.6-distutils xvfb curl
+RUN apt-get update -qqy --fix-missing
+RUN apt-get -y install python3.7 python3.7-distutils xvfb curl
 #  && rm /etc/apt/sources.list.d/debian.list \
 #  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
@@ -38,16 +39,16 @@ RUN mkdir -p ~/.vnc \
   && x11vnc -storepasswd secret ~/.vnc/passwd
 
 COPY scripts/get-pip.py /tmp/
-# RUN python3.6 /tmp/get-pip.py && rm /tmp/get-pip.py
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6
-# RUN apt-get -y install python3.6-pip
+# RUN python3.7 /tmp/get-pip.py && rm /tmp/get-pip.py
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.7
+# RUN apt-get -y install python3.7-pip
 
 RUN mkdir /usr/jsprofiles
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 
-RUN pip3.6 install --no-cache-dir -r requirements.txt
+RUN pip3.7 install --no-cache-dir -r requirements.txt
 
 COPY . .
 

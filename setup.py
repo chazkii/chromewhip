@@ -17,13 +17,13 @@ def readme():
 setup(
     name='chromewhip',
 
-    version='0.2.8',
+    version='0.3.4',
 
     description='asyncio driver + HTTP server for Chrome devtools protocol',
     long_description=readme(),
     # The project's main homepage.
     url='https://github.com/chuckus/chromewhip',
-    download_url='https://github.com/chuckus/chromewhip/archive/v0.2.8.tar.gz',
+    download_url='https://github.com/chuckus/chromewhip/archive/v0.3.4.tar.gz',
 
     # Author details
     author='Charlie Smith',
@@ -41,7 +41,7 @@ setup(
 
         'License :: OSI Approved :: MIT License',
 
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     # What does your project relate to?
@@ -60,8 +60,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'aiohttp==2.2.0', 'websockets==3.3', 'beautifulsoup4==4.6.0', 'lxml==3.8.0',
-        'pyyaml==3.12', 'Pillow==4.2.1'
+        'aiohttp==3.5.4', 'websockets==7.0', 'beautifulsoup4==4.7.1', 'lxml==4.3.3',
+        'pyyaml==5.1', 'Pillow==6.2.0'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -69,8 +69,8 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['Jinja2==2.9.6', 'jsonpatch==1.16'],
-        'test': ['pytest-asyncio==0.6.9'],
+        'dev': ['Jinja2==2.10.1', 'jsonpatch==1.23'],
+        'test': ['pytest-asyncio==0.10.0'],
     },
 
     # To provide executable scripts, use entry points in preference to the

@@ -40,13 +40,14 @@ class DOMNode(ChromeTypeBase):
                  systemId: Optional['str'] = None,
                  frameId: Optional['Page.FrameId'] = None,
                  contentDocumentIndex: Optional['int'] = None,
-                 importedDocumentIndex: Optional['int'] = None,
-                 templateContentIndex: Optional['int'] = None,
                  pseudoType: Optional['DOM.PseudoType'] = None,
                  shadowRootType: Optional['DOM.ShadowRootType'] = None,
                  isClickable: Optional['bool'] = None,
                  eventListeners: Optional['[DOMDebugger.EventListener]'] = None,
                  currentSourceURL: Optional['str'] = None,
+                 originURL: Optional['str'] = None,
+                 scrollOffsetX: Optional['float'] = None,
+                 scrollOffsetY: Optional['float'] = None,
                  ):
 
         self.nodeType = nodeType
@@ -69,13 +70,14 @@ class DOMNode(ChromeTypeBase):
         self.systemId = systemId
         self.frameId = frameId
         self.contentDocumentIndex = contentDocumentIndex
-        self.importedDocumentIndex = importedDocumentIndex
-        self.templateContentIndex = templateContentIndex
         self.pseudoType = pseudoType
         self.shadowRootType = shadowRootType
         self.isClickable = isClickable
         self.eventListeners = eventListeners
         self.currentSourceURL = currentSourceURL
+        self.originURL = originURL
+        self.scrollOffsetX = scrollOffsetX
+        self.scrollOffsetY = scrollOffsetY
 
 
 # InlineTextBox: Details of post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
@@ -100,6 +102,7 @@ class LayoutTreeNode(ChromeTypeBase):
                  inlineTextNodes: Optional['[InlineTextBox]'] = None,
                  styleIndex: Optional['int'] = None,
                  paintOrder: Optional['int'] = None,
+                 isStackingContext: Optional['bool'] = None,
                  ):
 
         self.domNodeIndex = domNodeIndex
@@ -108,6 +111,7 @@ class LayoutTreeNode(ChromeTypeBase):
         self.inlineTextNodes = inlineTextNodes
         self.styleIndex = styleIndex
         self.paintOrder = paintOrder
+        self.isStackingContext = isStackingContext
 
 
 # ComputedStyle: A subset of the full ComputedStyle as defined by the request whitelist.
@@ -130,9 +134,177 @@ class NameValue(ChromeTypeBase):
         self.value = value
 
 
+# StringIndex: Index of the string in the strings table.
+StringIndex = int
+
+# ArrayOfStrings: Index of the string in the strings table.
+ArrayOfStrings = [StringIndex]
+
+# RareStringData: Data that is only present on rare nodes.
+class RareStringData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 value: Union['[StringIndex]'],
+                 ):
+
+        self.index = index
+        self.value = value
+
+
+# RareBooleanData: 
+class RareBooleanData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 ):
+
+        self.index = index
+
+
+# RareIntegerData: 
+class RareIntegerData(ChromeTypeBase):
+    def __init__(self,
+                 index: Union['[]'],
+                 value: Union['[]'],
+                 ):
+
+        self.index = index
+        self.value = value
+
+
+# Rectangle: 
+Rectangle = [float]
+
+# DocumentSnapshot: Document snapshot.
+class DocumentSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 documentURL: Union['StringIndex'],
+                 baseURL: Union['StringIndex'],
+                 contentLanguage: Union['StringIndex'],
+                 encodingName: Union['StringIndex'],
+                 publicId: Union['StringIndex'],
+                 systemId: Union['StringIndex'],
+                 frameId: Union['StringIndex'],
+                 nodes: Union['NodeTreeSnapshot'],
+                 layout: Union['LayoutTreeSnapshot'],
+                 textBoxes: Union['TextBoxSnapshot'],
+                 scrollOffsetX: Optional['float'] = None,
+                 scrollOffsetY: Optional['float'] = None,
+                 ):
+
+        self.documentURL = documentURL
+        self.baseURL = baseURL
+        self.contentLanguage = contentLanguage
+        self.encodingName = encodingName
+        self.publicId = publicId
+        self.systemId = systemId
+        self.frameId = frameId
+        self.nodes = nodes
+        self.layout = layout
+        self.textBoxes = textBoxes
+        self.scrollOffsetX = scrollOffsetX
+        self.scrollOffsetY = scrollOffsetY
+
+
+# NodeTreeSnapshot: Table containing nodes.
+class NodeTreeSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 parentIndex: Optional['[]'] = None,
+                 nodeType: Optional['[]'] = None,
+                 nodeName: Optional['[StringIndex]'] = None,
+                 nodeValue: Optional['[StringIndex]'] = None,
+                 backendNodeId: Optional['[DOM.BackendNodeId]'] = None,
+                 attributes: Optional['[ArrayOfStrings]'] = None,
+                 textValue: Optional['RareStringData'] = None,
+                 inputValue: Optional['RareStringData'] = None,
+                 inputChecked: Optional['RareBooleanData'] = None,
+                 optionSelected: Optional['RareBooleanData'] = None,
+                 contentDocumentIndex: Optional['RareIntegerData'] = None,
+                 pseudoType: Optional['RareStringData'] = None,
+                 isClickable: Optional['RareBooleanData'] = None,
+                 currentSourceURL: Optional['RareStringData'] = None,
+                 originURL: Optional['RareStringData'] = None,
+                 ):
+
+        self.parentIndex = parentIndex
+        self.nodeType = nodeType
+        self.nodeName = nodeName
+        self.nodeValue = nodeValue
+        self.backendNodeId = backendNodeId
+        self.attributes = attributes
+        self.textValue = textValue
+        self.inputValue = inputValue
+        self.inputChecked = inputChecked
+        self.optionSelected = optionSelected
+        self.contentDocumentIndex = contentDocumentIndex
+        self.pseudoType = pseudoType
+        self.isClickable = isClickable
+        self.currentSourceURL = currentSourceURL
+        self.originURL = originURL
+
+
+# LayoutTreeSnapshot: Table of details of an element in the DOM tree with a LayoutObject.
+class LayoutTreeSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 nodeIndex: Union['[]'],
+                 styles: Union['[ArrayOfStrings]'],
+                 bounds: Union['[Rectangle]'],
+                 text: Union['[StringIndex]'],
+                 stackingContexts: Union['RareBooleanData'],
+                 paintOrders: Optional['[]'] = None,
+                 offsetRects: Optional['[Rectangle]'] = None,
+                 scrollRects: Optional['[Rectangle]'] = None,
+                 clientRects: Optional['[Rectangle]'] = None,
+                 ):
+
+        self.nodeIndex = nodeIndex
+        self.styles = styles
+        self.bounds = bounds
+        self.text = text
+        self.stackingContexts = stackingContexts
+        self.paintOrders = paintOrders
+        self.offsetRects = offsetRects
+        self.scrollRects = scrollRects
+        self.clientRects = clientRects
+
+
+# TextBoxSnapshot: Table of details of the post layout rendered text positions. The exact layout should not be regarded asstable and may change between versions.
+class TextBoxSnapshot(ChromeTypeBase):
+    def __init__(self,
+                 layoutIndex: Union['[]'],
+                 bounds: Union['[Rectangle]'],
+                 start: Union['[]'],
+                 length: Union['[]'],
+                 ):
+
+        self.layoutIndex = layoutIndex
+        self.bounds = bounds
+        self.start = start
+        self.length = length
+
+
 class DOMSnapshot(PayloadMixin):
     """ This domain facilitates obtaining document snapshots with DOM, layout, and style information.
     """
+    @classmethod
+    def disable(cls):
+        """Disables DOM snapshot agent for the given page.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables DOM snapshot agent for the given page.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
     @classmethod
     def getSnapshot(cls,
                     computedStyleWhitelist: Union['[]'],
@@ -171,6 +343,41 @@ flattened.
                 },
                 "computedStyles": {
                     "class": [ComputedStyle],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def captureSnapshot(cls,
+                        computedStyles: Union['[]'],
+                        includePaintOrder: Optional['bool'] = None,
+                        includeDOMRects: Optional['bool'] = None,
+                        ):
+        """Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+template contents, and imported documents) in a flattened array, as well as layout and
+white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+flattened.
+        :param computedStyles: Whitelist of computed styles to return.
+        :type computedStyles: []
+        :param includePaintOrder: Whether to include layout object paint orders into the snapshot.
+        :type includePaintOrder: bool
+        :param includeDOMRects: Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
+        :type includeDOMRects: bool
+        """
+        return (
+            cls.build_send_payload("captureSnapshot", {
+                "computedStyles": computedStyles,
+                "includePaintOrder": includePaintOrder,
+                "includeDOMRects": includeDOMRects,
+            }),
+            cls.convert_payload({
+                "documents": {
+                    "class": [DocumentSnapshot],
+                    "optional": False
+                },
+                "strings": {
+                    "class": [],
                     "optional": False
                 },
             })

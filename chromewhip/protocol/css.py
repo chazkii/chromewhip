@@ -484,10 +484,6 @@ the browser.
                     "class": str,
                     "optional": True
                 },
-                "computedBodyFontSize": {
-                    "class": str,
-                    "optional": True
-                },
             })
         )
 

@@ -20,9 +20,9 @@ from chromewhip.protocol import runtime as Runtime
 class HighlightConfig(ChromeTypeBase):
     def __init__(self,
                  showInfo: Optional['bool'] = None,
+                 showStyles: Optional['bool'] = None,
                  showRulers: Optional['bool'] = None,
                  showExtensionLines: Optional['bool'] = None,
-                 displayAsMaterial: Optional['bool'] = None,
                  contentColor: Optional['DOM.RGBA'] = None,
                  paddingColor: Optional['DOM.RGBA'] = None,
                  borderColor: Optional['DOM.RGBA'] = None,
@@ -30,14 +30,13 @@ class HighlightConfig(ChromeTypeBase):
                  eventTargetColor: Optional['DOM.RGBA'] = None,
                  shapeColor: Optional['DOM.RGBA'] = None,
                  shapeMarginColor: Optional['DOM.RGBA'] = None,
-                 selectorList: Optional['str'] = None,
                  cssGridColor: Optional['DOM.RGBA'] = None,
                  ):
 
         self.showInfo = showInfo
+        self.showStyles = showStyles
         self.showRulers = showRulers
         self.showExtensionLines = showExtensionLines
-        self.displayAsMaterial = displayAsMaterial
         self.contentColor = contentColor
         self.paddingColor = paddingColor
         self.borderColor = borderColor
@@ -45,7 +44,6 @@ class HighlightConfig(ChromeTypeBase):
         self.eventTargetColor = eventTargetColor
         self.shapeColor = shapeColor
         self.shapeMarginColor = shapeMarginColor
-        self.selectorList = selectorList
         self.cssGridColor = cssGridColor
 
 
@@ -78,14 +76,22 @@ class Overlay(PayloadMixin):
     @classmethod
     def getHighlightObjectForTest(cls,
                                   nodeId: Union['DOM.NodeId'],
+                                  includeDistance: Optional['bool'] = None,
+                                  includeStyle: Optional['bool'] = None,
                                   ):
         """For testing.
         :param nodeId: Id of the node to get highlight object for.
         :type nodeId: DOM.NodeId
+        :param includeDistance: Whether to include distance info.
+        :type includeDistance: bool
+        :param includeStyle: Whether to include style info.
+        :type includeStyle: bool
         """
         return (
             cls.build_send_payload("getHighlightObjectForTest", {
                 "nodeId": nodeId,
+                "includeDistance": includeDistance,
+                "includeStyle": includeStyle,
             }),
             cls.convert_payload({
                 "highlight": {
@@ -134,6 +140,7 @@ class Overlay(PayloadMixin):
                       nodeId: Optional['DOM.NodeId'] = None,
                       backendNodeId: Optional['DOM.BackendNodeId'] = None,
                       objectId: Optional['Runtime.RemoteObjectId'] = None,
+                      selector: Optional['str'] = None,
                       ):
         """Highlights DOM node with given id or with the given JavaScript object wrapper. Either nodeId or
 objectId must be specified.
@@ -145,6 +152,8 @@ objectId must be specified.
         :type backendNodeId: DOM.BackendNodeId
         :param objectId: JavaScript object id of the node to be highlighted.
         :type objectId: Runtime.RemoteObjectId
+        :param selector: Selectors to highlight relevant nodes.
+        :type selector: str
         """
         return (
             cls.build_send_payload("highlightNode", {
@@ -152,6 +161,7 @@ objectId must be specified.
                 "nodeId": nodeId,
                 "backendNodeId": backendNodeId,
                 "objectId": objectId,
+                "selector": selector,
             }),
             None
         )
@@ -236,6 +246,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         )
 
     @classmethod
+    def setShowAdHighlights(cls,
+                            show: Union['bool'],
+                            ):
+        """Highlights owner element of all frames detected to be ads.
+        :param show: True for showing ad highlights
+        :type show: bool
+        """
+        return (
+            cls.build_send_payload("setShowAdHighlights", {
+                "show": show,
+            }),
+            None
+        )
+
+    @classmethod
     def setPausedInDebuggerMessage(cls,
                                    message: Optional['str'] = None,
                                    ):
@@ -296,6 +321,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         )
 
     @classmethod
+    def setShowLayoutShiftRegions(cls,
+                                  result: Union['bool'],
+                                  ):
+        """Requests that backend shows layout shift regions
+        :param result: True for showing layout shift regions
+        :type result: bool
+        """
+        return (
+            cls.build_send_payload("setShowLayoutShiftRegions", {
+                "result": result,
+            }),
+            None
+        )
+
+    @classmethod
     def setShowScrollBottleneckRects(cls,
                                      show: Union['bool'],
                                      ):
@@ -305,6 +345,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         """
         return (
             cls.build_send_payload("setShowScrollBottleneckRects", {
+                "show": show,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowHitTestBorders(cls,
+                              show: Union['bool'],
+                              ):
+        """Requests that backend shows hit-test borders on layers
+        :param show: True for showing hit-test borders
+        :type show: bool
+        """
+        return (
+            cls.build_send_payload("setShowHitTestBorders", {
                 "show": show,
             }),
             None
@@ -321,21 +376,6 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         return (
             cls.build_send_payload("setShowViewportSizeOnResize", {
                 "show": show,
-            }),
-            None
-        )
-
-    @classmethod
-    def setSuspended(cls,
-                     suspended: Union['bool'],
-                     ):
-        """
-        :param suspended: Whether overlay should be suspended and not consume any resources until resumed.
-        :type suspended: bool
-        """
-        return (
-            cls.build_send_payload("setSuspended", {
-                "suspended": suspended,
             }),
             None
         )
@@ -400,6 +440,20 @@ class ScreenshotRequestedEvent(BaseEvent):
         if isinstance(viewport, dict):
             viewport = Page.Viewport(**viewport)
         self.viewport = viewport
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
+
+
+class InspectModeCanceledEvent(BaseEvent):
+
+    js_name = 'Overlay.inspectModeCanceled'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self):
+        pass
 
     @classmethod
     def build_hash(cls):

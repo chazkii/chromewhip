@@ -31,6 +31,7 @@ class SecurityStateExplanation(ChromeTypeBase):
                  description: Union['str'],
                  mixedContentType: Union['MixedContentType'],
                  certificate: Union['[]'],
+                 recommendations: Optional['[]'] = None,
                  ):
 
         self.securityState = securityState
@@ -39,6 +40,7 @@ class SecurityStateExplanation(ChromeTypeBase):
         self.description = description
         self.mixedContentType = mixedContentType
         self.certificate = certificate
+        self.recommendations = recommendations
 
 
 # InsecureContentStatus: Information about insecure content on the page.

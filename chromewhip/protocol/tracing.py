@@ -40,6 +40,9 @@ class TraceConfig(ChromeTypeBase):
         self.memoryDumpConfig = memoryDumpConfig
 
 
+# StreamFormat: Data format of a trace. Can be either the legacy JSON format or theprotocol buffer format. Note that the JSON format will be deprecated soon.
+StreamFormat = str
+
 # StreamCompression: Compression type to use for traces returned via streams.
 StreamCompression = str
 
@@ -111,6 +114,7 @@ class Tracing(PayloadMixin):
               options: Optional['str'] = None,
               bufferUsageReportingInterval: Optional['float'] = None,
               transferMode: Optional['str'] = None,
+              streamFormat: Optional['StreamFormat'] = None,
               streamCompression: Optional['StreamCompression'] = None,
               traceConfig: Optional['TraceConfig'] = None,
               ):
@@ -124,6 +128,9 @@ class Tracing(PayloadMixin):
         :param transferMode: Whether to report trace events as series of dataCollected events or to save trace to a
 stream (defaults to `ReportEvents`).
         :type transferMode: str
+        :param streamFormat: Trace data format to use. This only applies when using `ReturnAsStream`
+transfer mode (defaults to `json`).
+        :type streamFormat: StreamFormat
         :param streamCompression: Compression format to use. This only applies when using `ReturnAsStream`
 transfer mode (defaults to `none`)
         :type streamCompression: StreamCompression
@@ -136,6 +143,7 @@ transfer mode (defaults to `none`)
                 "options": options,
                 "bufferUsageReportingInterval": bufferUsageReportingInterval,
                 "transferMode": transferMode,
+                "streamFormat": streamFormat,
                 "streamCompression": streamCompression,
                 "traceConfig": traceConfig,
             }),
@@ -195,12 +203,20 @@ class TracingCompleteEvent(BaseEvent):
     is_hashable = False
 
     def __init__(self,
+                 dataLossOccurred: Union['bool', dict],
                  stream: Union['IO.StreamHandle', dict, None] = None,
+                 traceFormat: Union['StreamFormat', dict, None] = None,
                  streamCompression: Union['StreamCompression', dict, None] = None,
                  ):
+        if isinstance(dataLossOccurred, dict):
+            dataLossOccurred = bool(**dataLossOccurred)
+        self.dataLossOccurred = dataLossOccurred
         if isinstance(stream, dict):
             stream = IO.StreamHandle(**stream)
         self.stream = stream
+        if isinstance(traceFormat, dict):
+            traceFormat = StreamFormat(**traceFormat)
+        self.traceFormat = traceFormat
         if isinstance(streamCompression, dict):
             streamCompression = StreamCompression(**streamCompression)
         self.streamCompression = streamCompression

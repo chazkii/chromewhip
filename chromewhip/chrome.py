@@ -8,6 +8,7 @@ from typing import Optional
 import aiohttp
 import websockets
 import websockets.protocol
+import websockets.exceptions
 
 from chromewhip import helpers
 from chromewhip.base import SyncAdder
@@ -352,7 +353,17 @@ class ChromeTab(metaclass=SyncAdder):
         return await self._send(*network.Network.enable())
 
     async def send_command(self, command, input_event_type=None, await_on_event_type=None, timeout=0):
-        return await self._send(*command, input_event_cls=input_event_type, trigger_event_cls=await_on_event_type, timeout=timeout)
+        finished = False
+        retries = 0
+        max_retries = 3
+        while not finished:
+            try:
+                return await self._send(*command, input_event_cls=input_event_type, trigger_event_cls=await_on_event_type, timeout=timeout)
+            except websockets.exceptions.ConnectionClosed:
+                if retries > max_retries:
+                    self._log.error(f'Failed to execute send command {command} after {retries} times!')
+                    finished = True
+                await self.connect()
 
     async def html(self):
         result = await self.evaluate('document.documentElement.outerHTML')

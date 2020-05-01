@@ -51,17 +51,11 @@ class RemoteObject(ChromeTypeBase):
 class CustomPreview(ChromeTypeBase):
     def __init__(self,
                  header: Union['str'],
-                 hasBody: Union['bool'],
-                 formatterObjectId: Union['RemoteObjectId'],
-                 bindRemoteObjectFunctionId: Union['RemoteObjectId'],
-                 configObjectId: Optional['RemoteObjectId'] = None,
+                 bodyGetterId: Optional['RemoteObjectId'] = None,
                  ):
 
         self.header = header
-        self.hasBody = hasBody
-        self.formatterObjectId = formatterObjectId
-        self.bindRemoteObjectFunctionId = bindRemoteObjectFunctionId
-        self.configObjectId = configObjectId
+        self.bodyGetterId = bodyGetterId
 
 
 # ObjectPreview: Object containing abbreviated remote object value.
@@ -143,6 +137,17 @@ class InternalPropertyDescriptor(ChromeTypeBase):
     def __init__(self,
                  name: Union['str'],
                  value: Optional['RemoteObject'] = None,
+                 ):
+
+        self.name = name
+        self.value = value
+
+
+# PrivatePropertyDescriptor: Object private field descriptor.
+class PrivatePropertyDescriptor(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['RemoteObject'],
                  ):
 
         self.name = name
@@ -570,6 +575,10 @@ returned either.
                     "class": [InternalPropertyDescriptor],
                     "optional": True
                 },
+                "privateProperties": {
+                    "class": [PrivatePropertyDescriptor],
+                    "optional": True
+                },
                 "exceptionDetails": {
                     "class": ExceptionDetails,
                     "optional": True
@@ -717,6 +726,22 @@ resolved.
         )
 
     @classmethod
+    def setAsyncCallStackDepth(cls,
+                               maxDepth: Union['int'],
+                               ):
+        """Enables or disables async call stacks tracking.
+        :param maxDepth: Maximum depth of async call stacks. Setting to `0` will effectively disable collecting async
+call stacks (default).
+        :type maxDepth: int
+        """
+        return (
+            cls.build_send_payload("setAsyncCallStackDepth", {
+                "maxDepth": maxDepth,
+            }),
+            None
+        )
+
+    @classmethod
     def setCustomObjectFormatterEnabled(cls,
                                         enabled: Union['bool'],
                                         ):
@@ -732,6 +757,21 @@ resolved.
         )
 
     @classmethod
+    def setMaxCallStackSizeToCapture(cls,
+                                     size: Union['int'],
+                                     ):
+        """
+        :param size: 
+        :type size: int
+        """
+        return (
+            cls.build_send_payload("setMaxCallStackSizeToCapture", {
+                "size": size,
+            }),
+            None
+        )
+
+    @classmethod
     def terminateExecution(cls):
         """Terminate current or next JavaScript execution.
 Will cancel the termination when the outer-most script execution ends.
@@ -742,6 +782,79 @@ Will cancel the termination when the outer-most script execution ends.
             None
         )
 
+    @classmethod
+    def addBinding(cls,
+                   name: Union['str'],
+                   executionContextId: Optional['ExecutionContextId'] = None,
+                   ):
+        """If executionContextId is empty, adds binding with the given name on the
+global objects of all inspected contexts, including those created later,
+bindings survive reloads.
+If executionContextId is specified, adds binding only on global object of
+given execution context.
+Binding function takes exactly one argument, this argument should be string,
+in case of any other input, function throws an exception.
+Each binding function call produces Runtime.bindingCalled notification.
+        :param name: 
+        :type name: str
+        :param executionContextId: 
+        :type executionContextId: ExecutionContextId
+        """
+        return (
+            cls.build_send_payload("addBinding", {
+                "name": name,
+                "executionContextId": executionContextId,
+            }),
+            None
+        )
+
+    @classmethod
+    def removeBinding(cls,
+                      name: Union['str'],
+                      ):
+        """This method does not remove binding function from global object but
+unsubscribes current runtime agent from Runtime.bindingCalled notifications.
+        :param name: 
+        :type name: str
+        """
+        return (
+            cls.build_send_payload("removeBinding", {
+                "name": name,
+            }),
+            None
+        )
+
+
+
+class BindingCalledEvent(BaseEvent):
+
+    js_name = 'Runtime.bindingCalled'
+    hashable = ['executionContextId']
+    is_hashable = True
+
+    def __init__(self,
+                 name: Union['str', dict],
+                 payload: Union['str', dict],
+                 executionContextId: Union['ExecutionContextId', dict],
+                 ):
+        if isinstance(name, dict):
+            name = str(**name)
+        self.name = name
+        if isinstance(payload, dict):
+            payload = str(**payload)
+        self.payload = payload
+        if isinstance(executionContextId, dict):
+            executionContextId = ExecutionContextId(**executionContextId)
+        self.executionContextId = executionContextId
+
+    @classmethod
+    def build_hash(cls, executionContextId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class ConsoleAPICalledEvent(BaseEvent):

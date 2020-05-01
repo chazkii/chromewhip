@@ -33,9 +33,26 @@ class SamplingProfileNode(ChromeTypeBase):
 class SamplingProfile(ChromeTypeBase):
     def __init__(self,
                  samples: Union['[SamplingProfileNode]'],
+                 modules: Union['[Module]'],
                  ):
 
         self.samples = samples
+        self.modules = modules
+
+
+# Module: Executable module information
+class Module(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 uuid: Union['str'],
+                 baseAddress: Union['str'],
+                 size: Union['float'],
+                 ):
+
+        self.name = name
+        self.uuid = uuid
+        self.baseAddress = baseAddress
+        self.size = size
 
 
 class Memory(PayloadMixin):
@@ -70,6 +87,16 @@ class Memory(PayloadMixin):
         """
         return (
             cls.build_send_payload("prepareForLeakDetection", {
+            }),
+            None
+        )
+
+    @classmethod
+    def forciblyPurgeJavaScriptMemory(cls):
+        """Simulate OomIntervention by purging V8 memory.
+        """
+        return (
+            cls.build_send_payload("forciblyPurgeJavaScriptMemory", {
             }),
             None
         )

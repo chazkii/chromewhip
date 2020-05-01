@@ -144,12 +144,18 @@ breakpoints, stepping through execution, exploring stack traces, etc.
         )
 
     @classmethod
-    def enable(cls):
+    def enable(cls,
+               maxScriptsCacheSize: Optional['float'] = None,
+               ):
         """Enables debugger for the given page. Clients should not assume that the debugging has been
 enabled until the result for this command is received.
+        :param maxScriptsCacheSize: The maximum size in bytes of collected scripts (not referenced by other heap objects)
+the debugger can hold. Puts no limit if paramter is omitted.
+        :type maxScriptsCacheSize: float
         """
         return (
             cls.build_send_payload("enable", {
+                "maxScriptsCacheSize": maxScriptsCacheSize,
             }),
             cls.convert_payload({
                 "debuggerId": {
@@ -367,19 +373,6 @@ of scripts is used as end of range.
         )
 
     @classmethod
-    def scheduleStepIntoAsync(cls):
-        """This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and
-Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled
-before next pause. Returns success when async task is actually scheduled, returns error if no
-task were scheduled or another scheduleStepIntoAsync was called.
-        """
-        return (
-            cls.build_send_payload("scheduleStepIntoAsync", {
-            }),
-            None
-        )
-
-    @classmethod
     def searchInContent(cls,
                         scriptId: Union['Runtime.ScriptId'],
                         query: Union['str'],
@@ -490,6 +483,26 @@ breakpoint if this expression evaluates to true.
                 },
                 "actualLocation": {
                     "class": Location,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setInstrumentationBreakpoint(cls,
+                                     instrumentation: Union['str'],
+                                     ):
+        """Sets instrumentation breakpoint.
+        :param instrumentation: Instrumentation name.
+        :type instrumentation: str
+        """
+        return (
+            cls.build_send_payload("setInstrumentationBreakpoint", {
+                "instrumentation": instrumentation,
+            }),
+            cls.convert_payload({
+                "breakpointId": {
+                    "class": BreakpointId,
                     "optional": False
                 },
             })
@@ -711,7 +724,7 @@ scope types are allowed. Other scopes could be manipulated manually.
                  breakOnAsyncCall: Optional['bool'] = None,
                  ):
         """Steps into the function call.
-        :param breakOnAsyncCall: Debugger will issue additional Debugger.paused notification if any async task is scheduled
+        :param breakOnAsyncCall: Debugger will pause on the execution of the first async task which was scheduled
 before next pause.
         :type breakOnAsyncCall: bool
         """

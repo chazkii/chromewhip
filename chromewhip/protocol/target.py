@@ -75,14 +75,33 @@ class Target(PayloadMixin):
     @classmethod
     def attachToTarget(cls,
                        targetId: Union['TargetID'],
+                       flatten: Optional['bool'] = None,
                        ):
         """Attaches to the target with given id.
         :param targetId: 
         :type targetId: TargetID
+        :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+        :type flatten: bool
         """
         return (
             cls.build_send_payload("attachToTarget", {
                 "targetId": targetId,
+                "flatten": flatten,
+            }),
+            cls.convert_payload({
+                "sessionId": {
+                    "class": SessionID,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def attachToBrowserTarget(cls):
+        """Attaches to the browser target, only uses flat sessionId mode.
+        """
+        return (
+            cls.build_send_payload("attachToBrowserTarget", {
             }),
             cls.convert_payload({
                 "sessionId": {
@@ -110,6 +129,32 @@ class Target(PayloadMixin):
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def exposeDevToolsProtocol(cls,
+                               targetId: Union['TargetID'],
+                               bindingName: Optional['str'] = None,
+                               ):
+        """Inject object to the target's main frame that provides a communication
+channel with browser target.
+
+Injected object will be available as `window[bindingName]`.
+
+The object has the follwing API:
+- `binding.send(json)` - a method to send messages over the remote debugging protocol
+- `binding.onmessage = json => handleMessage(json)` - a callback that will be called for the protocol notifications and command responses.
+        :param targetId: 
+        :type targetId: TargetID
+        :param bindingName: Binding name, 'cdp' if not specified.
+        :type bindingName: str
+        """
+        return (
+            cls.build_send_payload("exposeDevToolsProtocol", {
+                "targetId": targetId,
+                "bindingName": bindingName,
+            }),
+            None
         )
 
     @classmethod
@@ -150,6 +195,8 @@ one.
                      height: Optional['int'] = None,
                      browserContextId: Optional['BrowserContextID'] = None,
                      enableBeginFrameControl: Optional['bool'] = None,
+                     newWindow: Optional['bool'] = None,
+                     background: Optional['bool'] = None,
                      ):
         """Creates a new page.
         :param url: The initial URL the page will be navigated to.
@@ -163,6 +210,11 @@ one.
         :param enableBeginFrameControl: Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
 not supported on MacOS yet, false by default).
         :type enableBeginFrameControl: bool
+        :param newWindow: Whether to create a new Window or Tab (chrome-only, false by default).
+        :type newWindow: bool
+        :param background: Whether to create the target in background or foreground (chrome-only,
+false by default).
+        :type background: bool
         """
         return (
             cls.build_send_payload("createTarget", {
@@ -171,6 +223,8 @@ not supported on MacOS yet, false by default).
                 "height": height,
                 "browserContextId": browserContextId,
                 "enableBeginFrameControl": enableBeginFrameControl,
+                "newWindow": newWindow,
+                "background": background,
             }),
             cls.convert_payload({
                 "targetId": {
@@ -217,7 +271,7 @@ beforeunload hooks.
 
     @classmethod
     def getTargetInfo(cls,
-                      targetId: Union['TargetID'],
+                      targetId: Optional['TargetID'] = None,
                       ):
         """Returns information about a target.
         :param targetId: 
@@ -277,6 +331,7 @@ beforeunload hooks.
     def setAutoAttach(cls,
                       autoAttach: Union['bool'],
                       waitForDebuggerOnStart: Union['bool'],
+                      flatten: Optional['bool'] = None,
                       ):
         """Controls whether to automatically attach to new targets which are considered to be related to
 this one. When turned on, attaches to all existing related targets as well. When turned off,
@@ -286,11 +341,14 @@ automatically detaches from all currently attached targets.
         :param waitForDebuggerOnStart: Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
 to run paused targets.
         :type waitForDebuggerOnStart: bool
+        :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+        :type flatten: bool
         """
         return (
             cls.build_send_payload("setAutoAttach", {
                 "autoAttach": autoAttach,
                 "waitForDebuggerOnStart": waitForDebuggerOnStart,
+                "flatten": flatten,
             }),
             None
         )
@@ -363,7 +421,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -378,7 +436,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -390,7 +448,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -409,7 +467,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -448,6 +506,37 @@ class TargetDestroyedEvent(BaseEvent):
         if isinstance(targetId, dict):
             targetId = TargetID(**targetId)
         self.targetId = targetId
+
+    @classmethod
+    def build_hash(cls, targetId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class TargetCrashedEvent(BaseEvent):
+
+    js_name = 'Target.targetCrashed'
+    hashable = ['targetId']
+    is_hashable = True
+
+    def __init__(self,
+                 targetId: Union['TargetID', dict],
+                 status: Union['str', dict],
+                 errorCode: Union['int', dict],
+                 ):
+        if isinstance(targetId, dict):
+            targetId = TargetID(**targetId)
+        self.targetId = targetId
+        if isinstance(status, dict):
+            status = str(**status)
+        self.status = status
+        if isinstance(errorCode, dict):
+            errorCode = int(**errorCode)
+        self.errorCode = errorCode
 
     @classmethod
     def build_hash(cls, targetId):

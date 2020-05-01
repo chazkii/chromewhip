@@ -375,6 +375,35 @@ be called for that search.
         )
 
     @classmethod
+    def getContentQuads(cls,
+                        nodeId: Optional['NodeId'] = None,
+                        backendNodeId: Optional['BackendNodeId'] = None,
+                        objectId: Optional['Runtime.RemoteObjectId'] = None,
+                        ):
+        """Returns quads that describe node position on the page. This method
+might return multiple quads for inline nodes.
+        :param nodeId: Identifier of the node.
+        :type nodeId: NodeId
+        :param backendNodeId: Identifier of the backend node.
+        :type backendNodeId: BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("getContentQuads", {
+                "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
+            }),
+            cls.convert_payload({
+                "quads": {
+                    "class": [Quad],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def getDocument(cls,
                     depth: Optional['int'] = None,
                     pierce: Optional['bool'] = None,
@@ -431,25 +460,38 @@ entire subtree or provide an integer larger than 0.
                            x: Union['int'],
                            y: Union['int'],
                            includeUserAgentShadowDOM: Optional['bool'] = None,
+                           ignorePointerEventsNone: Optional['bool'] = None,
                            ):
-        """Returns node id at given location.
+        """Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
+either returned or not.
         :param x: X coordinate.
         :type x: int
         :param y: Y coordinate.
         :type y: int
         :param includeUserAgentShadowDOM: False to skip to the nearest non-UA shadow root ancestor (default: false).
         :type includeUserAgentShadowDOM: bool
+        :param ignorePointerEventsNone: Whether to ignore pointer-events: none on elements and hit test them.
+        :type ignorePointerEventsNone: bool
         """
         return (
             cls.build_send_payload("getNodeForLocation", {
                 "x": x,
                 "y": y,
                 "includeUserAgentShadowDOM": includeUserAgentShadowDOM,
+                "ignorePointerEventsNone": ignorePointerEventsNone,
             }),
             cls.convert_payload({
+                "backendNodeId": {
+                    "class": BackendNodeId,
+                    "optional": False
+                },
+                "frameId": {
+                    "class": Page.FrameId,
+                    "optional": False
+                },
                 "nodeId": {
                     "class": NodeId,
-                    "optional": False
+                    "optional": True
                 },
             })
         )
@@ -815,6 +857,7 @@ nodes that form the path from the node to the root are also sent to the client a
                     nodeId: Optional['NodeId'] = None,
                     backendNodeId: Optional['DOM.BackendNodeId'] = None,
                     objectGroup: Optional['str'] = None,
+                    executionContextId: Optional['Runtime.ExecutionContextId'] = None,
                     ):
         """Resolves the JavaScript node object for a given NodeId or BackendNodeId.
         :param nodeId: Id of the node to resolve.
@@ -823,12 +866,15 @@ nodes that form the path from the node to the root are also sent to the client a
         :type backendNodeId: DOM.BackendNodeId
         :param objectGroup: Symbolic group name that can be used to release multiple objects.
         :type objectGroup: str
+        :param executionContextId: Execution context in which to resolve the node.
+        :type executionContextId: Runtime.ExecutionContextId
         """
         return (
             cls.build_send_payload("resolveNode", {
                 "nodeId": nodeId,
                 "backendNodeId": backendNodeId,
                 "objectGroup": objectGroup,
+                "executionContextId": executionContextId,
             }),
             cls.convert_payload({
                 "object": {
@@ -911,6 +957,62 @@ successfully.
                 "objectId": objectId,
             }),
             None
+        )
+
+    @classmethod
+    def setNodeStackTracesEnabled(cls,
+                                  enable: Union['bool'],
+                                  ):
+        """Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
+        :param enable: Enable or disable.
+        :type enable: bool
+        """
+        return (
+            cls.build_send_payload("setNodeStackTracesEnabled", {
+                "enable": enable,
+            }),
+            None
+        )
+
+    @classmethod
+    def getNodeStackTraces(cls,
+                           nodeId: Union['NodeId'],
+                           ):
+        """Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
+        :param nodeId: Id of the node to get stack traces for.
+        :type nodeId: NodeId
+        """
+        return (
+            cls.build_send_payload("getNodeStackTraces", {
+                "nodeId": nodeId,
+            }),
+            cls.convert_payload({
+                "creation": {
+                    "class": Runtime.StackTrace,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getFileInfo(cls,
+                    objectId: Union['Runtime.RemoteObjectId'],
+                    ):
+        """Returns file information for the given
+File wrapper.
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("getFileInfo", {
+                "objectId": objectId,
+            }),
+            cls.convert_payload({
+                "path": {
+                    "class": str,
+                    "optional": False
+                },
+            })
         )
 
     @classmethod
@@ -1014,9 +1116,13 @@ $x functions).
                 "frameId": frameId,
             }),
             cls.convert_payload({
+                "backendNodeId": {
+                    "class": BackendNodeId,
+                    "optional": False
+                },
                 "nodeId": {
                     "class": NodeId,
-                    "optional": False
+                    "optional": True
                 },
             })
         )
@@ -1138,7 +1244,7 @@ class ChildNodeCountUpdatedEvent(BaseEvent):
 class ChildNodeInsertedEvent(BaseEvent):
 
     js_name = 'Dom.childNodeInserted'
-    hashable = ['previousNodeId', 'parentNodeId']
+    hashable = ['parentNodeId', 'previousNodeId']
     is_hashable = True
 
     def __init__(self,
@@ -1157,7 +1263,7 @@ class ChildNodeInsertedEvent(BaseEvent):
         self.node = node
 
     @classmethod
-    def build_hash(cls, previousNodeId, parentNodeId):
+    def build_hash(cls, parentNodeId, previousNodeId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
