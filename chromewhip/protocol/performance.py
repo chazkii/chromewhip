@@ -38,11 +38,16 @@ class Performance(PayloadMixin):
         )
 
     @classmethod
-    def enable(cls):
+    def enable(cls,
+               timeDomain: Optional['str'] = None,
+               ):
         """Enable collecting and reporting metrics.
+        :param timeDomain: Time domain to use for collecting and reporting duration metrics.
+        :type timeDomain: str
         """
         return (
             cls.build_send_payload("enable", {
+                "timeDomain": timeDomain,
             }),
             None
         )

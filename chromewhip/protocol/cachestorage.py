@@ -163,8 +163,8 @@ class CacheStorage(PayloadMixin):
     @classmethod
     def requestEntries(cls,
                        cacheId: Union['CacheId'],
-                       skipCount: Union['int'],
-                       pageSize: Union['int'],
+                       skipCount: Optional['int'] = None,
+                       pageSize: Optional['int'] = None,
                        pathFilter: Optional['str'] = None,
                        ):
         """Requests data from cache.

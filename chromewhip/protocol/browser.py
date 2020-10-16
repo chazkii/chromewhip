@@ -13,6 +13,9 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
+# BrowserContextID: 
+BrowserContextID = str
+
 # WindowID: 
 WindowID = int
 
@@ -48,13 +51,15 @@ class PermissionDescriptor(ChromeTypeBase):
                  name: Union['str'],
                  sysex: Optional['bool'] = None,
                  userVisibleOnly: Optional['bool'] = None,
-                 type: Optional['str'] = None,
+                 allowWithoutSanitization: Optional['bool'] = None,
+                 panTiltZoom: Optional['bool'] = None,
                  ):
 
         self.name = name
         self.sysex = sysex
         self.userVisibleOnly = userVisibleOnly
-        self.type = type
+        self.allowWithoutSanitization = allowWithoutSanitization
+        self.panTiltZoom = panTiltZoom
 
 
 # Bucket: Chrome histogram bucket.
@@ -90,26 +95,26 @@ class Browser(PayloadMixin):
     """
     @classmethod
     def setPermission(cls,
-                      origin: Union['str'],
                       permission: Union['PermissionDescriptor'],
                       setting: Union['PermissionSetting'],
-                      browserContextId: Optional['Target.TargetID'] = None,
+                      origin: Optional['str'] = None,
+                      browserContextId: Optional['BrowserContextID'] = None,
                       ):
         """Set permission settings for given origin.
-        :param origin: Origin the permission applies to.
-        :type origin: str
         :param permission: Descriptor of permission to override.
         :type permission: PermissionDescriptor
         :param setting: Setting of the permission.
         :type setting: PermissionSetting
+        :param origin: Origin the permission applies to, all origins if not specified.
+        :type origin: str
         :param browserContextId: Context to override. When omitted, default browser context is used.
-        :type browserContextId: Target.TargetID
+        :type browserContextId: BrowserContextID
         """
         return (
             cls.build_send_payload("setPermission", {
-                "origin": origin,
                 "permission": permission,
                 "setting": setting,
+                "origin": origin,
                 "browserContextId": browserContextId,
             }),
             None
@@ -117,22 +122,22 @@ class Browser(PayloadMixin):
 
     @classmethod
     def grantPermissions(cls,
-                         origin: Union['str'],
                          permissions: Union['[PermissionType]'],
-                         browserContextId: Optional['Target.BrowserContextID'] = None,
+                         origin: Optional['str'] = None,
+                         browserContextId: Optional['BrowserContextID'] = None,
                          ):
         """Grant specific permissions to the given origin and reject all others.
-        :param origin: 
-        :type origin: str
         :param permissions: 
         :type permissions: [PermissionType]
+        :param origin: Origin the permission applies to, all origins if not specified.
+        :type origin: str
         :param browserContextId: BrowserContext to override permissions. When omitted, default browser context is used.
-        :type browserContextId: Target.BrowserContextID
+        :type browserContextId: BrowserContextID
         """
         return (
             cls.build_send_payload("grantPermissions", {
-                "origin": origin,
                 "permissions": permissions,
+                "origin": origin,
                 "browserContextId": browserContextId,
             }),
             None
@@ -140,15 +145,41 @@ class Browser(PayloadMixin):
 
     @classmethod
     def resetPermissions(cls,
-                         browserContextId: Optional['Target.BrowserContextID'] = None,
+                         browserContextId: Optional['BrowserContextID'] = None,
                          ):
         """Reset all permission management for all origins.
         :param browserContextId: BrowserContext to reset permissions. When omitted, default browser context is used.
-        :type browserContextId: Target.BrowserContextID
+        :type browserContextId: BrowserContextID
         """
         return (
             cls.build_send_payload("resetPermissions", {
                 "browserContextId": browserContextId,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDownloadBehavior(cls,
+                            behavior: Union['str'],
+                            browserContextId: Optional['BrowserContextID'] = None,
+                            downloadPath: Optional['str'] = None,
+                            ):
+        """Set the behavior when downloading a file.
+        :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if
+available (otherwise deny). |allowAndName| allows download and names files according to
+their dowmload guids.
+        :type behavior: str
+        :param browserContextId: BrowserContext to set download behavior. When omitted, default browser context is used.
+        :type browserContextId: BrowserContextID
+        :param downloadPath: The default path to save downloaded files to. This is requred if behavior is set to 'allow'
+or 'allowAndName'.
+        :type downloadPath: str
+        """
+        return (
+            cls.build_send_payload("setDownloadBehavior", {
+                "behavior": behavior,
+                "browserContextId": browserContextId,
+                "downloadPath": downloadPath,
             }),
             None
         )

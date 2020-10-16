@@ -14,6 +14,197 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 log = logging.getLogger(__name__)
 from chromewhip.protocol import network as Network
 
+# AffectedCookie: Information about a cookie that is affected by an inspector issue.
+class AffectedCookie(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 path: Union['str'],
+                 domain: Union['str'],
+                 ):
+
+        self.name = name
+        self.path = path
+        self.domain = domain
+
+
+# AffectedRequest: Information about a request that is affected by an inspector issue.
+class AffectedRequest(ChromeTypeBase):
+    def __init__(self,
+                 requestId: Union['Network.RequestId'],
+                 url: Optional['str'] = None,
+                 ):
+
+        self.requestId = requestId
+        self.url = url
+
+
+# AffectedFrame: Information about the frame affected by an inspector issue.
+class AffectedFrame(ChromeTypeBase):
+    def __init__(self,
+                 frameId: Union['Page.FrameId'],
+                 ):
+
+        self.frameId = frameId
+
+
+# SameSiteCookieExclusionReason: 
+SameSiteCookieExclusionReason = str
+
+# SameSiteCookieWarningReason: 
+SameSiteCookieWarningReason = str
+
+# SameSiteCookieOperation: 
+SameSiteCookieOperation = str
+
+# SameSiteCookieIssueDetails: This information is currently necessary, as the front-end has a difficulttime finding a specific cookie. With this, we can convey specific errorinformation without the cookie.
+class SameSiteCookieIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 cookie: Union['AffectedCookie'],
+                 cookieWarningReasons: Union['[SameSiteCookieWarningReason]'],
+                 cookieExclusionReasons: Union['[SameSiteCookieExclusionReason]'],
+                 operation: Union['SameSiteCookieOperation'],
+                 siteForCookies: Optional['str'] = None,
+                 cookieUrl: Optional['str'] = None,
+                 request: Optional['AffectedRequest'] = None,
+                 ):
+
+        self.cookie = cookie
+        self.cookieWarningReasons = cookieWarningReasons
+        self.cookieExclusionReasons = cookieExclusionReasons
+        self.operation = operation
+        self.siteForCookies = siteForCookies
+        self.cookieUrl = cookieUrl
+        self.request = request
+
+
+# MixedContentResolutionStatus: 
+MixedContentResolutionStatus = str
+
+# MixedContentResourceType: 
+MixedContentResourceType = str
+
+# MixedContentIssueDetails: 
+class MixedContentIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 resolutionStatus: Union['MixedContentResolutionStatus'],
+                 insecureURL: Union['str'],
+                 mainResourceURL: Union['str'],
+                 resourceType: Optional['MixedContentResourceType'] = None,
+                 request: Optional['AffectedRequest'] = None,
+                 frame: Optional['AffectedFrame'] = None,
+                 ):
+
+        self.resourceType = resourceType
+        self.resolutionStatus = resolutionStatus
+        self.insecureURL = insecureURL
+        self.mainResourceURL = mainResourceURL
+        self.request = request
+        self.frame = frame
+
+
+# BlockedByResponseReason: Enum indicating the reason a response has been blocked. These reasons arerefinements of the net error BLOCKED_BY_RESPONSE.
+BlockedByResponseReason = str
+
+# BlockedByResponseIssueDetails: Details for a request that has been blocked with the BLOCKED_BY_RESPONSEcode. Currently only used for COEP/COOP, but may be extended to includesome CSP errors in the future.
+class BlockedByResponseIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 request: Union['AffectedRequest'],
+                 reason: Union['BlockedByResponseReason'],
+                 parentFrame: Optional['AffectedFrame'] = None,
+                 blockedFrame: Optional['AffectedFrame'] = None,
+                 ):
+
+        self.request = request
+        self.parentFrame = parentFrame
+        self.blockedFrame = blockedFrame
+        self.reason = reason
+
+
+# HeavyAdResolutionStatus: 
+HeavyAdResolutionStatus = str
+
+# HeavyAdReason: 
+HeavyAdReason = str
+
+# HeavyAdIssueDetails: 
+class HeavyAdIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 resolution: Union['HeavyAdResolutionStatus'],
+                 reason: Union['HeavyAdReason'],
+                 frame: Union['AffectedFrame'],
+                 ):
+
+        self.resolution = resolution
+        self.reason = reason
+        self.frame = frame
+
+
+# ContentSecurityPolicyViolationType: 
+ContentSecurityPolicyViolationType = str
+
+# SourceCodeLocation: 
+class SourceCodeLocation(ChromeTypeBase):
+    def __init__(self,
+                 url: Union['str'],
+                 lineNumber: Union['int'],
+                 columnNumber: Union['int'],
+                 ):
+
+        self.url = url
+        self.lineNumber = lineNumber
+        self.columnNumber = columnNumber
+
+
+# ContentSecurityPolicyIssueDetails: 
+class ContentSecurityPolicyIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 violatedDirective: Union['str'],
+                 contentSecurityPolicyViolationType: Union['ContentSecurityPolicyViolationType'],
+                 blockedURL: Optional['str'] = None,
+                 frameAncestor: Optional['AffectedFrame'] = None,
+                 sourceCodeLocation: Optional['SourceCodeLocation'] = None,
+                 violatingNodeId: Optional['DOM.BackendNodeId'] = None,
+                 ):
+
+        self.blockedURL = blockedURL
+        self.violatedDirective = violatedDirective
+        self.contentSecurityPolicyViolationType = contentSecurityPolicyViolationType
+        self.frameAncestor = frameAncestor
+        self.sourceCodeLocation = sourceCodeLocation
+        self.violatingNodeId = violatingNodeId
+
+
+# InspectorIssueCode: A unique identifier for the type of issue. Each type may use one of theoptional fields in InspectorIssueDetails to convey more specificinformation about the kind of issue.
+InspectorIssueCode = str
+
+# InspectorIssueDetails: This struct holds a list of optional fields with additional informationspecific to the kind of issue. When adding a new issue code, please alsoadd a new optional field to this type.
+class InspectorIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 sameSiteCookieIssueDetails: Optional['SameSiteCookieIssueDetails'] = None,
+                 mixedContentIssueDetails: Optional['MixedContentIssueDetails'] = None,
+                 blockedByResponseIssueDetails: Optional['BlockedByResponseIssueDetails'] = None,
+                 heavyAdIssueDetails: Optional['HeavyAdIssueDetails'] = None,
+                 contentSecurityPolicyIssueDetails: Optional['ContentSecurityPolicyIssueDetails'] = None,
+                 ):
+
+        self.sameSiteCookieIssueDetails = sameSiteCookieIssueDetails
+        self.mixedContentIssueDetails = mixedContentIssueDetails
+        self.blockedByResponseIssueDetails = blockedByResponseIssueDetails
+        self.heavyAdIssueDetails = heavyAdIssueDetails
+        self.contentSecurityPolicyIssueDetails = contentSecurityPolicyIssueDetails
+
+
+# InspectorIssue: An inspector issue reported from the back-end.
+class InspectorIssue(ChromeTypeBase):
+    def __init__(self,
+                 code: Union['InspectorIssueCode'],
+                 details: Union['InspectorIssueDetails'],
+                 ):
+
+        self.code = code
+        self.details = details
+
+
 class Audits(PayloadMixin):
     """ Audits domain allows investigation of page violations and possible improvements.
     """
@@ -58,3 +249,42 @@ applies to images.
             })
         )
 
+    @classmethod
+    def disable(cls):
+        """Disables issues domain, prevents further issues from being reported to the client.
+        """
+        return (
+            cls.build_send_payload("disable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def enable(cls):
+        """Enables issues domain, sends the issues collected so far to the client by means of the
+`issueAdded` event.
+        """
+        return (
+            cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+
+
+class IssueAddedEvent(BaseEvent):
+
+    js_name = 'Audits.issueAdded'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 issue: Union['InspectorIssue', dict],
+                 ):
+        if isinstance(issue, dict):
+            issue = InspectorIssue(**issue)
+        self.issue = issue
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')

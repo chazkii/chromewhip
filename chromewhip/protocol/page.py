@@ -23,18 +23,31 @@ from chromewhip.protocol import emulation as Emulation
 # FrameId: Unique frame identifier.
 FrameId = str
 
+# AdFrameType: Indicates whether a frame has been identified as an ad.
+AdFrameType = str
+
+# SecureContextType: Indicates whether the frame is a secure context and why it is the case.
+SecureContextType = str
+
+# CrossOriginIsolatedContextType: Indicates whether the frame is cross-origin isolated and why it is the case.
+CrossOriginIsolatedContextType = str
+
 # Frame: Information about the Frame on the page.
 class Frame(ChromeTypeBase):
     def __init__(self,
                  id: Union['FrameId'],
                  loaderId: Union['Network.LoaderId'],
                  url: Union['str'],
+                 domainAndRegistry: Union['str'],
                  securityOrigin: Union['str'],
                  mimeType: Union['str'],
+                 secureContextType: Union['SecureContextType'],
+                 crossOriginIsolatedContextType: Union['CrossOriginIsolatedContextType'],
                  parentId: Optional['str'] = None,
                  name: Optional['str'] = None,
                  urlFragment: Optional['str'] = None,
                  unreachableUrl: Optional['str'] = None,
+                 adFrameType: Optional['AdFrameType'] = None,
                  ):
 
         self.id = id
@@ -43,9 +56,13 @@ class Frame(ChromeTypeBase):
         self.name = name
         self.url = url
         self.urlFragment = urlFragment
+        self.domainAndRegistry = domainAndRegistry
         self.securityOrigin = securityOrigin
         self.mimeType = mimeType
         self.unreachableUrl = unreachableUrl
+        self.adFrameType = adFrameType
+        self.secureContextType = secureContextType
+        self.crossOriginIsolatedContextType = crossOriginIsolatedContextType
 
 
 # FrameResource: Information about the Resource on the page.
@@ -155,6 +172,15 @@ class AppManifestError(ChromeTypeBase):
         self.column = column
 
 
+# AppManifestParsedProperties: Parsed app manifest properties.
+class AppManifestParsedProperties(ChromeTypeBase):
+    def __init__(self,
+                 scope: Union['str'],
+                 ):
+
+        self.scope = scope
+
+
 # LayoutViewport: Layout viewport position and dimensions.
 class LayoutViewport(ChromeTypeBase):
     def __init__(self,
@@ -244,6 +270,34 @@ class FontSizes(ChromeTypeBase):
 
 # ClientNavigationReason: 
 ClientNavigationReason = str
+
+# ClientNavigationDisposition: 
+ClientNavigationDisposition = str
+
+# InstallabilityErrorArgument: 
+class InstallabilityErrorArgument(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['str'],
+                 ):
+
+        self.name = name
+        self.value = value
+
+
+# InstallabilityError: The installability error
+class InstallabilityError(ChromeTypeBase):
+    def __init__(self,
+                 errorId: Union['str'],
+                 errorArguments: Union['[InstallabilityErrorArgument]'],
+                 ):
+
+        self.errorId = errorId
+        self.errorArguments = errorArguments
+
+
+# ReferrerPolicy: The referring-policy used for the navigation.
+ReferrerPolicy = str
 
 class Page(PayloadMixin):
     """ Actions and events related to the inspected page belong to the page domain.
@@ -475,6 +529,10 @@ option, use with caution.
                     "class": str,
                     "optional": True
                 },
+                "parsed": {
+                    "class": AppManifestParsedProperties,
+                    "optional": True
+                },
             })
         )
 
@@ -486,9 +544,24 @@ option, use with caution.
             cls.build_send_payload("getInstallabilityErrors", {
             }),
             cls.convert_payload({
-                "errors": {
-                    "class": [],
+                "installabilityErrors": {
+                    "class": [InstallabilityError],
                     "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getManifestIcons(cls):
+        """
+        """
+        return (
+            cls.build_send_payload("getManifestIcons", {
+            }),
+            cls.convert_payload({
+                "primaryIcon": {
+                    "class": str,
+                    "optional": True
                 },
             })
         )
@@ -645,6 +718,7 @@ dialog.
                  referrer: Optional['str'] = None,
                  transitionType: Optional['TransitionType'] = None,
                  frameId: Optional['FrameId'] = None,
+                 referrerPolicy: Optional['ReferrerPolicy'] = None,
                  ):
         """Navigates current page to the given URL.
         :param url: URL to navigate the page to.
@@ -655,6 +729,8 @@ dialog.
         :type transitionType: TransitionType
         :param frameId: Frame id to navigate, if not specified navigates the top frame.
         :type frameId: FrameId
+        :param referrerPolicy: Referrer-policy used for the navigation.
+        :type referrerPolicy: ReferrerPolicy
         """
         return (
             cls.build_send_payload("navigate", {
@@ -662,6 +738,7 @@ dialog.
                 "referrer": referrer,
                 "transitionType": transitionType,
                 "frameId": frameId,
+                "referrerPolicy": referrerPolicy,
             }),
             cls.convert_payload({
                 "frameId": {
@@ -1301,32 +1378,12 @@ cross-process navigation.
         """Intercept file chooser requests and transfer control to protocol clients.
 When file chooser interception is enabled, native file chooser dialog is not shown.
 Instead, a protocol event `Page.fileChooserOpened` is emitted.
-File chooser can be handled with `page.handleFileChooser` command.
         :param enabled: 
         :type enabled: bool
         """
         return (
             cls.build_send_payload("setInterceptFileChooserDialog", {
                 "enabled": enabled,
-            }),
-            None
-        )
-
-    @classmethod
-    def handleFileChooser(cls,
-                          action: Union['str'],
-                          files: Optional['[]'] = None,
-                          ):
-        """Accepts or cancels an intercepted file chooser dialog.
-        :param action: 
-        :type action: str
-        :param files: Array of absolute file paths to set, only respected with `accept` action.
-        :type files: []
-        """
-        return (
-            cls.build_send_payload("handleFileChooser", {
-                "action": action,
-                "files": files,
             }),
             None
         )
@@ -1354,25 +1411,38 @@ class DomContentEventFiredEvent(BaseEvent):
 class FileChooserOpenedEvent(BaseEvent):
 
     js_name = 'Page.fileChooserOpened'
-    hashable = []
-    is_hashable = False
+    hashable = ['frameId', 'backendNodeId']
+    is_hashable = True
 
     def __init__(self,
+                 frameId: Union['FrameId', dict],
+                 backendNodeId: Union['DOM.BackendNodeId', dict],
                  mode: Union['str', dict],
                  ):
+        if isinstance(frameId, dict):
+            frameId = FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(backendNodeId, dict):
+            backendNodeId = DOM.BackendNodeId(**backendNodeId)
+        self.backendNodeId = backendNodeId
         if isinstance(mode, dict):
             mode = str(**mode)
         self.mode = mode
 
     @classmethod
-    def build_hash(cls):
-        raise ValueError('Unable to build hash for non-hashable type')
+    def build_hash(cls, frameId, backendNodeId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
 
 
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['parentFrameId', 'frameId']
+    hashable = ['frameId', 'parentFrameId']
     is_hashable = True
 
     def __init__(self,
@@ -1391,7 +1461,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, parentFrameId, frameId):
+    def build_hash(cls, frameId, parentFrameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1493,6 +1563,7 @@ class FrameRequestedNavigationEvent(BaseEvent):
                  frameId: Union['FrameId', dict],
                  reason: Union['ClientNavigationReason', dict],
                  url: Union['str', dict],
+                 disposition: Union['ClientNavigationDisposition', dict],
                  ):
         if isinstance(frameId, dict):
             frameId = FrameId(**frameId)
@@ -1503,6 +1574,9 @@ class FrameRequestedNavigationEvent(BaseEvent):
         if isinstance(url, dict):
             url = str(**url)
         self.url = url
+        if isinstance(disposition, dict):
+            disposition = ClientNavigationDisposition(**disposition)
+        self.disposition = disposition
 
     @classmethod
     def build_hash(cls, frameId):
@@ -1523,7 +1597,7 @@ class FrameScheduledNavigationEvent(BaseEvent):
     def __init__(self,
                  frameId: Union['FrameId', dict],
                  delay: Union['float', dict],
-                 reason: Union['str', dict],
+                 reason: Union['ClientNavigationReason', dict],
                  url: Union['str', dict],
                  ):
         if isinstance(frameId, dict):
@@ -1533,7 +1607,7 @@ class FrameScheduledNavigationEvent(BaseEvent):
             delay = float(**delay)
         self.delay = delay
         if isinstance(reason, dict):
-            reason = str(**reason)
+            reason = ClientNavigationReason(**reason)
         self.reason = reason
         if isinstance(url, dict):
             url = str(**url)
@@ -1598,22 +1672,65 @@ class FrameStoppedLoadingEvent(BaseEvent):
 class DownloadWillBeginEvent(BaseEvent):
 
     js_name = 'Page.downloadWillBegin'
-    hashable = ['frameId']
+    hashable = ['frameId', 'guid']
     is_hashable = True
 
     def __init__(self,
                  frameId: Union['FrameId', dict],
+                 guid: Union['str', dict],
                  url: Union['str', dict],
+                 suggestedFilename: Union['str', dict],
                  ):
         if isinstance(frameId, dict):
             frameId = FrameId(**frameId)
         self.frameId = frameId
+        if isinstance(guid, dict):
+            guid = str(**guid)
+        self.guid = guid
         if isinstance(url, dict):
             url = str(**url)
         self.url = url
+        if isinstance(suggestedFilename, dict):
+            suggestedFilename = str(**suggestedFilename)
+        self.suggestedFilename = suggestedFilename
 
     @classmethod
-    def build_hash(cls, frameId):
+    def build_hash(cls, frameId, guid):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class DownloadProgressEvent(BaseEvent):
+
+    js_name = 'Page.downloadProgress'
+    hashable = ['guid']
+    is_hashable = True
+
+    def __init__(self,
+                 guid: Union['str', dict],
+                 totalBytes: Union['float', dict],
+                 receivedBytes: Union['float', dict],
+                 state: Union['str', dict],
+                 ):
+        if isinstance(guid, dict):
+            guid = str(**guid)
+        self.guid = guid
+        if isinstance(totalBytes, dict):
+            totalBytes = float(**totalBytes)
+        self.totalBytes = totalBytes
+        if isinstance(receivedBytes, dict):
+            receivedBytes = float(**receivedBytes)
+        self.receivedBytes = receivedBytes
+        if isinstance(state, dict):
+            state = str(**state)
+        self.state = state
+
+    @classmethod
+    def build_hash(cls, guid):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

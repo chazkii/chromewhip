@@ -12,6 +12,7 @@ from typing import Any, Optional, Union
 from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
+from chromewhip.protocol import page as Page
 
 # ApplicationCacheResource: Detailed application cache resource information.
 class ApplicationCacheResource(ChromeTypeBase):

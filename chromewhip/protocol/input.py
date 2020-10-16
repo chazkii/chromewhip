@@ -37,6 +37,9 @@ class TouchPoint(ChromeTypeBase):
 # GestureSourceType: 
 GestureSourceType = str
 
+# MouseButton: 
+MouseButton = str
+
 # TimeSinceEpoch: UTC time in seconds, counted from January 1, 1970.
 TimeSinceEpoch = float
 
@@ -59,6 +62,7 @@ class Input(PayloadMixin):
                          isKeypad: Optional['bool'] = None,
                          isSystemKey: Optional['bool'] = None,
                          location: Optional['int'] = None,
+                         commands: Optional['[]'] = None,
                          ):
         """Dispatches a key event to the page.
         :param type: Type of the key event.
@@ -94,6 +98,10 @@ modifiers, keyboard layout, etc (e.g., 'AltGr') (default: "").
         :param location: Whether the event was from the left or right side of the keyboard. 1=Left, 2=Right (default:
 0).
         :type location: int
+        :param commands: Editing commands to send with the key event (e.g., 'selectAll') (default: []).
+These are related to but not equal the command names used in `document.execCommand` and NSStandardKeyBindingResponding.
+See https://source.chromium.org/chromium/chromium/src/+/master:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
+        :type commands: []
         """
         return (
             cls.build_send_payload("dispatchKeyEvent", {
@@ -111,6 +119,7 @@ modifiers, keyboard layout, etc (e.g., 'AltGr') (default: "").
                 "isKeypad": isKeypad,
                 "isSystemKey": isSystemKey,
                 "location": location,
+                "commands": commands,
             }),
             None
         )
@@ -138,7 +147,7 @@ for example an emoji keyboard or an IME.
                            y: Union['float'],
                            modifiers: Optional['int'] = None,
                            timestamp: Optional['TimeSinceEpoch'] = None,
-                           button: Optional['str'] = None,
+                           button: Optional['MouseButton'] = None,
                            buttons: Optional['int'] = None,
                            clickCount: Optional['int'] = None,
                            deltaX: Optional['float'] = None,
@@ -159,7 +168,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
         :param timestamp: Time at which the event occurred.
         :type timestamp: TimeSinceEpoch
         :param button: Mouse button (default: "none").
-        :type button: str
+        :type button: MouseButton
         :param buttons: A number indicating which buttons are pressed on the mouse when a mouse event is triggered.
 Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
         :type buttons: int
@@ -225,7 +234,7 @@ one by one.
                                    type: Union['str'],
                                    x: Union['int'],
                                    y: Union['int'],
-                                   button: Union['str'],
+                                   button: Union['MouseButton'],
                                    timestamp: Optional['TimeSinceEpoch'] = None,
                                    deltaX: Optional['float'] = None,
                                    deltaY: Optional['float'] = None,
@@ -239,8 +248,8 @@ one by one.
         :type x: int
         :param y: Y coordinate of the mouse pointer in DIP.
         :type y: int
-        :param button: Mouse button.
-        :type button: str
+        :param button: Mouse button. Only "none", "left", "right" are supported.
+        :type button: MouseButton
         :param timestamp: Time at which the event occurred (default: current time).
         :type timestamp: TimeSinceEpoch
         :param deltaX: X delta in DIP for mouse wheel event (default: 0).

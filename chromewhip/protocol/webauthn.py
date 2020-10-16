@@ -27,16 +27,20 @@ class VirtualAuthenticatorOptions(ChromeTypeBase):
     def __init__(self,
                  protocol: Union['AuthenticatorProtocol'],
                  transport: Union['AuthenticatorTransport'],
-                 hasResidentKey: Union['bool'],
-                 hasUserVerification: Union['bool'],
+                 hasResidentKey: Optional['bool'] = None,
+                 hasUserVerification: Optional['bool'] = None,
+                 hasLargeBlob: Optional['bool'] = None,
                  automaticPresenceSimulation: Optional['bool'] = None,
+                 isUserVerified: Optional['bool'] = None,
                  ):
 
         self.protocol = protocol
         self.transport = transport
         self.hasResidentKey = hasResidentKey
         self.hasUserVerification = hasUserVerification
+        self.hasLargeBlob = hasLargeBlob
         self.automaticPresenceSimulation = automaticPresenceSimulation
+        self.isUserVerified = isUserVerified
 
 
 # Credential: 
@@ -232,6 +236,26 @@ The default is true.
             cls.build_send_payload("setUserVerified", {
                 "authenticatorId": authenticatorId,
                 "isUserVerified": isUserVerified,
+            }),
+            None
+        )
+
+    @classmethod
+    def setAutomaticPresenceSimulation(cls,
+                                       authenticatorId: Union['AuthenticatorId'],
+                                       enabled: Union['bool'],
+                                       ):
+        """Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
+The default is true.
+        :param authenticatorId: 
+        :type authenticatorId: AuthenticatorId
+        :param enabled: 
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setAutomaticPresenceSimulation", {
+                "authenticatorId": authenticatorId,
+                "enabled": enabled,
             }),
             None
         )

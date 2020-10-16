@@ -213,15 +213,19 @@ default value is 32768 bytes.
     @classmethod
     def stopTrackingHeapObjects(cls,
                                 reportProgress: Optional['bool'] = None,
+                                treatGlobalObjectsAsRoots: Optional['bool'] = None,
                                 ):
         """
         :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken
 when the tracking is stopped.
         :type reportProgress: bool
+        :param treatGlobalObjectsAsRoots: 
+        :type treatGlobalObjectsAsRoots: bool
         """
         return (
             cls.build_send_payload("stopTrackingHeapObjects", {
                 "reportProgress": reportProgress,
+                "treatGlobalObjectsAsRoots": treatGlobalObjectsAsRoots,
             }),
             None
         )
@@ -229,14 +233,18 @@ when the tracking is stopped.
     @classmethod
     def takeHeapSnapshot(cls,
                          reportProgress: Optional['bool'] = None,
+                         treatGlobalObjectsAsRoots: Optional['bool'] = None,
                          ):
         """
         :param reportProgress: If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
         :type reportProgress: bool
+        :param treatGlobalObjectsAsRoots: If true, a raw snapshot without artifical roots will be generated
+        :type treatGlobalObjectsAsRoots: bool
         """
         return (
             cls.build_send_payload("takeHeapSnapshot", {
                 "reportProgress": reportProgress,
+                "treatGlobalObjectsAsRoots": treatGlobalObjectsAsRoots,
             }),
             None
         )

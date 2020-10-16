@@ -147,11 +147,15 @@ class InternalPropertyDescriptor(ChromeTypeBase):
 class PrivatePropertyDescriptor(ChromeTypeBase):
     def __init__(self,
                  name: Union['str'],
-                 value: Union['RemoteObject'],
+                 value: Optional['RemoteObject'] = None,
+                 get: Optional['RemoteObject'] = None,
+                 set: Optional['RemoteObject'] = None,
                  ):
 
         self.name = name
         self.value = value
+        self.get = get
+        self.set = set
 
 
 # CallArgument: Represents function call argument. Either remote object id `objectId`, primitive `value`,unserializable primitive value or neither of (for undefined) them should be specified.
@@ -450,6 +454,9 @@ context.
                  awaitPromise: Optional['bool'] = None,
                  throwOnSideEffect: Optional['bool'] = None,
                  timeout: Optional['TimeDelta'] = None,
+                 disableBreaks: Optional['bool'] = None,
+                 replMode: Optional['bool'] = None,
+                 allowUnsafeEvalBlockedByCSP: Optional['bool'] = None,
                  ):
         """Evaluates expression on global object.
         :param expression: Expression to evaluate.
@@ -474,9 +481,21 @@ evaluation will be performed in the context of the inspected page.
 resolved.
         :type awaitPromise: bool
         :param throwOnSideEffect: Whether to throw an exception if side effect cannot be ruled out during evaluation.
+This implies `disableBreaks` below.
         :type throwOnSideEffect: bool
         :param timeout: Terminate execution after timing out (number of milliseconds).
         :type timeout: TimeDelta
+        :param disableBreaks: Disable breakpoints during execution.
+        :type disableBreaks: bool
+        :param replMode: Setting this flag to true enables `let` re-declaration and top-level `await`.
+Note that `let` variables can only be re-declared if they originate from
+`replMode` themselves.
+        :type replMode: bool
+        :param allowUnsafeEvalBlockedByCSP: The Content Security Policy (CSP) for the target might block 'unsafe-eval'
+which includes eval(), Function(), setTimeout() and setInterval()
+when called with non-callable arguments. This flag bypasses CSP for this
+evaluation and allows unsafe-eval. Defaults to true.
+        :type allowUnsafeEvalBlockedByCSP: bool
         """
         return (
             cls.build_send_payload("evaluate", {
@@ -491,6 +510,9 @@ resolved.
                 "awaitPromise": awaitPromise,
                 "throwOnSideEffect": throwOnSideEffect,
                 "timeout": timeout,
+                "disableBreaks": disableBreaks,
+                "replMode": replMode,
+                "allowUnsafeEvalBlockedByCSP": allowUnsafeEvalBlockedByCSP,
             }),
             cls.convert_payload({
                 "result": {

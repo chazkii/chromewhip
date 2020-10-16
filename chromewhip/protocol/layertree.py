@@ -121,6 +121,10 @@ class LayerTree(PayloadMixin):
                     "class": [],
                     "optional": False
                 },
+                "compositingReasonIds": {
+                    "class": [],
+                    "optional": False
+                },
             })
         )
 

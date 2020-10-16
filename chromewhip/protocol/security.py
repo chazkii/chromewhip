@@ -22,6 +22,78 @@ MixedContentType = str
 # SecurityState: The security level of a page or resource.
 SecurityState = str
 
+# CertificateSecurityState: Details about the security state of the page certificate.
+class CertificateSecurityState(ChromeTypeBase):
+    def __init__(self,
+                 protocol: Union['str'],
+                 keyExchange: Union['str'],
+                 cipher: Union['str'],
+                 certificate: Union['[]'],
+                 subjectName: Union['str'],
+                 issuer: Union['str'],
+                 validFrom: Union['Network.TimeSinceEpoch'],
+                 validTo: Union['Network.TimeSinceEpoch'],
+                 certificateHasWeakSignature: Union['bool'],
+                 certificateHasSha1Signature: Union['bool'],
+                 modernSSL: Union['bool'],
+                 obsoleteSslProtocol: Union['bool'],
+                 obsoleteSslKeyExchange: Union['bool'],
+                 obsoleteSslCipher: Union['bool'],
+                 obsoleteSslSignature: Union['bool'],
+                 keyExchangeGroup: Optional['str'] = None,
+                 mac: Optional['str'] = None,
+                 certificateNetworkError: Optional['str'] = None,
+                 ):
+
+        self.protocol = protocol
+        self.keyExchange = keyExchange
+        self.keyExchangeGroup = keyExchangeGroup
+        self.cipher = cipher
+        self.mac = mac
+        self.certificate = certificate
+        self.subjectName = subjectName
+        self.issuer = issuer
+        self.validFrom = validFrom
+        self.validTo = validTo
+        self.certificateNetworkError = certificateNetworkError
+        self.certificateHasWeakSignature = certificateHasWeakSignature
+        self.certificateHasSha1Signature = certificateHasSha1Signature
+        self.modernSSL = modernSSL
+        self.obsoleteSslProtocol = obsoleteSslProtocol
+        self.obsoleteSslKeyExchange = obsoleteSslKeyExchange
+        self.obsoleteSslCipher = obsoleteSslCipher
+        self.obsoleteSslSignature = obsoleteSslSignature
+
+
+# SafetyTipStatus: 
+SafetyTipStatus = str
+
+# SafetyTipInfo: 
+class SafetyTipInfo(ChromeTypeBase):
+    def __init__(self,
+                 safetyTipStatus: Union['SafetyTipStatus'],
+                 safeUrl: Optional['str'] = None,
+                 ):
+
+        self.safetyTipStatus = safetyTipStatus
+        self.safeUrl = safeUrl
+
+
+# VisibleSecurityState: Security state information about the page.
+class VisibleSecurityState(ChromeTypeBase):
+    def __init__(self,
+                 securityState: Union['SecurityState'],
+                 securityStateIssueIds: Union['[]'],
+                 certificateSecurityState: Optional['CertificateSecurityState'] = None,
+                 safetyTipInfo: Optional['SafetyTipInfo'] = None,
+                 ):
+
+        self.securityState = securityState
+        self.certificateSecurityState = certificateSecurityState
+        self.safetyTipInfo = safetyTipInfo
+        self.securityStateIssueIds = securityStateIssueIds
+
+
 # SecurityStateExplanation: An explanation of an factor contributing to the security state.
 class SecurityStateExplanation(ChromeTypeBase):
     def __init__(self,
@@ -171,6 +243,24 @@ class CertificateErrorEvent(BaseEvent):
         h = '{}:{}'.format(cls.js_name, serialized_id_params)
         log.debug('generated hash = %s' % h)
         return h
+
+
+class VisibleSecurityStateChangedEvent(BaseEvent):
+
+    js_name = 'Security.visibleSecurityStateChanged'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 visibleSecurityState: Union['VisibleSecurityState', dict],
+                 ):
+        if isinstance(visibleSecurityState, dict):
+            visibleSecurityState = VisibleSecurityState(**visibleSecurityState)
+        self.visibleSecurityState = visibleSecurityState
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')
 
 
 class SecurityStateChangedEvent(BaseEvent):

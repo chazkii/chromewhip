@@ -13,6 +13,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 from chromewhip.protocol import dom as DOM
+from chromewhip.protocol import page as Page
 
 # StyleSheetId: 
 StyleSheetId = str
@@ -85,9 +86,13 @@ class CSSStyleSheetHeader(ChromeTypeBase):
                  title: Union['str'],
                  disabled: Union['bool'],
                  isInline: Union['bool'],
+                 isMutable: Union['bool'],
+                 isConstructed: Union['bool'],
                  startLine: Union['float'],
                  startColumn: Union['float'],
                  length: Union['float'],
+                 endLine: Union['float'],
+                 endColumn: Union['float'],
                  sourceMapURL: Optional['str'] = None,
                  ownerNode: Optional['DOM.BackendNodeId'] = None,
                  hasSourceURL: Optional['bool'] = None,
@@ -103,9 +108,13 @@ class CSSStyleSheetHeader(ChromeTypeBase):
         self.disabled = disabled
         self.hasSourceURL = hasSourceURL
         self.isInline = isInline
+        self.isMutable = isMutable
+        self.isConstructed = isConstructed
         self.startLine = startLine
         self.startColumn = startColumn
         self.length = length
+        self.endLine = endLine
+        self.endColumn = endColumn
 
 
 # CSSRule: CSS rule representation.
@@ -279,7 +288,24 @@ class PlatformFontUsage(ChromeTypeBase):
         self.glyphCount = glyphCount
 
 
-# FontFace: Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
+# FontVariationAxis: Information about font variation axes for variable fonts
+class FontVariationAxis(ChromeTypeBase):
+    def __init__(self,
+                 tag: Union['str'],
+                 name: Union['str'],
+                 minValue: Union['float'],
+                 maxValue: Union['float'],
+                 defaultValue: Union['float'],
+                 ):
+
+        self.tag = tag
+        self.name = name
+        self.minValue = minValue
+        self.maxValue = maxValue
+        self.defaultValue = defaultValue
+
+
+# FontFace: Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptionsand additional information such as platformFontFamily and fontVariationAxes.
 class FontFace(ChromeTypeBase):
     def __init__(self,
                  fontFamily: Union['str'],
@@ -290,6 +316,7 @@ class FontFace(ChromeTypeBase):
                  unicodeRange: Union['str'],
                  src: Union['str'],
                  platformFontFamily: Union['str'],
+                 fontVariationAxes: Optional['[FontVariationAxis]'] = None,
                  ):
 
         self.fontFamily = fontFamily
@@ -300,6 +327,7 @@ class FontFace(ChromeTypeBase):
         self.unicodeRange = unicodeRange
         self.src = src
         self.platformFontFamily = platformFontFamily
+        self.fontVariationAxes = fontVariationAxes
 
 
 # CSSKeyframesRule: CSS keyframes rule representation.
@@ -629,6 +657,41 @@ node.
         )
 
     @classmethod
+    def trackComputedStyleUpdates(cls,
+                                  propertiesToTrack: Union['[CSSComputedStyleProperty]'],
+                                  ):
+        """Starts tracking the given computed styles for updates. The specified array of properties
+replaces the one previously specified. Pass empty array to disable tracking.
+Use takeComputedStyleUpdates to retrieve the list of nodes that had properties modified.
+The changes to computed style properties are only tracked for nodes pushed to the front-end
+by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
+to the front-end, no updates will be issued for the node.
+        :param propertiesToTrack: 
+        :type propertiesToTrack: [CSSComputedStyleProperty]
+        """
+        return (
+            cls.build_send_payload("trackComputedStyleUpdates", {
+                "propertiesToTrack": propertiesToTrack,
+            }),
+            None
+        )
+
+    @classmethod
+    def takeComputedStyleUpdates(cls):
+        """Polls the next batch of computed style updates.
+        """
+        return (
+            cls.build_send_payload("takeComputedStyleUpdates", {
+            }),
+            cls.convert_payload({
+                "nodeIds": {
+                    "class": [DOM.NodeId],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setEffectivePropertyValueForNode(cls,
                                          nodeId: Union['DOM.NodeId'],
                                          propertyName: Union['str'],
@@ -819,7 +882,26 @@ instrumentation)
                     "class": [RuleUsage],
                     "optional": False
                 },
+                "timestamp": {
+                    "class": float,
+                    "optional": False
+                },
             })
+        )
+
+    @classmethod
+    def setLocalFontsEnabled(cls,
+                             enabled: Union['bool'],
+                             ):
+        """Enables/disables rendering of local CSS fonts (enabled by default).
+        :param enabled: Whether rendering of local fonts is enabled.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setLocalFontsEnabled", {
+                "enabled": enabled,
+            }),
+            None
         )
 
 

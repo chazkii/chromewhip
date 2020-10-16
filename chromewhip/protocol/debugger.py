@@ -44,6 +44,19 @@ class ScriptPosition(ChromeTypeBase):
         self.columnNumber = columnNumber
 
 
+# LocationRange: Location range within one script.
+class LocationRange(ChromeTypeBase):
+    def __init__(self,
+                 scriptId: Union['Runtime.ScriptId'],
+                 start: Union['ScriptPosition'],
+                 end: Union['ScriptPosition'],
+                 ):
+
+        self.scriptId = scriptId
+        self.start = start
+        self.end = end
+
+
 # CallFrame: JavaScript call frame. Array of call frames form the call stack.
 class CallFrame(ChromeTypeBase):
     def __init__(self,
@@ -108,6 +121,20 @@ class BreakLocation(ChromeTypeBase):
         self.lineNumber = lineNumber
         self.columnNumber = columnNumber
         self.type = type
+
+
+# ScriptLanguage: Enum of possible script languages.
+ScriptLanguage = str
+
+# DebugSymbols: Debug symbols available for a wasm script.
+class DebugSymbols(ChromeTypeBase):
+    def __init__(self,
+                 type: Union['str'],
+                 externalURL: Optional['str'] = None,
+                 ):
+
+        self.type = type
+        self.externalURL = externalURL
 
 
 class Debugger(PayloadMixin):
@@ -225,6 +252,38 @@ execution. Overrides `setPauseOnException` state.
         )
 
     @classmethod
+    def executeWasmEvaluator(cls,
+                             callFrameId: Union['CallFrameId'],
+                             evaluator: Union['str'],
+                             timeout: Optional['Runtime.TimeDelta'] = None,
+                             ):
+        """Execute a Wasm Evaluator module on a given call frame.
+        :param callFrameId: WebAssembly call frame identifier to evaluate on.
+        :type callFrameId: CallFrameId
+        :param evaluator: Code of the evaluator module.
+        :type evaluator: str
+        :param timeout: Terminate execution after timing out (number of milliseconds).
+        :type timeout: Runtime.TimeDelta
+        """
+        return (
+            cls.build_send_payload("executeWasmEvaluator", {
+                "callFrameId": callFrameId,
+                "evaluator": evaluator,
+                "timeout": timeout,
+            }),
+            cls.convert_payload({
+                "result": {
+                    "class": Runtime.RemoteObject,
+                    "optional": False
+                },
+                "exceptionDetails": {
+                    "class": Runtime.ExceptionDetails,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
     def getPossibleBreakpoints(cls,
                                start: Union['Location'],
                                end: Optional['Location'] = None,
@@ -268,6 +327,30 @@ of scripts is used as end of range.
             }),
             cls.convert_payload({
                 "scriptSource": {
+                    "class": str,
+                    "optional": False
+                },
+                "bytecode": {
+                    "class": str,
+                    "optional": True
+                },
+            })
+        )
+
+    @classmethod
+    def getWasmBytecode(cls,
+                        scriptId: Union['Runtime.ScriptId'],
+                        ):
+        """This command is deprecated. Use getScriptSource instead.
+        :param scriptId: Id of the Wasm script to get source for.
+        :type scriptId: Runtime.ScriptId
+        """
+        return (
+            cls.build_send_payload("getWasmBytecode", {
+                "scriptId": scriptId,
+            }),
+            cls.convert_payload({
+                "bytecode": {
                     "class": str,
                     "optional": False
                 },
@@ -363,11 +446,20 @@ of scripts is used as end of range.
         )
 
     @classmethod
-    def resume(cls):
+    def resume(cls,
+               terminateOnResume: Optional['bool'] = None,
+               ):
         """Resumes JavaScript execution.
+        :param terminateOnResume: Set to true to terminate execution upon resuming execution. In contrast
+to Runtime.terminateExecution, this will allows to execute further
+JavaScript (i.e. via evaluation) until execution of the paused code
+is actually resumed, at which point termination is triggered.
+If execution is currently not paused, this parameter has no effect.
+        :type terminateOnResume: bool
         """
         return (
             cls.build_send_payload("resume", {
+                "terminateOnResume": terminateOnResume,
             }),
             None
         )
@@ -722,15 +814,19 @@ scope types are allowed. Other scopes could be manipulated manually.
     @classmethod
     def stepInto(cls,
                  breakOnAsyncCall: Optional['bool'] = None,
+                 skipList: Optional['[LocationRange]'] = None,
                  ):
         """Steps into the function call.
         :param breakOnAsyncCall: Debugger will pause on the execution of the first async task which was scheduled
 before next pause.
         :type breakOnAsyncCall: bool
+        :param skipList: The skipList specifies location ranges that should be skipped on step into.
+        :type skipList: [LocationRange]
         """
         return (
             cls.build_send_payload("stepInto", {
                 "breakOnAsyncCall": breakOnAsyncCall,
+                "skipList": skipList,
             }),
             None
         )
@@ -746,11 +842,16 @@ before next pause.
         )
 
     @classmethod
-    def stepOver(cls):
+    def stepOver(cls,
+                 skipList: Optional['[LocationRange]'] = None,
+                 ):
         """Steps over the statement.
+        :param skipList: The skipList specifies location ranges that should be skipped on step over.
+        :type skipList: [LocationRange]
         """
         return (
             cls.build_send_payload("stepOver", {
+                "skipList": skipList,
             }),
             None
         )
@@ -787,7 +888,7 @@ class BreakpointResolvedEvent(BaseEvent):
 class PausedEvent(BaseEvent):
 
     js_name = 'Debugger.paused'
-    hashable = ['asyncCallStackTraceId', 'asyncStackTraceId']
+    hashable = ['asyncStackTraceId', 'asyncCallStackTraceId']
     is_hashable = True
 
     def __init__(self,
@@ -822,7 +923,7 @@ class PausedEvent(BaseEvent):
         self.asyncCallStackTraceId = asyncCallStackTraceId
 
     @classmethod
-    def build_hash(cls, asyncCallStackTraceId, asyncStackTraceId):
+    def build_hash(cls, asyncStackTraceId, asyncCallStackTraceId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -866,6 +967,9 @@ class ScriptFailedToParseEvent(BaseEvent):
                  isModule: Union['bool', dict, None] = None,
                  length: Union['int', dict, None] = None,
                  stackTrace: Union['Runtime.StackTrace', dict, None] = None,
+                 codeOffset: Union['int', dict, None] = None,
+                 scriptLanguage: Union['Debugger.ScriptLanguage', dict, None] = None,
+                 embedderName: Union['str', dict, None] = None,
                  ):
         if isinstance(scriptId, dict):
             scriptId = Runtime.ScriptId(**scriptId)
@@ -909,6 +1013,15 @@ class ScriptFailedToParseEvent(BaseEvent):
         if isinstance(stackTrace, dict):
             stackTrace = Runtime.StackTrace(**stackTrace)
         self.stackTrace = stackTrace
+        if isinstance(codeOffset, dict):
+            codeOffset = int(**codeOffset)
+        self.codeOffset = codeOffset
+        if isinstance(scriptLanguage, dict):
+            scriptLanguage = Debugger.ScriptLanguage(**scriptLanguage)
+        self.scriptLanguage = scriptLanguage
+        if isinstance(embedderName, dict):
+            embedderName = str(**embedderName)
+        self.embedderName = embedderName
 
     @classmethod
     def build_hash(cls, scriptId, executionContextId):
@@ -942,6 +1055,10 @@ class ScriptParsedEvent(BaseEvent):
                  isModule: Union['bool', dict, None] = None,
                  length: Union['int', dict, None] = None,
                  stackTrace: Union['Runtime.StackTrace', dict, None] = None,
+                 codeOffset: Union['int', dict, None] = None,
+                 scriptLanguage: Union['Debugger.ScriptLanguage', dict, None] = None,
+                 debugSymbols: Union['Debugger.DebugSymbols', dict, None] = None,
+                 embedderName: Union['str', dict, None] = None,
                  ):
         if isinstance(scriptId, dict):
             scriptId = Runtime.ScriptId(**scriptId)
@@ -988,6 +1105,18 @@ class ScriptParsedEvent(BaseEvent):
         if isinstance(stackTrace, dict):
             stackTrace = Runtime.StackTrace(**stackTrace)
         self.stackTrace = stackTrace
+        if isinstance(codeOffset, dict):
+            codeOffset = int(**codeOffset)
+        self.codeOffset = codeOffset
+        if isinstance(scriptLanguage, dict):
+            scriptLanguage = Debugger.ScriptLanguage(**scriptLanguage)
+        self.scriptLanguage = scriptLanguage
+        if isinstance(debugSymbols, dict):
+            debugSymbols = Debugger.DebugSymbols(**debugSymbols)
+        self.debugSymbols = debugSymbols
+        if isinstance(embedderName, dict):
+            embedderName = str(**embedderName)
+        self.embedderName = embedderName
 
     @classmethod
     def build_hash(cls, scriptId, executionContextId):

@@ -16,12 +16,71 @@ from chromewhip.protocol import dom as DOM
 from chromewhip.protocol import page as Page
 from chromewhip.protocol import runtime as Runtime
 
+# SourceOrderConfig: Configuration data for drawing the source order of an elements children.
+class SourceOrderConfig(ChromeTypeBase):
+    def __init__(self,
+                 parentOutlineColor: Union['DOM.RGBA'],
+                 childOutlineColor: Union['DOM.RGBA'],
+                 ):
+
+        self.parentOutlineColor = parentOutlineColor
+        self.childOutlineColor = childOutlineColor
+
+
+# GridHighlightConfig: Configuration data for the highlighting of Grid elements.
+class GridHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 showGridExtensionLines: Optional['bool'] = None,
+                 showPositiveLineNumbers: Optional['bool'] = None,
+                 showNegativeLineNumbers: Optional['bool'] = None,
+                 showAreaNames: Optional['bool'] = None,
+                 showLineNames: Optional['bool'] = None,
+                 showTrackSizes: Optional['bool'] = None,
+                 gridBorderColor: Optional['DOM.RGBA'] = None,
+                 cellBorderColor: Optional['DOM.RGBA'] = None,
+                 rowLineColor: Optional['DOM.RGBA'] = None,
+                 columnLineColor: Optional['DOM.RGBA'] = None,
+                 gridBorderDash: Optional['bool'] = None,
+                 cellBorderDash: Optional['bool'] = None,
+                 rowLineDash: Optional['bool'] = None,
+                 columnLineDash: Optional['bool'] = None,
+                 rowGapColor: Optional['DOM.RGBA'] = None,
+                 rowHatchColor: Optional['DOM.RGBA'] = None,
+                 columnGapColor: Optional['DOM.RGBA'] = None,
+                 columnHatchColor: Optional['DOM.RGBA'] = None,
+                 areaBorderColor: Optional['DOM.RGBA'] = None,
+                 gridBackgroundColor: Optional['DOM.RGBA'] = None,
+                 ):
+
+        self.showGridExtensionLines = showGridExtensionLines
+        self.showPositiveLineNumbers = showPositiveLineNumbers
+        self.showNegativeLineNumbers = showNegativeLineNumbers
+        self.showAreaNames = showAreaNames
+        self.showLineNames = showLineNames
+        self.showTrackSizes = showTrackSizes
+        self.gridBorderColor = gridBorderColor
+        self.cellBorderColor = cellBorderColor
+        self.rowLineColor = rowLineColor
+        self.columnLineColor = columnLineColor
+        self.gridBorderDash = gridBorderDash
+        self.cellBorderDash = cellBorderDash
+        self.rowLineDash = rowLineDash
+        self.columnLineDash = columnLineDash
+        self.rowGapColor = rowGapColor
+        self.rowHatchColor = rowHatchColor
+        self.columnGapColor = columnGapColor
+        self.columnHatchColor = columnHatchColor
+        self.areaBorderColor = areaBorderColor
+        self.gridBackgroundColor = gridBackgroundColor
+
+
 # HighlightConfig: Configuration data for the highlighting of page elements.
 class HighlightConfig(ChromeTypeBase):
     def __init__(self,
                  showInfo: Optional['bool'] = None,
                  showStyles: Optional['bool'] = None,
                  showRulers: Optional['bool'] = None,
+                 showAccessibilityInfo: Optional['bool'] = None,
                  showExtensionLines: Optional['bool'] = None,
                  contentColor: Optional['DOM.RGBA'] = None,
                  paddingColor: Optional['DOM.RGBA'] = None,
@@ -31,11 +90,14 @@ class HighlightConfig(ChromeTypeBase):
                  shapeColor: Optional['DOM.RGBA'] = None,
                  shapeMarginColor: Optional['DOM.RGBA'] = None,
                  cssGridColor: Optional['DOM.RGBA'] = None,
+                 colorFormat: Optional['ColorFormat'] = None,
+                 gridHighlightConfig: Optional['GridHighlightConfig'] = None,
                  ):
 
         self.showInfo = showInfo
         self.showStyles = showStyles
         self.showRulers = showRulers
+        self.showAccessibilityInfo = showAccessibilityInfo
         self.showExtensionLines = showExtensionLines
         self.contentColor = contentColor
         self.paddingColor = paddingColor
@@ -45,6 +107,35 @@ class HighlightConfig(ChromeTypeBase):
         self.shapeColor = shapeColor
         self.shapeMarginColor = shapeMarginColor
         self.cssGridColor = cssGridColor
+        self.colorFormat = colorFormat
+        self.gridHighlightConfig = gridHighlightConfig
+
+
+# ColorFormat: 
+ColorFormat = str
+
+# GridNodeHighlightConfig: Configurations for Persistent Grid Highlight
+class GridNodeHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 gridHighlightConfig: Union['GridHighlightConfig'],
+                 nodeId: Union['DOM.NodeId'],
+                 ):
+
+        self.gridHighlightConfig = gridHighlightConfig
+        self.nodeId = nodeId
+
+
+# HingeConfig: Configuration for dual screen hinge
+class HingeConfig(ChromeTypeBase):
+    def __init__(self,
+                 rect: Union['DOM.Rect'],
+                 contentColor: Optional['DOM.RGBA'] = None,
+                 outlineColor: Optional['DOM.RGBA'] = None,
+                 ):
+
+        self.rect = rect
+        self.contentColor = contentColor
+        self.outlineColor = outlineColor
 
 
 # InspectMode: 
@@ -78,6 +169,8 @@ class Overlay(PayloadMixin):
                                   nodeId: Union['DOM.NodeId'],
                                   includeDistance: Optional['bool'] = None,
                                   includeStyle: Optional['bool'] = None,
+                                  colorFormat: Optional['ColorFormat'] = None,
+                                  showAccessibilityInfo: Optional['bool'] = None,
                                   ):
         """For testing.
         :param nodeId: Id of the node to get highlight object for.
@@ -86,12 +179,58 @@ class Overlay(PayloadMixin):
         :type includeDistance: bool
         :param includeStyle: Whether to include style info.
         :type includeStyle: bool
+        :param colorFormat: The color format to get config with (default: hex).
+        :type colorFormat: ColorFormat
+        :param showAccessibilityInfo: Whether to show accessibility info (default: true).
+        :type showAccessibilityInfo: bool
         """
         return (
             cls.build_send_payload("getHighlightObjectForTest", {
                 "nodeId": nodeId,
                 "includeDistance": includeDistance,
                 "includeStyle": includeStyle,
+                "colorFormat": colorFormat,
+                "showAccessibilityInfo": showAccessibilityInfo,
+            }),
+            cls.convert_payload({
+                "highlight": {
+                    "class": dict,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getGridHighlightObjectsForTest(cls,
+                                       nodeIds: Union['[DOM.NodeId]'],
+                                       ):
+        """For Persistent Grid testing.
+        :param nodeIds: Ids of the node to get highlight object for.
+        :type nodeIds: [DOM.NodeId]
+        """
+        return (
+            cls.build_send_payload("getGridHighlightObjectsForTest", {
+                "nodeIds": nodeIds,
+            }),
+            cls.convert_payload({
+                "highlights": {
+                    "class": dict,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getSourceOrderHighlightObjectForTest(cls,
+                                             nodeId: Union['DOM.NodeId'],
+                                             ):
+        """For Source Order Viewer testing.
+        :param nodeId: Id of the node to highlight.
+        :type nodeId: DOM.NodeId
+        """
+        return (
+            cls.build_send_payload("getSourceOrderHighlightObjectForTest", {
+                "nodeId": nodeId,
             }),
             cls.convert_payload({
                 "highlight": {
@@ -225,6 +364,34 @@ objectId must be specified.
         )
 
     @classmethod
+    def highlightSourceOrder(cls,
+                             sourceOrderConfig: Union['SourceOrderConfig'],
+                             nodeId: Optional['DOM.NodeId'] = None,
+                             backendNodeId: Optional['DOM.BackendNodeId'] = None,
+                             objectId: Optional['Runtime.RemoteObjectId'] = None,
+                             ):
+        """Highlights the source order of the children of the DOM node with given id or with the given
+JavaScript object wrapper. Either nodeId or objectId must be specified.
+        :param sourceOrderConfig: A descriptor for the appearance of the overlay drawing.
+        :type sourceOrderConfig: SourceOrderConfig
+        :param nodeId: Identifier of the node to highlight.
+        :type nodeId: DOM.NodeId
+        :param backendNodeId: Identifier of the backend node to highlight.
+        :type backendNodeId: DOM.BackendNodeId
+        :param objectId: JavaScript object id of the node to be highlighted.
+        :type objectId: Runtime.RemoteObjectId
+        """
+        return (
+            cls.build_send_payload("highlightSourceOrder", {
+                "sourceOrderConfig": sourceOrderConfig,
+                "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
+            }),
+            None
+        )
+
+    @classmethod
     def setInspectMode(cls,
                        mode: Union['InspectMode'],
                        highlightConfig: Optional['HighlightConfig'] = None,
@@ -306,6 +473,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         )
 
     @classmethod
+    def setShowGridOverlays(cls,
+                            gridNodeHighlightConfigs: Union['[GridNodeHighlightConfig]'],
+                            ):
+        """Highlight multiple elements with the CSS Grid overlay.
+        :param gridNodeHighlightConfigs: An array of node identifiers and descriptors for the highlight appearance.
+        :type gridNodeHighlightConfigs: [GridNodeHighlightConfig]
+        """
+        return (
+            cls.build_send_payload("setShowGridOverlays", {
+                "gridNodeHighlightConfigs": gridNodeHighlightConfigs,
+            }),
+            None
+        )
+
+    @classmethod
     def setShowPaintRects(cls,
                           result: Union['bool'],
                           ):
@@ -376,6 +558,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         return (
             cls.build_send_payload("setShowViewportSizeOnResize", {
                 "show": show,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowHinge(cls,
+                     hingeConfig: Optional['HingeConfig'] = None,
+                     ):
+        """Add a dual screen device hinge
+        :param hingeConfig: hinge data, null means hideHinge
+        :type hingeConfig: HingeConfig
+        """
+        return (
+            cls.build_send_payload("setShowHinge", {
+                "hingeConfig": hingeConfig,
             }),
             None
         )

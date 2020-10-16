@@ -73,7 +73,7 @@ class BaseAudioContext(ChromeTypeBase):
         self.sampleRate = sampleRate
 
 
-# AudioListener: Protocol object for AudioListner
+# AudioListener: Protocol object for AudioListener
 class AudioListener(ChromeTypeBase):
     def __init__(self,
                  listenerId: Union['GraphObjectId'],
@@ -301,7 +301,7 @@ class AudioNodeCreatedEvent(BaseEvent):
 class AudioNodeWillBeDestroyedEvent(BaseEvent):
 
     js_name = 'Webaudio.audioNodeWillBeDestroyed'
-    hashable = ['contextId', 'nodeId']
+    hashable = ['nodeId', 'contextId']
     is_hashable = True
 
     def __init__(self,
@@ -316,7 +316,7 @@ class AudioNodeWillBeDestroyedEvent(BaseEvent):
         self.nodeId = nodeId
 
     @classmethod
-    def build_hash(cls, contextId, nodeId):
+    def build_hash(cls, nodeId, contextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -346,7 +346,7 @@ class AudioParamCreatedEvent(BaseEvent):
 class AudioParamWillBeDestroyedEvent(BaseEvent):
 
     js_name = 'Webaudio.audioParamWillBeDestroyed'
-    hashable = ['contextId', 'nodeId', 'paramId']
+    hashable = ['paramId', 'nodeId', 'contextId']
     is_hashable = True
 
     def __init__(self,
@@ -365,7 +365,7 @@ class AudioParamWillBeDestroyedEvent(BaseEvent):
         self.paramId = paramId
 
     @classmethod
-    def build_hash(cls, contextId, nodeId, paramId):
+    def build_hash(cls, paramId, nodeId, contextId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

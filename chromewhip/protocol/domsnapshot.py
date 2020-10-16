@@ -178,6 +178,7 @@ Rectangle = [float]
 class DocumentSnapshot(ChromeTypeBase):
     def __init__(self,
                  documentURL: Union['StringIndex'],
+                 title: Union['StringIndex'],
                  baseURL: Union['StringIndex'],
                  contentLanguage: Union['StringIndex'],
                  encodingName: Union['StringIndex'],
@@ -189,9 +190,12 @@ class DocumentSnapshot(ChromeTypeBase):
                  textBoxes: Union['TextBoxSnapshot'],
                  scrollOffsetX: Optional['float'] = None,
                  scrollOffsetY: Optional['float'] = None,
+                 contentWidth: Optional['float'] = None,
+                 contentHeight: Optional['float'] = None,
                  ):
 
         self.documentURL = documentURL
+        self.title = title
         self.baseURL = baseURL
         self.contentLanguage = contentLanguage
         self.encodingName = encodingName
@@ -203,6 +207,8 @@ class DocumentSnapshot(ChromeTypeBase):
         self.textBoxes = textBoxes
         self.scrollOffsetX = scrollOffsetX
         self.scrollOffsetY = scrollOffsetY
+        self.contentWidth = contentWidth
+        self.contentHeight = contentHeight
 
 
 # NodeTreeSnapshot: Table containing nodes.

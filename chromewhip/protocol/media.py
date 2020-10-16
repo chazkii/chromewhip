@@ -19,33 +19,48 @@ PlayerId = str
 # Timestamp: 
 Timestamp = float
 
-# PlayerProperty: Player Property type
-class PlayerProperty(ChromeTypeBase):
+# PlayerMessage: Have one type per entry in MediaLogRecord::TypeCorresponds to kMessage
+class PlayerMessage(ChromeTypeBase):
     def __init__(self,
-                 name: Union['str'],
-                 value: Optional['str'] = None,
+                 level: Union['str'],
+                 message: Union['str'],
                  ):
 
-        self.name = name
-        self.value = value
+        self.level = level
+        self.message = message
 
 
-# PlayerEventType: Break out events into different types
-PlayerEventType = str
-
-# PlayerEvent: 
-class PlayerEvent(ChromeTypeBase):
+# PlayerProperty: Corresponds to kMediaPropertyChange
+class PlayerProperty(ChromeTypeBase):
     def __init__(self,
-                 type: Union['PlayerEventType'],
-                 timestamp: Union['Timestamp'],
                  name: Union['str'],
                  value: Union['str'],
                  ):
 
-        self.type = type
-        self.timestamp = timestamp
         self.name = name
         self.value = value
+
+
+# PlayerEvent: Corresponds to kMediaEventTriggered
+class PlayerEvent(ChromeTypeBase):
+    def __init__(self,
+                 timestamp: Union['Timestamp'],
+                 value: Union['str'],
+                 ):
+
+        self.timestamp = timestamp
+        self.value = value
+
+
+# PlayerError: Corresponds to kMediaError
+class PlayerError(ChromeTypeBase):
+    def __init__(self,
+                 type: Union['str'],
+                 errorCode: Union['str'],
+                 ):
+
+        self.type = type
+        self.errorCode = errorCode
 
 
 class Media(PayloadMixin):
@@ -116,6 +131,60 @@ class PlayerEventsAddedEvent(BaseEvent):
         if isinstance(events, dict):
             events = [PlayerEvent](**events)
         self.events = events
+
+    @classmethod
+    def build_hash(cls, playerId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class PlayerMessagesLoggedEvent(BaseEvent):
+
+    js_name = 'Media.playerMessagesLogged'
+    hashable = ['playerId']
+    is_hashable = True
+
+    def __init__(self,
+                 playerId: Union['PlayerId', dict],
+                 messages: Union['[PlayerMessage]', dict],
+                 ):
+        if isinstance(playerId, dict):
+            playerId = PlayerId(**playerId)
+        self.playerId = playerId
+        if isinstance(messages, dict):
+            messages = [PlayerMessage](**messages)
+        self.messages = messages
+
+    @classmethod
+    def build_hash(cls, playerId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class PlayerErrorsRaisedEvent(BaseEvent):
+
+    js_name = 'Media.playerErrorsRaised'
+    hashable = ['playerId']
+    is_hashable = True
+
+    def __init__(self,
+                 playerId: Union['PlayerId', dict],
+                 errors: Union['[PlayerError]', dict],
+                 ):
+        if isinstance(playerId, dict):
+            playerId = PlayerId(**playerId)
+        self.playerId = playerId
+        if isinstance(errors, dict):
+            errors = [PlayerError](**errors)
+        self.errors = errors
 
     @classmethod
     def build_hash(cls, playerId):

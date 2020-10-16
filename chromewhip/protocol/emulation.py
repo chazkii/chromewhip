@@ -27,8 +27,64 @@ class ScreenOrientation(ChromeTypeBase):
         self.angle = angle
 
 
+# DisplayFeature: 
+class DisplayFeature(ChromeTypeBase):
+    def __init__(self,
+                 orientation: Union['str'],
+                 offset: Union['int'],
+                 maskLength: Union['int'],
+                 ):
+
+        self.orientation = orientation
+        self.offset = offset
+        self.maskLength = maskLength
+
+
+# MediaFeature: 
+class MediaFeature(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['str'],
+                 ):
+
+        self.name = name
+        self.value = value
+
+
 # VirtualTimePolicy: advance: If the scheduler runs out of immediate work, the virtual time base may fast forward toallow the next delayed task (if any) to run; pause: The virtual time base may not advance;pauseIfNetworkFetchesPending: The virtual time base may not advance if there are any pendingresource fetches.
 VirtualTimePolicy = str
+
+# UserAgentBrandVersion: Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+class UserAgentBrandVersion(ChromeTypeBase):
+    def __init__(self,
+                 brand: Union['str'],
+                 version: Union['str'],
+                 ):
+
+        self.brand = brand
+        self.version = version
+
+
+# UserAgentMetadata: Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+class UserAgentMetadata(ChromeTypeBase):
+    def __init__(self,
+                 brands: Union['[UserAgentBrandVersion]'],
+                 fullVersion: Union['str'],
+                 platform: Union['str'],
+                 platformVersion: Union['str'],
+                 architecture: Union['str'],
+                 model: Union['str'],
+                 mobile: Union['bool'],
+                 ):
+
+        self.brands = brands
+        self.fullVersion = fullVersion
+        self.platform = platform
+        self.platformVersion = platformVersion
+        self.architecture = architecture
+        self.model = model
+        self.mobile = mobile
+
 
 class Emulation(PayloadMixin):
     """ This domain emulates different environments for the page.
@@ -139,6 +195,7 @@ cleared.
                                  dontSetVisibleSize: Optional['bool'] = None,
                                  screenOrientation: Optional['ScreenOrientation'] = None,
                                  viewport: Optional['Page.Viewport'] = None,
+                                 displayFeature: Optional['DisplayFeature'] = None,
                                  ):
         """Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
 window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
@@ -169,6 +226,9 @@ autosizing and more.
         :param viewport: If set, the visible area of the page will be overridden to this viewport. This viewport
 change is not observed by the page, e.g. viewport-relative elements do not change positions.
         :type viewport: Page.Viewport
+        :param displayFeature: If set, the display feature of a multi-segment screen. If not set, multi-segment support
+is turned-off.
+        :type displayFeature: DisplayFeature
         """
         return (
             cls.build_send_payload("setDeviceMetricsOverride", {
@@ -184,6 +244,7 @@ change is not observed by the page, e.g. viewport-relative elements do not chang
                 "dontSetVisibleSize": dontSetVisibleSize,
                 "screenOrientation": screenOrientation,
                 "viewport": viewport,
+                "displayFeature": displayFeature,
             }),
             None
         )
@@ -239,15 +300,34 @@ change is not observed by the page, e.g. viewport-relative elements do not chang
 
     @classmethod
     def setEmulatedMedia(cls,
-                         media: Union['str'],
+                         media: Optional['str'] = None,
+                         features: Optional['[MediaFeature]'] = None,
                          ):
-        """Emulates the given media for CSS media queries.
+        """Emulates the given media type or media feature for CSS media queries.
         :param media: Media type to emulate. Empty string disables the override.
         :type media: str
+        :param features: Media features to emulate.
+        :type features: [MediaFeature]
         """
         return (
             cls.build_send_payload("setEmulatedMedia", {
                 "media": media,
+                "features": features,
+            }),
+            None
+        )
+
+    @classmethod
+    def setEmulatedVisionDeficiency(cls,
+                                    type: Union['str'],
+                                    ):
+        """Emulates the given vision deficiency.
+        :param type: Vision deficiency to emulate.
+        :type type: str
+        """
+        return (
+            cls.build_send_payload("setEmulatedVisionDeficiency", {
+                "type": type,
             }),
             None
         )
@@ -272,6 +352,35 @@ unavailable.
                 "latitude": latitude,
                 "longitude": longitude,
                 "accuracy": accuracy,
+            }),
+            None
+        )
+
+    @classmethod
+    def setIdleOverride(cls,
+                        isUserActive: Union['bool'],
+                        isScreenUnlocked: Union['bool'],
+                        ):
+        """Overrides the Idle state.
+        :param isUserActive: Mock isUserActive
+        :type isUserActive: bool
+        :param isScreenUnlocked: Mock isScreenUnlocked
+        :type isScreenUnlocked: bool
+        """
+        return (
+            cls.build_send_payload("setIdleOverride", {
+                "isUserActive": isUserActive,
+                "isScreenUnlocked": isScreenUnlocked,
+            }),
+            None
+        )
+
+    @classmethod
+    def clearIdleOverride(cls):
+        """Clears Idle state overrides.
+        """
+        return (
+            cls.build_send_payload("clearIdleOverride", {
             }),
             None
         )
@@ -381,6 +490,22 @@ Note any previous deferred policy change is superseded.
         )
 
     @classmethod
+    def setLocaleOverride(cls,
+                          locale: Optional['str'] = None,
+                          ):
+        """Overrides default host system locale with the specified one.
+        :param locale: ICU style C locale (e.g. "en_US"). If not specified or empty, disables the override and
+restores default host system locale.
+        :type locale: str
+        """
+        return (
+            cls.build_send_payload("setLocaleOverride", {
+                "locale": locale,
+            }),
+            None
+        )
+
+    @classmethod
     def setTimezoneOverride(cls,
                             timezoneId: Union['str'],
                             ):
@@ -422,6 +547,7 @@ on Android.
                              userAgent: Union['str'],
                              acceptLanguage: Optional['str'] = None,
                              platform: Optional['str'] = None,
+                             userAgentMetadata: Optional['UserAgentMetadata'] = None,
                              ):
         """Allows overriding user agent with the given string.
         :param userAgent: User agent to use.
@@ -430,12 +556,15 @@ on Android.
         :type acceptLanguage: str
         :param platform: The platform navigator.platform should return.
         :type platform: str
+        :param userAgentMetadata: To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
+        :type userAgentMetadata: UserAgentMetadata
         """
         return (
             cls.build_send_payload("setUserAgentOverride", {
                 "userAgent": userAgent,
                 "acceptLanguage": acceptLanguage,
                 "platform": platform,
+                "userAgentMetadata": userAgentMetadata,
             }),
             None
         )

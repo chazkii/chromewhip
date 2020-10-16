@@ -90,11 +90,16 @@ class Tracing(PayloadMixin):
         )
 
     @classmethod
-    def requestMemoryDump(cls):
+    def requestMemoryDump(cls,
+                          deterministic: Optional['bool'] = None,
+                          ):
         """Request a global memory dump.
+        :param deterministic: Enables more deterministic results by forcing garbage collection
+        :type deterministic: bool
         """
         return (
             cls.build_send_payload("requestMemoryDump", {
+                "deterministic": deterministic,
             }),
             cls.convert_payload({
                 "dumpGuid": {

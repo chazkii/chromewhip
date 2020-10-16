@@ -19,9 +19,6 @@ TargetID = str
 # SessionID: Unique identifier of attached debugging session.
 SessionID = str
 
-# BrowserContextID: 
-BrowserContextID = str
-
 # TargetInfo: 
 class TargetInfo(ChromeTypeBase):
     def __init__(self,
@@ -30,8 +27,10 @@ class TargetInfo(ChromeTypeBase):
                  title: Union['str'],
                  url: Union['str'],
                  attached: Union['bool'],
+                 canAccessOpener: Union['bool'],
                  openerId: Optional['TargetID'] = None,
-                 browserContextId: Optional['BrowserContextID'] = None,
+                 openerFrameId: Optional['Page.FrameId'] = None,
+                 browserContextId: Optional['Browser.BrowserContextID'] = None,
                  ):
 
         self.targetId = targetId
@@ -40,6 +39,8 @@ class TargetInfo(ChromeTypeBase):
         self.url = url
         self.attached = attached
         self.openerId = openerId
+        self.canAccessOpener = canAccessOpener
+        self.openerFrameId = openerFrameId
         self.browserContextId = browserContextId
 
 
@@ -81,6 +82,8 @@ class Target(PayloadMixin):
         :param targetId: 
         :type targetId: TargetID
         :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+We plan to make this the default, deprecate non-flattened mode,
+and eventually retire it. See crbug.com/991325.
         :type flatten: bool
         """
         return (
@@ -158,16 +161,29 @@ The object has the follwing API:
         )
 
     @classmethod
-    def createBrowserContext(cls):
+    def createBrowserContext(cls,
+                             disposeOnDetach: Optional['bool'] = None,
+                             proxyServer: Optional['str'] = None,
+                             proxyBypassList: Optional['str'] = None,
+                             ):
         """Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
 one.
+        :param disposeOnDetach: If specified, disposes this context when debugging session disconnects.
+        :type disposeOnDetach: bool
+        :param proxyServer: Proxy server, similar to the one passed to --proxy-server
+        :type proxyServer: str
+        :param proxyBypassList: Proxy bypass list, similar to the one passed to --proxy-bypass-list
+        :type proxyBypassList: str
         """
         return (
             cls.build_send_payload("createBrowserContext", {
+                "disposeOnDetach": disposeOnDetach,
+                "proxyServer": proxyServer,
+                "proxyBypassList": proxyBypassList,
             }),
             cls.convert_payload({
                 "browserContextId": {
-                    "class": BrowserContextID,
+                    "class": Browser.BrowserContextID,
                     "optional": False
                 },
             })
@@ -182,7 +198,7 @@ one.
             }),
             cls.convert_payload({
                 "browserContextIds": {
-                    "class": [BrowserContextID],
+                    "class": [Browser.BrowserContextID],
                     "optional": False
                 },
             })
@@ -193,7 +209,7 @@ one.
                      url: Union['str'],
                      width: Optional['int'] = None,
                      height: Optional['int'] = None,
-                     browserContextId: Optional['BrowserContextID'] = None,
+                     browserContextId: Optional['Browser.BrowserContextID'] = None,
                      enableBeginFrameControl: Optional['bool'] = None,
                      newWindow: Optional['bool'] = None,
                      background: Optional['bool'] = None,
@@ -206,7 +222,7 @@ one.
         :param height: Frame height in DIP (headless chrome only).
         :type height: int
         :param browserContextId: The browser context to create the page in.
-        :type browserContextId: BrowserContextID
+        :type browserContextId: Browser.BrowserContextID
         :param enableBeginFrameControl: Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
 not supported on MacOS yet, false by default).
         :type enableBeginFrameControl: bool
@@ -255,12 +271,12 @@ false by default).
 
     @classmethod
     def disposeBrowserContext(cls,
-                              browserContextId: Union['BrowserContextID'],
+                              browserContextId: Union['Browser.BrowserContextID'],
                               ):
         """Deletes a BrowserContext. All the belonging pages will be closed without calling their
 beforeunload hooks.
         :param browserContextId: 
-        :type browserContextId: BrowserContextID
+        :type browserContextId: Browser.BrowserContextID
         """
         return (
             cls.build_send_payload("disposeBrowserContext", {
@@ -311,6 +327,8 @@ beforeunload hooks.
                             targetId: Optional['TargetID'] = None,
                             ):
         """Sends protocol message over session with given id.
+Consider using flat mode instead; see commands attachToTarget, setAutoAttach,
+and crbug.com/991325.
         :param message: 
         :type message: str
         :param sessionId: Identifier of the session.
@@ -342,6 +360,8 @@ automatically detaches from all currently attached targets.
 to run paused targets.
         :type waitForDebuggerOnStart: bool
         :param flatten: Enables "flat" access to the session via specifying sessionId attribute in the commands.
+We plan to make this the default, deprecate non-flattened mode,
+and eventually retire it. See crbug.com/991325.
         :type flatten: bool
         """
         return (
@@ -421,7 +441,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['targetId', 'sessionId']
+    hashable = ['sessionId', 'targetId']
     is_hashable = True
 
     def __init__(self,
@@ -436,7 +456,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, targetId, sessionId):
+    def build_hash(cls, sessionId, targetId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -448,7 +468,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['targetId', 'sessionId']
+    hashable = ['sessionId', 'targetId']
     is_hashable = True
 
     def __init__(self,
@@ -467,7 +487,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, targetId, sessionId):
+    def build_hash(cls, sessionId, targetId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

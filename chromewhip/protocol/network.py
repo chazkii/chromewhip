@@ -47,6 +47,9 @@ ConnectionType = str
 # CookieSameSite: Represents the cookie's 'SameSite' status:https://tools.ietf.org/html/draft-west-first-party-cookies
 CookieSameSite = str
 
+# CookiePriority: Represents the cookie's 'Priority' status:https://tools.ietf.org/html/draft-west-cookie-priority-00
+CookiePriority = str
+
 # ResourceTiming: Timing information for the request.
 class ResourceTiming(ChromeTypeBase):
     def __init__(self,
@@ -61,6 +64,8 @@ class ResourceTiming(ChromeTypeBase):
                  sslEnd: Union['float'],
                  workerStart: Union['float'],
                  workerReady: Union['float'],
+                 workerFetchStart: Union['float'],
+                 workerRespondWithSettled: Union['float'],
                  sendStart: Union['float'],
                  sendEnd: Union['float'],
                  pushStart: Union['float'],
@@ -79,6 +84,8 @@ class ResourceTiming(ChromeTypeBase):
         self.sslEnd = sslEnd
         self.workerStart = workerStart
         self.workerReady = workerReady
+        self.workerFetchStart = workerFetchStart
+        self.workerRespondWithSettled = workerRespondWithSettled
         self.sendStart = sendStart
         self.sendEnd = sendEnd
         self.pushStart = pushStart
@@ -88,6 +95,15 @@ class ResourceTiming(ChromeTypeBase):
 
 # ResourcePriority: Loading priority of a resource request.
 ResourcePriority = str
+
+# PostDataEntry: Post data entry for HTTP request
+class PostDataEntry(ChromeTypeBase):
+    def __init__(self,
+                 bytes: Optional['str'] = None,
+                 ):
+
+        self.bytes = bytes
+
 
 # Request: HTTP request data.
 class Request(ChromeTypeBase):
@@ -100,8 +116,10 @@ class Request(ChromeTypeBase):
                  urlFragment: Optional['str'] = None,
                  postData: Optional['str'] = None,
                  hasPostData: Optional['bool'] = None,
+                 postDataEntries: Optional['[PostDataEntry]'] = None,
                  mixedContentType: Optional['Security.MixedContentType'] = None,
                  isLinkPreload: Optional['bool'] = None,
+                 trustTokenParams: Optional['TrustTokenParams'] = None,
                  ):
 
         self.url = url
@@ -110,10 +128,12 @@ class Request(ChromeTypeBase):
         self.headers = headers
         self.postData = postData
         self.hasPostData = hasPostData
+        self.postDataEntries = postDataEntries
         self.mixedContentType = mixedContentType
         self.initialPriority = initialPriority
         self.referrerPolicy = referrerPolicy
         self.isLinkPreload = isLinkPreload
+        self.trustTokenParams = trustTokenParams
 
 
 # SignedCertificateTimestamp: Details of a signed certificate timestamp (SCT).
@@ -178,6 +198,25 @@ CertificateTransparencyCompliance = str
 # BlockedReason: The reason why request was blocked.
 BlockedReason = str
 
+# ServiceWorkerResponseSource: Source of serviceworker response.
+ServiceWorkerResponseSource = str
+
+# TrustTokenParams: Determines what type of Trust Token operation is executed anddepending on the type, some additional parameters.
+class TrustTokenParams(ChromeTypeBase):
+    def __init__(self,
+                 type: Union['TrustTokenOperationType'],
+                 refreshPolicy: Union['str'],
+                 issuers: Optional['[]'] = None,
+                 ):
+
+        self.type = type
+        self.refreshPolicy = refreshPolicy
+        self.issuers = issuers
+
+
+# TrustTokenOperationType: 
+TrustTokenOperationType = str
+
 # Response: HTTP response data.
 class Response(ChromeTypeBase):
     def __init__(self,
@@ -199,6 +238,9 @@ class Response(ChromeTypeBase):
                  fromServiceWorker: Optional['bool'] = None,
                  fromPrefetchCache: Optional['bool'] = None,
                  timing: Optional['ResourceTiming'] = None,
+                 serviceWorkerResponseSource: Optional['ServiceWorkerResponseSource'] = None,
+                 responseTime: Optional['TimeSinceEpoch'] = None,
+                 cacheStorageCacheName: Optional['str'] = None,
                  protocol: Optional['str'] = None,
                  securityDetails: Optional['SecurityDetails'] = None,
                  ):
@@ -220,6 +262,9 @@ class Response(ChromeTypeBase):
         self.fromPrefetchCache = fromPrefetchCache
         self.encodedDataLength = encodedDataLength
         self.timing = timing
+        self.serviceWorkerResponseSource = serviceWorkerResponseSource
+        self.responseTime = responseTime
+        self.cacheStorageCacheName = cacheStorageCacheName
         self.protocol = protocol
         self.securityState = securityState
         self.securityDetails = securityDetails
@@ -288,12 +333,14 @@ class Initiator(ChromeTypeBase):
                  stack: Optional['Runtime.StackTrace'] = None,
                  url: Optional['str'] = None,
                  lineNumber: Optional['float'] = None,
+                 columnNumber: Optional['float'] = None,
                  ):
 
         self.type = type
         self.stack = stack
         self.url = url
         self.lineNumber = lineNumber
+        self.columnNumber = columnNumber
 
 
 # Cookie: Cookie object
@@ -308,6 +355,7 @@ class Cookie(ChromeTypeBase):
                  httpOnly: Union['bool'],
                  secure: Union['bool'],
                  session: Union['bool'],
+                 priority: Union['CookiePriority'],
                  sameSite: Optional['CookieSameSite'] = None,
                  ):
 
@@ -321,6 +369,7 @@ class Cookie(ChromeTypeBase):
         self.secure = secure
         self.session = session
         self.sameSite = sameSite
+        self.priority = priority
 
 
 # SetCookieBlockedReason: Types of reasons why a cookie may not be stored from a response.
@@ -365,6 +414,7 @@ class CookieParam(ChromeTypeBase):
                  httpOnly: Optional['bool'] = None,
                  sameSite: Optional['CookieSameSite'] = None,
                  expires: Optional['TimeSinceEpoch'] = None,
+                 priority: Optional['CookiePriority'] = None,
                  ):
 
         self.name = name
@@ -376,6 +426,7 @@ class CookieParam(ChromeTypeBase):
         self.httpOnly = httpOnly
         self.sameSite = sameSite
         self.expires = expires
+        self.priority = priority
 
 
 # AuthChallenge: Authorization challenge for HTTP status code 401 or 407.
@@ -493,6 +544,83 @@ class SignedExchangeInfo(ChromeTypeBase):
         self.header = header
         self.securityDetails = securityDetails
         self.errors = errors
+
+
+# CrossOriginOpenerPolicyValue: 
+CrossOriginOpenerPolicyValue = str
+
+# CrossOriginOpenerPolicyStatus: 
+class CrossOriginOpenerPolicyStatus(ChromeTypeBase):
+    def __init__(self,
+                 value: Union['CrossOriginOpenerPolicyValue'],
+                 reportOnlyValue: Union['CrossOriginOpenerPolicyValue'],
+                 reportingEndpoint: Optional['str'] = None,
+                 reportOnlyReportingEndpoint: Optional['str'] = None,
+                 ):
+
+        self.value = value
+        self.reportOnlyValue = reportOnlyValue
+        self.reportingEndpoint = reportingEndpoint
+        self.reportOnlyReportingEndpoint = reportOnlyReportingEndpoint
+
+
+# CrossOriginEmbedderPolicyValue: 
+CrossOriginEmbedderPolicyValue = str
+
+# CrossOriginEmbedderPolicyStatus: 
+class CrossOriginEmbedderPolicyStatus(ChromeTypeBase):
+    def __init__(self,
+                 value: Union['CrossOriginEmbedderPolicyValue'],
+                 reportOnlyValue: Union['CrossOriginEmbedderPolicyValue'],
+                 reportingEndpoint: Optional['str'] = None,
+                 reportOnlyReportingEndpoint: Optional['str'] = None,
+                 ):
+
+        self.value = value
+        self.reportOnlyValue = reportOnlyValue
+        self.reportingEndpoint = reportingEndpoint
+        self.reportOnlyReportingEndpoint = reportOnlyReportingEndpoint
+
+
+# SecurityIsolationStatus: 
+class SecurityIsolationStatus(ChromeTypeBase):
+    def __init__(self,
+                 coop: Union['CrossOriginOpenerPolicyStatus'],
+                 coep: Union['CrossOriginEmbedderPolicyStatus'],
+                 ):
+
+        self.coop = coop
+        self.coep = coep
+
+
+# LoadNetworkResourcePageResult: An object providing the result of a network resource load.
+class LoadNetworkResourcePageResult(ChromeTypeBase):
+    def __init__(self,
+                 success: Union['bool'],
+                 netError: Optional['float'] = None,
+                 netErrorName: Optional['str'] = None,
+                 httpStatusCode: Optional['float'] = None,
+                 stream: Optional['IO.StreamHandle'] = None,
+                 headers: Optional['Network.Headers'] = None,
+                 ):
+
+        self.success = success
+        self.netError = netError
+        self.netErrorName = netErrorName
+        self.httpStatusCode = httpStatusCode
+        self.stream = stream
+        self.headers = headers
+
+
+# LoadNetworkResourceOptions: An options object that may be extended later to better support CORS,CORB and streaming.
+class LoadNetworkResourceOptions(ChromeTypeBase):
+    def __init__(self,
+                 disableCache: Union['bool'],
+                 includeCredentials: Union['bool'],
+                 ):
+
+        self.disableCache = disableCache
+        self.includeCredentials = includeCredentials
 
 
 class Network(PayloadMixin):
@@ -751,7 +879,9 @@ information in the `cookies` field.
                    ):
         """Returns all browser cookies for the current URL. Depending on the backend support, will return
 detailed cookie information in the `cookies` field.
-        :param urls: The list of URLs for which applicable cookies will be fetched
+        :param urls: The list of URLs for which applicable cookies will be fetched.
+If not specified, it's assumed to be set to the list containing
+the URLs of the page and all of its subframes.
         :type urls: []
         """
         return (
@@ -962,6 +1092,7 @@ attribute, user, password.
                   httpOnly: Optional['bool'] = None,
                   sameSite: Optional['CookieSameSite'] = None,
                   expires: Optional['TimeSinceEpoch'] = None,
+                  priority: Optional['CookiePriority'] = None,
                   ):
         """Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
         :param name: Cookie name.
@@ -983,6 +1114,8 @@ default domain and path values of the created cookie.
         :type sameSite: CookieSameSite
         :param expires: Cookie expiration date, session cookie if not set
         :type expires: TimeSinceEpoch
+        :param priority: Cookie Priority type.
+        :type priority: CookiePriority
         """
         return (
             cls.build_send_payload("setCookie", {
@@ -995,6 +1128,7 @@ default domain and path values of the created cookie.
                 "httpOnly": httpOnly,
                 "sameSite": sameSite,
                 "expires": expires,
+                "priority": priority,
             }),
             cls.convert_payload({
                 "success": {
@@ -1054,6 +1188,21 @@ default domain and path values of the created cookie.
         )
 
     @classmethod
+    def setAttachDebugHeader(cls,
+                             enabled: Union['bool'],
+                             ):
+        """Specifies whether to sned a debug header to all outgoing requests.
+        :param enabled: Whether to send a debug header.
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setAttachDebugHeader", {
+                "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
     def setRequestInterception(cls,
                                patterns: Union['[RequestPattern]'],
                                ):
@@ -1075,6 +1224,7 @@ continueInterceptedRequest call.
                              userAgent: Union['str'],
                              acceptLanguage: Optional['str'] = None,
                              platform: Optional['str'] = None,
+                             userAgentMetadata: Optional['Emulation.UserAgentMetadata'] = None,
                              ):
         """Allows overriding user agent with the given string.
         :param userAgent: User agent to use.
@@ -1083,14 +1233,65 @@ continueInterceptedRequest call.
         :type acceptLanguage: str
         :param platform: The platform navigator.platform should return.
         :type platform: str
+        :param userAgentMetadata: To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
+        :type userAgentMetadata: Emulation.UserAgentMetadata
         """
         return (
             cls.build_send_payload("setUserAgentOverride", {
                 "userAgent": userAgent,
                 "acceptLanguage": acceptLanguage,
                 "platform": platform,
+                "userAgentMetadata": userAgentMetadata,
             }),
             None
+        )
+
+    @classmethod
+    def getSecurityIsolationStatus(cls,
+                                   frameId: Optional['Page.FrameId'] = None,
+                                   ):
+        """Returns information about the COEP/COOP isolation status.
+        :param frameId: If no frameId is provided, the status of the target is provided.
+        :type frameId: Page.FrameId
+        """
+        return (
+            cls.build_send_payload("getSecurityIsolationStatus", {
+                "frameId": frameId,
+            }),
+            cls.convert_payload({
+                "status": {
+                    "class": SecurityIsolationStatus,
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def loadNetworkResource(cls,
+                            frameId: Union['Page.FrameId'],
+                            url: Union['str'],
+                            options: Union['LoadNetworkResourceOptions'],
+                            ):
+        """Fetches the resource and returns the content.
+        :param frameId: Frame id to get the resource for.
+        :type frameId: Page.FrameId
+        :param url: URL of the resource to get content for.
+        :type url: str
+        :param options: Options for the request.
+        :type options: LoadNetworkResourceOptions
+        """
+        return (
+            cls.build_send_payload("loadNetworkResource", {
+                "frameId": frameId,
+                "url": url,
+                "options": options,
+            }),
+            cls.convert_payload({
+                "resource": {
+                    "class": LoadNetworkResourcePageResult,
+                    "optional": False
+                },
+            })
         )
 
 
@@ -1250,7 +1451,7 @@ class LoadingFinishedEvent(BaseEvent):
 class RequestInterceptedEvent(BaseEvent):
 
     js_name = 'Network.requestIntercepted'
-    hashable = ['interceptionId', 'frameId', 'requestId']
+    hashable = ['frameId', 'requestId', 'interceptionId']
     is_hashable = True
 
     def __init__(self,
@@ -1305,7 +1506,7 @@ class RequestInterceptedEvent(BaseEvent):
         self.requestId = requestId
 
     @classmethod
-    def build_hash(cls, interceptionId, frameId, requestId):
+    def build_hash(cls, frameId, requestId, interceptionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1340,7 +1541,7 @@ class RequestServedFromCacheEvent(BaseEvent):
 class RequestWillBeSentEvent(BaseEvent):
 
     js_name = 'Network.requestWillBeSent'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1391,7 +1592,7 @@ class RequestWillBeSentEvent(BaseEvent):
         self.hasUserGesture = hasUserGesture
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1461,7 +1662,7 @@ class SignedExchangeReceivedEvent(BaseEvent):
 class ResponseReceivedEvent(BaseEvent):
 
     js_name = 'Network.responseReceived'
-    hashable = ['loaderId', 'frameId', 'requestId']
+    hashable = ['frameId', 'loaderId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -1492,7 +1693,7 @@ class ResponseReceivedEvent(BaseEvent):
         self.frameId = frameId
 
     @classmethod
-    def build_hash(cls, loaderId, frameId, requestId):
+    def build_hash(cls, frameId, loaderId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1726,15 +1927,15 @@ class RequestWillBeSentExtraInfoEvent(BaseEvent):
 
     def __init__(self,
                  requestId: Union['RequestId', dict],
-                 blockedCookies: Union['[BlockedCookieWithReason]', dict],
+                 associatedCookies: Union['[BlockedCookieWithReason]', dict],
                  headers: Union['Headers', dict],
                  ):
         if isinstance(requestId, dict):
             requestId = RequestId(**requestId)
         self.requestId = requestId
-        if isinstance(blockedCookies, dict):
-            blockedCookies = [BlockedCookieWithReason](**blockedCookies)
-        self.blockedCookies = blockedCookies
+        if isinstance(associatedCookies, dict):
+            associatedCookies = [BlockedCookieWithReason](**associatedCookies)
+        self.associatedCookies = associatedCookies
         if isinstance(headers, dict):
             headers = Headers(**headers)
         self.headers = headers

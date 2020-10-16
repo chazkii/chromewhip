@@ -12,6 +12,8 @@ from typing import Any, Optional, Union
 from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
+from chromewhip.protocol import browser as Browser
+from chromewhip.protocol import network as Network
 
 # StorageType: Enum of possible storage types.
 StorageType = str
@@ -45,6 +47,60 @@ class Storage(PayloadMixin):
             cls.build_send_payload("clearDataForOrigin", {
                 "origin": origin,
                 "storageTypes": storageTypes,
+            }),
+            None
+        )
+
+    @classmethod
+    def getCookies(cls,
+                   browserContextId: Optional['Browser.BrowserContextID'] = None,
+                   ):
+        """Returns all browser cookies.
+        :param browserContextId: Browser context to use when called on the browser endpoint.
+        :type browserContextId: Browser.BrowserContextID
+        """
+        return (
+            cls.build_send_payload("getCookies", {
+                "browserContextId": browserContextId,
+            }),
+            cls.convert_payload({
+                "cookies": {
+                    "class": [Network.Cookie],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def setCookies(cls,
+                   cookies: Union['[Network.CookieParam]'],
+                   browserContextId: Optional['Browser.BrowserContextID'] = None,
+                   ):
+        """Sets given cookies.
+        :param cookies: Cookies to be set.
+        :type cookies: [Network.CookieParam]
+        :param browserContextId: Browser context to use when called on the browser endpoint.
+        :type browserContextId: Browser.BrowserContextID
+        """
+        return (
+            cls.build_send_payload("setCookies", {
+                "cookies": cookies,
+                "browserContextId": browserContextId,
+            }),
+            None
+        )
+
+    @classmethod
+    def clearCookies(cls,
+                     browserContextId: Optional['Browser.BrowserContextID'] = None,
+                     ):
+        """Clears cookies.
+        :param browserContextId: Browser context to use when called on the browser endpoint.
+        :type browserContextId: Browser.BrowserContextID
+        """
+        return (
+            cls.build_send_payload("clearCookies", {
+                "browserContextId": browserContextId,
             }),
             None
         )

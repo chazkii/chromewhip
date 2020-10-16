@@ -169,6 +169,17 @@ class Rect(ChromeTypeBase):
         self.height = height
 
 
+# CSSComputedStyleProperty: 
+class CSSComputedStyleProperty(ChromeTypeBase):
+    def __init__(self,
+                 name: Union['str'],
+                 value: Union['str'],
+                 ):
+
+        self.name = name
+        self.value = value
+
+
 class DOM(PayloadMixin):
     """ This domain exposes DOM read/write operations. Each DOM Node is represented with its mirror object
 that has an `id`. This `id` can be used to get additional information on the Node, resolve it into
@@ -265,6 +276,36 @@ entire subtree or provide an integer larger than 0.
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def scrollIntoViewIfNeeded(cls,
+                               nodeId: Optional['NodeId'] = None,
+                               backendNodeId: Optional['BackendNodeId'] = None,
+                               objectId: Optional['Runtime.RemoteObjectId'] = None,
+                               rect: Optional['Rect'] = None,
+                               ):
+        """Scrolls the specified rect of the given node into view if not already visible.
+Note: exactly one between nodeId, backendNodeId and objectId should be passed
+to identify the node.
+        :param nodeId: Identifier of the node.
+        :type nodeId: NodeId
+        :param backendNodeId: Identifier of the backend node.
+        :type backendNodeId: BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper.
+        :type objectId: Runtime.RemoteObjectId
+        :param rect: The rect to be scrolled into view, relative to the node's border box, in CSS pixels.
+When omitted, center of the node will be used, similar to Element.scrollIntoView.
+        :type rect: Rect
+        """
+        return (
+            cls.build_send_payload("scrollIntoViewIfNeeded", {
+                "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
+                "rect": rect,
+            }),
+            None
         )
 
     @classmethod
@@ -435,6 +476,8 @@ entire subtree or provide an integer larger than 0.
                              pierce: Optional['bool'] = None,
                              ):
         """Returns the root DOM node (and optionally the subtree) to the caller.
+Deprecated, as it is not designed to work well with the rest of the DOM agent.
+Use DOMSnapshot.captureSnapshot instead.
         :param depth: The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
 entire subtree or provide an integer larger than 0.
         :type depth: int
@@ -450,6 +493,35 @@ entire subtree or provide an integer larger than 0.
             cls.convert_payload({
                 "nodes": {
                     "class": [Node],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getNodesForSubtreeByStyle(cls,
+                                  nodeId: Union['NodeId'],
+                                  computedStyles: Union['[CSSComputedStyleProperty]'],
+                                  pierce: Optional['bool'] = None,
+                                  ):
+        """Finds nodes with a given computed style in a subtree.
+        :param nodeId: Node ID pointing to the root of a subtree.
+        :type nodeId: NodeId
+        :param computedStyles: The style to filter nodes by (includes nodes if any of properties matches).
+        :type computedStyles: [CSSComputedStyleProperty]
+        :param pierce: Whether or not iframes and shadow roots in the same target should be traversed when returning the
+results (default is false).
+        :type pierce: bool
+        """
+        return (
+            cls.build_send_payload("getNodesForSubtreeByStyle", {
+                "nodeId": nodeId,
+                "computedStyles": computedStyles,
+                "pierce": pierce,
+            }),
+            cls.convert_payload({
+                "nodeIds": {
+                    "class": [NodeId],
                     "optional": False
                 },
             })
@@ -1393,7 +1465,7 @@ class PseudoElementAddedEvent(BaseEvent):
 class PseudoElementRemovedEvent(BaseEvent):
 
     js_name = 'Dom.pseudoElementRemoved'
-    hashable = ['parentId', 'pseudoElementId']
+    hashable = ['pseudoElementId', 'parentId']
     is_hashable = True
 
     def __init__(self,
@@ -1408,7 +1480,7 @@ class PseudoElementRemovedEvent(BaseEvent):
         self.pseudoElementId = pseudoElementId
 
     @classmethod
-    def build_hash(cls, parentId, pseudoElementId):
+    def build_hash(cls, pseudoElementId, parentId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

@@ -22,10 +22,14 @@ class GPUDevice(ChromeTypeBase):
                  deviceString: Union['str'],
                  driverVendor: Union['str'],
                  driverVersion: Union['str'],
+                 subSysId: Optional['float'] = None,
+                 revision: Optional['float'] = None,
                  ):
 
         self.vendorId = vendorId
         self.deviceId = deviceId
+        self.subSysId = subSysId
+        self.revision = revision
         self.vendorString = vendorString
         self.deviceString = deviceString
         self.driverVendor = driverVendor

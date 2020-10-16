@@ -191,3 +191,43 @@ This turns on accessibility for the page, which can impact performance until acc
             })
         )
 
+    @classmethod
+    def queryAXTree(cls,
+                    nodeId: Optional['DOM.NodeId'] = None,
+                    backendNodeId: Optional['DOM.BackendNodeId'] = None,
+                    objectId: Optional['Runtime.RemoteObjectId'] = None,
+                    accessibleName: Optional['str'] = None,
+                    role: Optional['str'] = None,
+                    ):
+        """Query a DOM node's accessibility subtree for accessible name and role.
+This command computes the name and role for all nodes in the subtree, including those that are
+ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
+node is specified, or the DOM node does not exist, the command returns an error. If neither
+`accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
+        :param nodeId: Identifier of the node for the root to query.
+        :type nodeId: DOM.NodeId
+        :param backendNodeId: Identifier of the backend node for the root to query.
+        :type backendNodeId: DOM.BackendNodeId
+        :param objectId: JavaScript object id of the node wrapper for the root to query.
+        :type objectId: Runtime.RemoteObjectId
+        :param accessibleName: Find nodes with this computed name.
+        :type accessibleName: str
+        :param role: Find nodes with this computed role.
+        :type role: str
+        """
+        return (
+            cls.build_send_payload("queryAXTree", {
+                "nodeId": nodeId,
+                "backendNodeId": backendNodeId,
+                "objectId": objectId,
+                "accessibleName": accessibleName,
+                "role": role,
+            }),
+            cls.convert_payload({
+                "nodes": {
+                    "class": [AXNode],
+                    "optional": False
+                },
+            })
+        )
+

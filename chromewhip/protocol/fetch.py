@@ -185,7 +185,7 @@ If absent, a standard phrase matching responseCode is used.
         :type method: str
         :param postData: If set, overrides the post data in the request.
         :type postData: str
-        :param headers: If set, overrides the request headrts.
+        :param headers: If set, overrides the request headers.
         :type headers: [HeaderEntry]
         """
         return (
@@ -281,7 +281,7 @@ domain before body is received results in an undefined behavior.
 class RequestPausedEvent(BaseEvent):
 
     js_name = 'Fetch.requestPaused'
-    hashable = ['networkId', 'frameId', 'requestId']
+    hashable = ['frameId', 'requestId', 'networkId']
     is_hashable = True
 
     def __init__(self,
@@ -320,7 +320,7 @@ class RequestPausedEvent(BaseEvent):
         self.networkId = networkId
 
     @classmethod
-    def build_hash(cls, networkId, frameId, requestId):
+    def build_hash(cls, frameId, requestId, networkId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
