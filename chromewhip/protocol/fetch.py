@@ -281,7 +281,7 @@ domain before body is received results in an undefined behavior.
 class RequestPausedEvent(BaseEvent):
 
     js_name = 'Fetch.requestPaused'
-    hashable = ['frameId', 'requestId', 'networkId']
+    hashable = ['networkId', 'frameId', 'requestId']
     is_hashable = True
 
     def __init__(self,
@@ -320,7 +320,7 @@ class RequestPausedEvent(BaseEvent):
         self.networkId = networkId
 
     @classmethod
-    def build_hash(cls, frameId, requestId, networkId):
+    def build_hash(cls, networkId, frameId, requestId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

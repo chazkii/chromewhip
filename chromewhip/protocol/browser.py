@@ -62,6 +62,9 @@ class PermissionDescriptor(ChromeTypeBase):
         self.panTiltZoom = panTiltZoom
 
 
+# BrowserCommandId: Browser command ids used by executeBrowserCommand.
+BrowserCommandId = str
+
 # Bucket: Chrome histogram bucket.
 class Bucket(ChromeTypeBase):
     def __init__(self,
@@ -163,6 +166,7 @@ class Browser(PayloadMixin):
                             behavior: Union['str'],
                             browserContextId: Optional['BrowserContextID'] = None,
                             downloadPath: Optional['str'] = None,
+                            eventsEnabled: Optional['bool'] = None,
                             ):
         """Set the behavior when downloading a file.
         :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if
@@ -174,12 +178,34 @@ their dowmload guids.
         :param downloadPath: The default path to save downloaded files to. This is requred if behavior is set to 'allow'
 or 'allowAndName'.
         :type downloadPath: str
+        :param eventsEnabled: Whether to emit download events (defaults to false).
+        :type eventsEnabled: bool
         """
         return (
             cls.build_send_payload("setDownloadBehavior", {
                 "behavior": behavior,
                 "browserContextId": browserContextId,
                 "downloadPath": downloadPath,
+                "eventsEnabled": eventsEnabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def cancelDownload(cls,
+                       guid: Union['str'],
+                       browserContextId: Optional['BrowserContextID'] = None,
+                       ):
+        """Cancel a download if in progress
+        :param guid: Global unique identifier of the download.
+        :type guid: str
+        :param browserContextId: BrowserContext to perform the action in. When omitted, default browser context is used.
+        :type browserContextId: BrowserContextID
+        """
+        return (
+            cls.build_send_payload("cancelDownload", {
+                "guid": guid,
+                "browserContextId": browserContextId,
             }),
             None
         )
@@ -394,3 +420,88 @@ with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
             None
         )
 
+    @classmethod
+    def executeBrowserCommand(cls,
+                              commandId: Union['BrowserCommandId'],
+                              ):
+        """Invoke custom browser commands used by telemetry.
+        :param commandId: 
+        :type commandId: BrowserCommandId
+        """
+        return (
+            cls.build_send_payload("executeBrowserCommand", {
+                "commandId": commandId,
+            }),
+            None
+        )
+
+
+
+class DownloadWillBeginEvent(BaseEvent):
+
+    js_name = 'Browser.downloadWillBegin'
+    hashable = ['guid', 'frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frameId: Union['Page.FrameId', dict],
+                 guid: Union['str', dict],
+                 url: Union['str', dict],
+                 suggestedFilename: Union['str', dict],
+                 ):
+        if isinstance(frameId, dict):
+            frameId = Page.FrameId(**frameId)
+        self.frameId = frameId
+        if isinstance(guid, dict):
+            guid = str(**guid)
+        self.guid = guid
+        if isinstance(url, dict):
+            url = str(**url)
+        self.url = url
+        if isinstance(suggestedFilename, dict):
+            suggestedFilename = str(**suggestedFilename)
+        self.suggestedFilename = suggestedFilename
+
+    @classmethod
+    def build_hash(cls, guid, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class DownloadProgressEvent(BaseEvent):
+
+    js_name = 'Browser.downloadProgress'
+    hashable = ['guid']
+    is_hashable = True
+
+    def __init__(self,
+                 guid: Union['str', dict],
+                 totalBytes: Union['float', dict],
+                 receivedBytes: Union['float', dict],
+                 state: Union['str', dict],
+                 ):
+        if isinstance(guid, dict):
+            guid = str(**guid)
+        self.guid = guid
+        if isinstance(totalBytes, dict):
+            totalBytes = float(**totalBytes)
+        self.totalBytes = totalBytes
+        if isinstance(receivedBytes, dict):
+            receivedBytes = float(**receivedBytes)
+        self.receivedBytes = receivedBytes
+        if isinstance(state, dict):
+            state = str(**state)
+        self.state = state
+
+    @classmethod
+    def build_hash(cls, guid):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h

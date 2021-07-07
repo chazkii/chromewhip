@@ -19,6 +19,9 @@ from chromewhip.protocol import runtime as Runtime
 # DOMBreakpointType: DOM breakpoint type.
 DOMBreakpointType = str
 
+# CSPViolationType: CSP Violation type.
+CSPViolationType = str
+
 # EventListener: Object event listener.
 class EventListener(ChromeTypeBase):
     def __init__(self,
@@ -144,6 +147,21 @@ entire subtree or provide an integer larger than 0.
         return (
             cls.build_send_payload("removeXHRBreakpoint", {
                 "url": url,
+            }),
+            None
+        )
+
+    @classmethod
+    def setBreakOnCSPViolation(cls,
+                               violationTypes: Union['[CSPViolationType]'],
+                               ):
+        """Sets breakpoint on particular CSP violations.
+        :param violationTypes: CSP Violations to stop upon.
+        :type violationTypes: [CSPViolationType]
+        """
+        return (
+            cls.build_send_payload("setBreakOnCSPViolation", {
+                "violationTypes": violationTypes,
             }),
             None
         )

@@ -46,6 +46,12 @@ StreamFormat = str
 # StreamCompression: Compression type to use for traces returned via streams.
 StreamCompression = str
 
+# MemoryDumpLevelOfDetail: Details exposed when memory request explicitly declared.Keep consistent with memory_dump_request_args.h andmemory_instrumentation.mojom
+MemoryDumpLevelOfDetail = str
+
+# TracingBackend: Backend type to use for tracing. `chrome` uses the Chrome-integratedtracing service and is supported on all platforms. `system` is onlysupported on Chrome OS and uses the Perfetto system tracing service.`auto` chooses `system` when the perfettoConfig provided to Tracing.startspecifies at least one non-Chrome data source; otherwise uses `chrome`.
+TracingBackend = str
+
 class Tracing(PayloadMixin):
     """ 
     """
@@ -92,14 +98,18 @@ class Tracing(PayloadMixin):
     @classmethod
     def requestMemoryDump(cls,
                           deterministic: Optional['bool'] = None,
+                          levelOfDetail: Optional['MemoryDumpLevelOfDetail'] = None,
                           ):
         """Request a global memory dump.
         :param deterministic: Enables more deterministic results by forcing garbage collection
         :type deterministic: bool
+        :param levelOfDetail: Specifies level of details in memory dump. Defaults to "detailed".
+        :type levelOfDetail: MemoryDumpLevelOfDetail
         """
         return (
             cls.build_send_payload("requestMemoryDump", {
                 "deterministic": deterministic,
+                "levelOfDetail": levelOfDetail,
             }),
             cls.convert_payload({
                 "dumpGuid": {
@@ -122,6 +132,8 @@ class Tracing(PayloadMixin):
               streamFormat: Optional['StreamFormat'] = None,
               streamCompression: Optional['StreamCompression'] = None,
               traceConfig: Optional['TraceConfig'] = None,
+              perfettoConfig: Optional['str'] = None,
+              tracingBackend: Optional['TracingBackend'] = None,
               ):
         """Start trace events collection.
         :param categories: Category/tag filter
@@ -141,6 +153,12 @@ transfer mode (defaults to `none`)
         :type streamCompression: StreamCompression
         :param traceConfig: 
         :type traceConfig: TraceConfig
+        :param perfettoConfig: Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
+When specified, the parameters `categories`, `options`, `traceConfig`
+are ignored.
+        :type perfettoConfig: str
+        :param tracingBackend: Backend type (defaults to `auto`)
+        :type tracingBackend: TracingBackend
         """
         return (
             cls.build_send_payload("start", {
@@ -151,6 +169,8 @@ transfer mode (defaults to `none`)
                 "streamFormat": streamFormat,
                 "streamCompression": streamCompression,
                 "traceConfig": traceConfig,
+                "perfettoConfig": perfettoConfig,
+                "tracingBackend": tracingBackend,
             }),
             None
         )

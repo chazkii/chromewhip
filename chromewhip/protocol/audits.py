@@ -148,8 +148,10 @@ class SourceCodeLocation(ChromeTypeBase):
                  url: Union['str'],
                  lineNumber: Union['int'],
                  columnNumber: Union['int'],
+                 scriptId: Optional['Runtime.ScriptId'] = None,
                  ):
 
+        self.scriptId = scriptId
         self.url = url
         self.lineNumber = lineNumber
         self.columnNumber = columnNumber
@@ -159,6 +161,7 @@ class SourceCodeLocation(ChromeTypeBase):
 class ContentSecurityPolicyIssueDetails(ChromeTypeBase):
     def __init__(self,
                  violatedDirective: Union['str'],
+                 isReportOnly: Union['bool'],
                  contentSecurityPolicyViolationType: Union['ContentSecurityPolicyViolationType'],
                  blockedURL: Optional['str'] = None,
                  frameAncestor: Optional['AffectedFrame'] = None,
@@ -168,10 +171,87 @@ class ContentSecurityPolicyIssueDetails(ChromeTypeBase):
 
         self.blockedURL = blockedURL
         self.violatedDirective = violatedDirective
+        self.isReportOnly = isReportOnly
         self.contentSecurityPolicyViolationType = contentSecurityPolicyViolationType
         self.frameAncestor = frameAncestor
         self.sourceCodeLocation = sourceCodeLocation
         self.violatingNodeId = violatingNodeId
+
+
+# SharedArrayBufferIssueType: 
+SharedArrayBufferIssueType = str
+
+# SharedArrayBufferIssueDetails: Details for a issue arising from an SAB being instantiated in, ortransfered to a context that is not cross-origin isolated.
+class SharedArrayBufferIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 sourceCodeLocation: Union['SourceCodeLocation'],
+                 isWarning: Union['bool'],
+                 type: Union['SharedArrayBufferIssueType'],
+                 ):
+
+        self.sourceCodeLocation = sourceCodeLocation
+        self.isWarning = isWarning
+        self.type = type
+
+
+# TwaQualityEnforcementViolationType: 
+TwaQualityEnforcementViolationType = str
+
+# TrustedWebActivityIssueDetails: 
+class TrustedWebActivityIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 url: Union['str'],
+                 violationType: Union['TwaQualityEnforcementViolationType'],
+                 httpStatusCode: Optional['int'] = None,
+                 packageName: Optional['str'] = None,
+                 signature: Optional['str'] = None,
+                 ):
+
+        self.url = url
+        self.violationType = violationType
+        self.httpStatusCode = httpStatusCode
+        self.packageName = packageName
+        self.signature = signature
+
+
+# LowTextContrastIssueDetails: 
+class LowTextContrastIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 violatingNodeId: Union['DOM.BackendNodeId'],
+                 violatingNodeSelector: Union['str'],
+                 contrastRatio: Union['float'],
+                 thresholdAA: Union['float'],
+                 thresholdAAA: Union['float'],
+                 fontSize: Union['str'],
+                 fontWeight: Union['str'],
+                 ):
+
+        self.violatingNodeId = violatingNodeId
+        self.violatingNodeSelector = violatingNodeSelector
+        self.contrastRatio = contrastRatio
+        self.thresholdAA = thresholdAA
+        self.thresholdAAA = thresholdAAA
+        self.fontSize = fontSize
+        self.fontWeight = fontWeight
+
+
+# CorsIssueDetails: Details for a CORS related issue, e.g. a warning or error related toCORS RFC1918 enforcement.
+class CorsIssueDetails(ChromeTypeBase):
+    def __init__(self,
+                 corsErrorStatus: Union['Network.CorsErrorStatus'],
+                 isWarning: Union['bool'],
+                 request: Union['AffectedRequest'],
+                 initiatorOrigin: Optional['str'] = None,
+                 resourceIPAddressSpace: Optional['Network.IPAddressSpace'] = None,
+                 clientSecurityState: Optional['Network.ClientSecurityState'] = None,
+                 ):
+
+        self.corsErrorStatus = corsErrorStatus
+        self.isWarning = isWarning
+        self.request = request
+        self.initiatorOrigin = initiatorOrigin
+        self.resourceIPAddressSpace = resourceIPAddressSpace
+        self.clientSecurityState = clientSecurityState
 
 
 # InspectorIssueCode: A unique identifier for the type of issue. Each type may use one of theoptional fields in InspectorIssueDetails to convey more specificinformation about the kind of issue.
@@ -185,6 +265,10 @@ class InspectorIssueDetails(ChromeTypeBase):
                  blockedByResponseIssueDetails: Optional['BlockedByResponseIssueDetails'] = None,
                  heavyAdIssueDetails: Optional['HeavyAdIssueDetails'] = None,
                  contentSecurityPolicyIssueDetails: Optional['ContentSecurityPolicyIssueDetails'] = None,
+                 sharedArrayBufferIssueDetails: Optional['SharedArrayBufferIssueDetails'] = None,
+                 twaQualityEnforcementDetails: Optional['TrustedWebActivityIssueDetails'] = None,
+                 lowTextContrastIssueDetails: Optional['LowTextContrastIssueDetails'] = None,
+                 corsIssueDetails: Optional['CorsIssueDetails'] = None,
                  ):
 
         self.sameSiteCookieIssueDetails = sameSiteCookieIssueDetails
@@ -192,6 +276,10 @@ class InspectorIssueDetails(ChromeTypeBase):
         self.blockedByResponseIssueDetails = blockedByResponseIssueDetails
         self.heavyAdIssueDetails = heavyAdIssueDetails
         self.contentSecurityPolicyIssueDetails = contentSecurityPolicyIssueDetails
+        self.sharedArrayBufferIssueDetails = sharedArrayBufferIssueDetails
+        self.twaQualityEnforcementDetails = twaQualityEnforcementDetails
+        self.lowTextContrastIssueDetails = lowTextContrastIssueDetails
+        self.corsIssueDetails = corsIssueDetails
 
 
 # InspectorIssue: An inspector issue reported from the back-end.
@@ -266,6 +354,22 @@ applies to images.
         """
         return (
             cls.build_send_payload("enable", {
+            }),
+            None
+        )
+
+    @classmethod
+    def checkContrast(cls,
+                      reportAAA: Optional['bool'] = None,
+                      ):
+        """Runs the contrast check for the target page. Found issues are reported
+using Audits.issueAdded event.
+        :param reportAAA: Whether to report WCAG AAA level issues. Default is false.
+        :type reportAAA: bool
+        """
+        return (
+            cls.build_send_payload("checkContrast", {
+                "reportAAA": reportAAA,
             }),
             None
         )

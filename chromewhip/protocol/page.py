@@ -32,6 +32,39 @@ SecureContextType = str
 # CrossOriginIsolatedContextType: Indicates whether the frame is cross-origin isolated and why it is the case.
 CrossOriginIsolatedContextType = str
 
+# GatedAPIFeatures: 
+GatedAPIFeatures = str
+
+# PermissionsPolicyFeature: All Permissions Policy features. This enum should match the one definedin renderer/core/feature_policy/feature_policy_features.json5.
+PermissionsPolicyFeature = str
+
+# PermissionsPolicyBlockReason: Reason for a permissions policy feature to be disabled.
+PermissionsPolicyBlockReason = str
+
+# PermissionsPolicyBlockLocator: 
+class PermissionsPolicyBlockLocator(ChromeTypeBase):
+    def __init__(self,
+                 frameId: Union['FrameId'],
+                 blockReason: Union['PermissionsPolicyBlockReason'],
+                 ):
+
+        self.frameId = frameId
+        self.blockReason = blockReason
+
+
+# PermissionsPolicyFeatureState: 
+class PermissionsPolicyFeatureState(ChromeTypeBase):
+    def __init__(self,
+                 feature: Union['PermissionsPolicyFeature'],
+                 allowed: Union['bool'],
+                 locator: Optional['PermissionsPolicyBlockLocator'] = None,
+                 ):
+
+        self.feature = feature
+        self.allowed = allowed
+        self.locator = locator
+
+
 # Frame: Information about the Frame on the page.
 class Frame(ChromeTypeBase):
     def __init__(self,
@@ -43,6 +76,7 @@ class Frame(ChromeTypeBase):
                  mimeType: Union['str'],
                  secureContextType: Union['SecureContextType'],
                  crossOriginIsolatedContextType: Union['CrossOriginIsolatedContextType'],
+                 gatedAPIFeatures: Union['[GatedAPIFeatures]'],
                  parentId: Optional['str'] = None,
                  name: Optional['str'] = None,
                  urlFragment: Optional['str'] = None,
@@ -63,6 +97,7 @@ class Frame(ChromeTypeBase):
         self.adFrameType = adFrameType
         self.secureContextType = secureContextType
         self.crossOriginIsolatedContextType = crossOriginIsolatedContextType
+        self.gatedAPIFeatures = gatedAPIFeatures
 
 
 # FrameResource: Information about the Resource on the page.
@@ -299,6 +334,17 @@ class InstallabilityError(ChromeTypeBase):
 # ReferrerPolicy: The referring-policy used for the navigation.
 ReferrerPolicy = str
 
+# CompilationCacheParams: Per-script compilation cache parameters for `Page.produceCompilationCache`
+class CompilationCacheParams(ChromeTypeBase):
+    def __init__(self,
+                 url: Union['str'],
+                 eager: Optional['bool'] = None,
+                 ):
+
+        self.url = url
+        self.eager = eager
+
+
 class Page(PayloadMixin):
     """ Actions and events related to the inspected page belong to the page domain.
     """
@@ -364,6 +410,7 @@ event is emitted.
                           quality: Optional['int'] = None,
                           clip: Optional['Viewport'] = None,
                           fromSurface: Optional['bool'] = None,
+                          captureBeyondViewport: Optional['bool'] = None,
                           ):
         """Capture page screenshot.
         :param format: Image compression format (defaults to png).
@@ -374,6 +421,8 @@ event is emitted.
         :type clip: Viewport
         :param fromSurface: Capture the screenshot from the surface, rather than the view. Defaults to true.
         :type fromSurface: bool
+        :param captureBeyondViewport: Capture the screenshot beyond the viewport. Defaults to false.
+        :type captureBeyondViewport: bool
         """
         return (
             cls.build_send_payload("captureScreenshot", {
@@ -381,6 +430,7 @@ event is emitted.
                 "quality": quality,
                 "clip": clip,
                 "fromSurface": fromSurface,
+                "captureBeyondViewport": captureBeyondViewport,
             }),
             cls.convert_payload({
                 "data": {
@@ -614,6 +664,18 @@ information in the `cookies` field.
                     "optional": False
                 },
                 "contentSize": {
+                    "class": DOM.Rect,
+                    "optional": False
+                },
+                "cssLayoutViewport": {
+                    "class": LayoutViewport,
+                    "optional": False
+                },
+                "cssVisualViewport": {
+                    "class": VisualViewport,
+                    "optional": False
+                },
+                "cssContentSize": {
                     "class": DOM.Rect,
                     "optional": False
                 },
@@ -998,6 +1060,26 @@ Argument will be ignored if reloading dataURL origin.
         )
 
     @classmethod
+    def getPermissionsPolicyState(cls,
+                                  frameId: Union['FrameId'],
+                                  ):
+        """Get Permissions Policy state on given frame.
+        :param frameId: 
+        :type frameId: FrameId
+        """
+        return (
+            cls.build_send_payload("getPermissionsPolicyState", {
+                "frameId": frameId,
+            }),
+            cls.convert_payload({
+                "states": {
+                    "class": [PermissionsPolicyFeatureState],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
     def setDeviceMetricsOverride(cls,
                                  width: Union['int'],
                                  height: Union['int'],
@@ -1302,12 +1384,36 @@ https://github.com/WICG/web-lifecycle/
                                    enabled: Union['bool'],
                                    ):
         """Forces compilation cache to be generated for every subresource script.
+See also: `Page.produceCompilationCache`.
         :param enabled: 
         :type enabled: bool
         """
         return (
             cls.build_send_payload("setProduceCompilationCache", {
                 "enabled": enabled,
+            }),
+            None
+        )
+
+    @classmethod
+    def produceCompilationCache(cls,
+                                scripts: Union['[CompilationCacheParams]'],
+                                ):
+        """Requests backend to produce compilation cache for the specified scripts.
+Unlike setProduceCompilationCache, this allows client to only produce cache
+for specific scripts. `scripts` are appeneded to the list of scripts
+for which the cache for would produced. Disabling compilation cache with
+`setProduceCompilationCache` would reset all pending cache requests.
+The list may also be reset during page navigation.
+When script with a matching URL is encountered, the cache is optionally
+produced upon backend discretion, based on internal heuristics.
+See also: `Page.compilationCacheProduced`.
+        :param scripts: 
+        :type scripts: [CompilationCacheParams]
+        """
+        return (
+            cls.build_send_payload("produceCompilationCache", {
+                "scripts": scripts,
             }),
             None
         )
@@ -1411,7 +1517,7 @@ class DomContentEventFiredEvent(BaseEvent):
 class FileChooserOpenedEvent(BaseEvent):
 
     js_name = 'Page.fileChooserOpened'
-    hashable = ['frameId', 'backendNodeId']
+    hashable = ['backendNodeId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1430,7 +1536,7 @@ class FileChooserOpenedEvent(BaseEvent):
         self.mode = mode
 
     @classmethod
-    def build_hash(cls, frameId, backendNodeId):
+    def build_hash(cls, backendNodeId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1442,7 +1548,7 @@ class FileChooserOpenedEvent(BaseEvent):
 class FrameAttachedEvent(BaseEvent):
 
     js_name = 'Page.frameAttached'
-    hashable = ['frameId', 'parentFrameId']
+    hashable = ['parentFrameId', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1461,7 +1567,7 @@ class FrameAttachedEvent(BaseEvent):
         self.stack = stack
 
     @classmethod
-    def build_hash(cls, frameId, parentFrameId):
+    def build_hash(cls, parentFrameId, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1501,10 +1607,14 @@ class FrameDetachedEvent(BaseEvent):
 
     def __init__(self,
                  frameId: Union['FrameId', dict],
+                 reason: Union['str', dict],
                  ):
         if isinstance(frameId, dict):
             frameId = FrameId(**frameId)
         self.frameId = frameId
+        if isinstance(reason, dict):
+            reason = str(**reason)
+        self.reason = reason
 
     @classmethod
     def build_hash(cls, frameId):
@@ -1519,6 +1629,29 @@ class FrameDetachedEvent(BaseEvent):
 class FrameNavigatedEvent(BaseEvent):
 
     js_name = 'Page.frameNavigated'
+    hashable = ['frameId']
+    is_hashable = True
+
+    def __init__(self,
+                 frame: Union['Frame', dict],
+                 ):
+        if isinstance(frame, dict):
+            frame = Frame(**frame)
+        self.frame = frame
+
+    @classmethod
+    def build_hash(cls, frameId):
+        kwargs = locals()
+        kwargs.pop('cls')
+        serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
+        h = '{}:{}'.format(cls.js_name, serialized_id_params)
+        log.debug('generated hash = %s' % h)
+        return h
+
+
+class DocumentOpenedEvent(BaseEvent):
+
+    js_name = 'Page.documentOpened'
     hashable = ['frameId']
     is_hashable = True
 
@@ -1672,7 +1805,7 @@ class FrameStoppedLoadingEvent(BaseEvent):
 class DownloadWillBeginEvent(BaseEvent):
 
     js_name = 'Page.downloadWillBegin'
-    hashable = ['frameId', 'guid']
+    hashable = ['guid', 'frameId']
     is_hashable = True
 
     def __init__(self,
@@ -1695,7 +1828,7 @@ class DownloadWillBeginEvent(BaseEvent):
         self.suggestedFilename = suggestedFilename
 
     @classmethod
-    def build_hash(cls, frameId, guid):
+    def build_hash(cls, guid, frameId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

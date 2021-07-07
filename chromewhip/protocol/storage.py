@@ -29,6 +29,17 @@ class UsageForType(ChromeTypeBase):
         self.usage = usage
 
 
+# TrustTokens: Pair of issuer origin and number of available (signed, but not used) TrustTokens from that issuer.
+class TrustTokens(ChromeTypeBase):
+    def __init__(self,
+                 issuerOrigin: Union['str'],
+                 count: Union['float'],
+                 ):
+
+        self.issuerOrigin = issuerOrigin
+        self.count = count
+
+
 class Storage(PayloadMixin):
     """ 
     """
@@ -126,11 +137,40 @@ class Storage(PayloadMixin):
                     "class": float,
                     "optional": False
                 },
+                "overrideActive": {
+                    "class": bool,
+                    "optional": False
+                },
                 "usageBreakdown": {
                     "class": [UsageForType],
                     "optional": False
                 },
             })
+        )
+
+    @classmethod
+    def overrideQuotaForOrigin(cls,
+                               origin: Union['str'],
+                               quotaSize: Optional['float'] = None,
+                               ):
+        """Override quota for the specified origin
+        :param origin: Security origin.
+        :type origin: str
+        :param quotaSize: The quota size (in bytes) to override the original quota with.
+If this is called multiple times, the overriden quota will be equal to
+the quotaSize provided in the final call. If this is called without
+specifying a quotaSize, the quota will be reset to the default value for
+the specified origin. If this is called multiple times with different
+origins, the override will be maintained for each origin until it is
+disabled (called without a quotaSize).
+        :type quotaSize: float
+        """
+        return (
+            cls.build_send_payload("overrideQuotaForOrigin", {
+                "origin": origin,
+                "quotaSize": quotaSize,
+            }),
+            None
         )
 
     @classmethod
@@ -191,6 +231,43 @@ class Storage(PayloadMixin):
                 "origin": origin,
             }),
             None
+        )
+
+    @classmethod
+    def getTrustTokens(cls):
+        """Returns the number of stored Trust Tokens per issuer for the
+current browsing context.
+        """
+        return (
+            cls.build_send_payload("getTrustTokens", {
+            }),
+            cls.convert_payload({
+                "tokens": {
+                    "class": [TrustTokens],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def clearTrustTokens(cls,
+                         issuerOrigin: Union['str'],
+                         ):
+        """Removes all Trust Tokens issued by the provided issuerOrigin.
+Leaves other stored data, including the issuer's Redemption Records, intact.
+        :param issuerOrigin: 
+        :type issuerOrigin: str
+        """
+        return (
+            cls.build_send_payload("clearTrustTokens", {
+                "issuerOrigin": issuerOrigin,
+            }),
+            cls.convert_payload({
+                "didDeleteTokens": {
+                    "class": bool,
+                    "optional": False
+                },
+            })
         )
 
 

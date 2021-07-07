@@ -215,7 +215,7 @@ one.
                      background: Optional['bool'] = None,
                      ):
         """Creates a new page.
-        :param url: The initial URL the page will be navigated to.
+        :param url: The initial URL the page will be navigated to. An empty string indicates about:blank.
         :type url: str
         :param width: Frame width in DIP (headless chrome only).
         :type width: int
@@ -441,7 +441,7 @@ class AttachedToTargetEvent(BaseEvent):
 class DetachedFromTargetEvent(BaseEvent):
 
     js_name = 'Target.detachedFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -456,7 +456,7 @@ class DetachedFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -468,7 +468,7 @@ class DetachedFromTargetEvent(BaseEvent):
 class ReceivedMessageFromTargetEvent(BaseEvent):
 
     js_name = 'Target.receivedMessageFromTarget'
-    hashable = ['sessionId', 'targetId']
+    hashable = ['targetId', 'sessionId']
     is_hashable = True
 
     def __init__(self,
@@ -487,7 +487,7 @@ class ReceivedMessageFromTargetEvent(BaseEvent):
         self.targetId = targetId
 
     @classmethod
-    def build_hash(cls, sessionId, targetId):
+    def build_hash(cls, targetId, sessionId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

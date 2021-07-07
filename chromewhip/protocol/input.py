@@ -22,6 +22,10 @@ class TouchPoint(ChromeTypeBase):
                  radiusY: Optional['float'] = None,
                  rotationAngle: Optional['float'] = None,
                  force: Optional['float'] = None,
+                 tangentialPressure: Optional['float'] = None,
+                 tiltX: Optional['int'] = None,
+                 tiltY: Optional['int'] = None,
+                 twist: Optional['int'] = None,
                  id: Optional['float'] = None,
                  ):
 
@@ -31,6 +35,10 @@ class TouchPoint(ChromeTypeBase):
         self.radiusY = radiusY
         self.rotationAngle = rotationAngle
         self.force = force
+        self.tangentialPressure = tangentialPressure
+        self.tiltX = tiltX
+        self.tiltY = tiltY
+        self.twist = twist
         self.id = id
 
 
@@ -43,9 +51,68 @@ MouseButton = str
 # TimeSinceEpoch: UTC time in seconds, counted from January 1, 1970.
 TimeSinceEpoch = float
 
+# DragDataItem: 
+class DragDataItem(ChromeTypeBase):
+    def __init__(self,
+                 mimeType: Union['str'],
+                 data: Union['str'],
+                 title: Optional['str'] = None,
+                 baseURL: Optional['str'] = None,
+                 ):
+
+        self.mimeType = mimeType
+        self.data = data
+        self.title = title
+        self.baseURL = baseURL
+
+
+# DragData: 
+class DragData(ChromeTypeBase):
+    def __init__(self,
+                 items: Union['[DragDataItem]'],
+                 dragOperationsMask: Union['int'],
+                 ):
+
+        self.items = items
+        self.dragOperationsMask = dragOperationsMask
+
+
 class Input(PayloadMixin):
     """ 
     """
+    @classmethod
+    def dispatchDragEvent(cls,
+                          type: Union['str'],
+                          x: Union['float'],
+                          y: Union['float'],
+                          data: Union['DragData'],
+                          modifiers: Optional['int'] = None,
+                          ):
+        """Dispatches a drag event into the page.
+        :param type: Type of the drag event.
+        :type type: str
+        :param x: X coordinate of the event relative to the main frame's viewport in CSS pixels.
+        :type x: float
+        :param y: Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
+the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+        :type y: float
+        :param data: 
+        :type data: DragData
+        :param modifiers: Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+        :type modifiers: int
+        """
+        return (
+            cls.build_send_payload("dispatchDragEvent", {
+                "type": type,
+                "x": x,
+                "y": y,
+                "data": data,
+                "modifiers": modifiers,
+            }),
+            None
+        )
+
     @classmethod
     def dispatchKeyEvent(cls,
                          type: Union['str'],
@@ -150,6 +217,11 @@ for example an emoji keyboard or an IME.
                            button: Optional['MouseButton'] = None,
                            buttons: Optional['int'] = None,
                            clickCount: Optional['int'] = None,
+                           force: Optional['float'] = None,
+                           tangentialPressure: Optional['float'] = None,
+                           tiltX: Optional['int'] = None,
+                           tiltY: Optional['int'] = None,
+                           twist: Optional['int'] = None,
                            deltaX: Optional['float'] = None,
                            deltaY: Optional['float'] = None,
                            pointerType: Optional['str'] = None,
@@ -174,6 +246,16 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
         :type buttons: int
         :param clickCount: Number of times the mouse button was clicked (default: 0).
         :type clickCount: int
+        :param force: The normalized pressure, which has a range of [0,1] (default: 0).
+        :type force: float
+        :param tangentialPressure: The normalized tangential pressure, which has a range of [-1,1] (default: 0).
+        :type tangentialPressure: float
+        :param tiltX: The plane angle between the Y-Z plane and the plane containing both the stylus axis and the Y axis, in degrees of the range [-90,90], a positive tiltX is to the right (default: 0).
+        :type tiltX: int
+        :param tiltY: The plane angle between the X-Z plane and the plane containing both the stylus axis and the X axis, in degrees of the range [-90,90], a positive tiltY is towards the user (default: 0).
+        :type tiltY: int
+        :param twist: The clockwise rotation of a pen stylus around its own major axis, in degrees in the range [0,359] (default: 0).
+        :type twist: int
         :param deltaX: X delta in CSS pixels for mouse wheel event (default: 0).
         :type deltaX: float
         :param deltaY: Y delta in CSS pixels for mouse wheel event (default: 0).
@@ -191,6 +273,11 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
                 "button": button,
                 "buttons": buttons,
                 "clickCount": clickCount,
+                "force": force,
+                "tangentialPressure": tangentialPressure,
+                "tiltX": tiltX,
+                "tiltY": tiltY,
+                "twist": twist,
                 "deltaX": deltaX,
                 "deltaY": deltaY,
                 "pointerType": pointerType,
@@ -288,6 +375,22 @@ one by one.
         return (
             cls.build_send_payload("setIgnoreInputEvents", {
                 "ignore": ignore,
+            }),
+            None
+        )
+
+    @classmethod
+    def setInterceptDrags(cls,
+                          enabled: Union['bool'],
+                          ):
+        """Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
+Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
+        :param enabled: 
+        :type enabled: bool
+        """
+        return (
+            cls.build_send_payload("setInterceptDrags", {
+                "enabled": enabled,
             }),
             None
         )
@@ -418,3 +521,21 @@ for the preferred input type).
             None
         )
 
+
+
+class DragInterceptedEvent(BaseEvent):
+
+    js_name = 'Input.dragIntercepted'
+    hashable = []
+    is_hashable = False
+
+    def __init__(self,
+                 data: Union['DragData', dict],
+                 ):
+        if isinstance(data, dict):
+            data = DragData(**data)
+        self.data = data
+
+    @classmethod
+    def build_hash(cls):
+        raise ValueError('Unable to build hash for non-hashable type')

@@ -19,6 +19,9 @@ AuthenticatorId = str
 # AuthenticatorProtocol: 
 AuthenticatorProtocol = str
 
+# Ctap2Version: 
+Ctap2Version = str
+
 # AuthenticatorTransport: 
 AuthenticatorTransport = str
 
@@ -27,6 +30,7 @@ class VirtualAuthenticatorOptions(ChromeTypeBase):
     def __init__(self,
                  protocol: Union['AuthenticatorProtocol'],
                  transport: Union['AuthenticatorTransport'],
+                 ctap2Version: Optional['Ctap2Version'] = None,
                  hasResidentKey: Optional['bool'] = None,
                  hasUserVerification: Optional['bool'] = None,
                  hasLargeBlob: Optional['bool'] = None,
@@ -35,6 +39,7 @@ class VirtualAuthenticatorOptions(ChromeTypeBase):
                  ):
 
         self.protocol = protocol
+        self.ctap2Version = ctap2Version
         self.transport = transport
         self.hasResidentKey = hasResidentKey
         self.hasUserVerification = hasUserVerification
@@ -52,6 +57,7 @@ class Credential(ChromeTypeBase):
                  signCount: Union['int'],
                  rpId: Optional['str'] = None,
                  userHandle: Optional['str'] = None,
+                 largeBlob: Optional['str'] = None,
                  ):
 
         self.credentialId = credentialId
@@ -60,6 +66,7 @@ class Credential(ChromeTypeBase):
         self.privateKey = privateKey
         self.userHandle = userHandle
         self.signCount = signCount
+        self.largeBlob = largeBlob
 
 
 class WebAuthn(PayloadMixin):
