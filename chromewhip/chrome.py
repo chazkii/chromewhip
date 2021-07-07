@@ -7,7 +7,7 @@ from typing import Optional
 
 import aiohttp
 import websockets
-import websockets.protocol
+import websockets.legacy.protocol
 import websockets.exceptions
 
 from chromewhip import helpers
@@ -244,7 +244,6 @@ class ChromeTab(metaclass=SyncAdder):
             if self._devtools_trace:
                 self._devtools_trace.tx(request)
             msg = json.dumps(request, cls=helpers.ChromewhipJSONEncoder)
-
             self._send_log.info('Sending command = %s' % msg)
             self._current_task = asyncio.ensure_future(self._ws.send(msg))
             await asyncio.wait_for(self._current_task, timeout=timeout)  # send
@@ -317,7 +316,7 @@ class ChromeTab(metaclass=SyncAdder):
             method = request['method']
             id_ = request['id']
             self._send_log.error(msg)
-            if self._ws.state != websockets.protocol.OPEN:
+            if self._ws.state != websockets.protocol.State.OPEN:
                 close_code = self._ws.close_code
                 if close_code == 1002:
                     raise ProtocolError('Websocket protocol error occured for "%s" with id=%s' % (method, id_))
