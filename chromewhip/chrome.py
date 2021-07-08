@@ -128,7 +128,7 @@ class ChromeTab(metaclass=SyncAdder):
         return t
 
     async def connect(self):
-        self._ws = await websockets.connect(self._ws_uri, max_size=MAX_PAYLOAD_SIZE_BYTES)  # 16MB
+        self._ws = await websockets.connect(self._ws_uri, max_size=MAX_PAYLOAD_SIZE_BYTES, ping_interval=None)  # 16MB
         self._recv_task = asyncio.ensure_future(self.recv_handler())
         self._log.info('Connected to Chrome tab %s' % self._ws_uri)
 
