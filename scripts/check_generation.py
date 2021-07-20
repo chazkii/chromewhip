@@ -1,11 +1,5 @@
 import sys
 sys.path.insert(0, "../")
-import chromewhip.protocol.console
-import chromewhip.protocol.debugger
-import chromewhip.protocol.heapprofiler
-import chromewhip.protocol.profiler
-import chromewhip.protocol.runtime
-import chromewhip.protocol.schema
 import chromewhip.protocol.accessibility
 import chromewhip.protocol.animation
 import chromewhip.protocol.applicationcache
@@ -34,6 +28,7 @@ import chromewhip.protocol.network
 import chromewhip.protocol.overlay
 import chromewhip.protocol.page
 import chromewhip.protocol.performance
+import chromewhip.protocol.performancetimeline
 import chromewhip.protocol.security
 import chromewhip.protocol.serviceworker
 import chromewhip.protocol.storage
@@ -45,3 +40,9 @@ import chromewhip.protocol.fetch
 import chromewhip.protocol.webaudio
 import chromewhip.protocol.webauthn
 import chromewhip.protocol.media
+import chromewhip.protocol.console
+import chromewhip.protocol.debugger
+import chromewhip.protocol.heapprofiler
+import chromewhip.protocol.profiler
+import chromewhip.protocol.runtime
+import chromewhip.protocol.schema

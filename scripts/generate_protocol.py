@@ -68,7 +68,18 @@ def set_py_type(type_obj, type_ids_set):
 # import autopep8
 processed_data = {}
 hashable_objs_per_prot = {}
-for fpd in [js_json_fp, browser_json_fp]:
+
+if len(sys.argv) == 1:
+    input_files = [js_json_fp, browser_json_fp]
+elif sys.argv[1] == '--one-input-file':
+    input_files = [browser_json_fp]
+else:
+    print("Usage: %s [--one-input-file]" % sys.argv[0], file=sys.stderr)
+    exit(1)
+
+print("Generating protocol bindings from %s" % str(input_files), file=sys.stderr)
+
+for fpd in input_files:
     pname, fp = fpd
     data = json.load(open(fp))
 

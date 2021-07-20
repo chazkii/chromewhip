@@ -74,6 +74,67 @@ class GridHighlightConfig(ChromeTypeBase):
         self.gridBackgroundColor = gridBackgroundColor
 
 
+# FlexContainerHighlightConfig: Configuration data for the highlighting of Flex container elements.
+class FlexContainerHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 containerBorder: Optional['LineStyle'] = None,
+                 lineSeparator: Optional['LineStyle'] = None,
+                 itemSeparator: Optional['LineStyle'] = None,
+                 mainDistributedSpace: Optional['BoxStyle'] = None,
+                 crossDistributedSpace: Optional['BoxStyle'] = None,
+                 rowGapSpace: Optional['BoxStyle'] = None,
+                 columnGapSpace: Optional['BoxStyle'] = None,
+                 crossAlignment: Optional['LineStyle'] = None,
+                 ):
+
+        self.containerBorder = containerBorder
+        self.lineSeparator = lineSeparator
+        self.itemSeparator = itemSeparator
+        self.mainDistributedSpace = mainDistributedSpace
+        self.crossDistributedSpace = crossDistributedSpace
+        self.rowGapSpace = rowGapSpace
+        self.columnGapSpace = columnGapSpace
+        self.crossAlignment = crossAlignment
+
+
+# FlexItemHighlightConfig: Configuration data for the highlighting of Flex item elements.
+class FlexItemHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 baseSizeBox: Optional['BoxStyle'] = None,
+                 baseSizeBorder: Optional['LineStyle'] = None,
+                 flexibilityArrow: Optional['LineStyle'] = None,
+                 ):
+
+        self.baseSizeBox = baseSizeBox
+        self.baseSizeBorder = baseSizeBorder
+        self.flexibilityArrow = flexibilityArrow
+
+
+# LineStyle: Style information for drawing a line.
+class LineStyle(ChromeTypeBase):
+    def __init__(self,
+                 color: Optional['DOM.RGBA'] = None,
+                 pattern: Optional['str'] = None,
+                 ):
+
+        self.color = color
+        self.pattern = pattern
+
+
+# BoxStyle: Style information for drawing a box.
+class BoxStyle(ChromeTypeBase):
+    def __init__(self,
+                 fillColor: Optional['DOM.RGBA'] = None,
+                 hatchColor: Optional['DOM.RGBA'] = None,
+                 ):
+
+        self.fillColor = fillColor
+        self.hatchColor = hatchColor
+
+
+# ContrastAlgorithm: 
+ContrastAlgorithm = str
+
 # HighlightConfig: Configuration data for the highlighting of page elements.
 class HighlightConfig(ChromeTypeBase):
     def __init__(self,
@@ -92,6 +153,9 @@ class HighlightConfig(ChromeTypeBase):
                  cssGridColor: Optional['DOM.RGBA'] = None,
                  colorFormat: Optional['ColorFormat'] = None,
                  gridHighlightConfig: Optional['GridHighlightConfig'] = None,
+                 flexContainerHighlightConfig: Optional['FlexContainerHighlightConfig'] = None,
+                 flexItemHighlightConfig: Optional['FlexItemHighlightConfig'] = None,
+                 contrastAlgorithm: Optional['ContrastAlgorithm'] = None,
                  ):
 
         self.showInfo = showInfo
@@ -109,6 +173,9 @@ class HighlightConfig(ChromeTypeBase):
         self.cssGridColor = cssGridColor
         self.colorFormat = colorFormat
         self.gridHighlightConfig = gridHighlightConfig
+        self.flexContainerHighlightConfig = flexContainerHighlightConfig
+        self.flexItemHighlightConfig = flexItemHighlightConfig
+        self.contrastAlgorithm = contrastAlgorithm
 
 
 # ColorFormat: 
@@ -122,6 +189,43 @@ class GridNodeHighlightConfig(ChromeTypeBase):
                  ):
 
         self.gridHighlightConfig = gridHighlightConfig
+        self.nodeId = nodeId
+
+
+# FlexNodeHighlightConfig: 
+class FlexNodeHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 flexContainerHighlightConfig: Union['FlexContainerHighlightConfig'],
+                 nodeId: Union['DOM.NodeId'],
+                 ):
+
+        self.flexContainerHighlightConfig = flexContainerHighlightConfig
+        self.nodeId = nodeId
+
+
+# ScrollSnapContainerHighlightConfig: 
+class ScrollSnapContainerHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 snapportBorder: Optional['LineStyle'] = None,
+                 snapAreaBorder: Optional['LineStyle'] = None,
+                 scrollMarginColor: Optional['DOM.RGBA'] = None,
+                 scrollPaddingColor: Optional['DOM.RGBA'] = None,
+                 ):
+
+        self.snapportBorder = snapportBorder
+        self.snapAreaBorder = snapAreaBorder
+        self.scrollMarginColor = scrollMarginColor
+        self.scrollPaddingColor = scrollPaddingColor
+
+
+# ScrollSnapHighlightConfig: 
+class ScrollSnapHighlightConfig(ChromeTypeBase):
+    def __init__(self,
+                 scrollSnapContainerHighlightConfig: Union['ScrollSnapContainerHighlightConfig'],
+                 nodeId: Union['DOM.NodeId'],
+                 ):
+
+        self.scrollSnapContainerHighlightConfig = scrollSnapContainerHighlightConfig
         self.nodeId = nodeId
 
 
@@ -488,6 +592,36 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         )
 
     @classmethod
+    def setShowFlexOverlays(cls,
+                            flexNodeHighlightConfigs: Union['[FlexNodeHighlightConfig]'],
+                            ):
+        """
+        :param flexNodeHighlightConfigs: An array of node identifiers and descriptors for the highlight appearance.
+        :type flexNodeHighlightConfigs: [FlexNodeHighlightConfig]
+        """
+        return (
+            cls.build_send_payload("setShowFlexOverlays", {
+                "flexNodeHighlightConfigs": flexNodeHighlightConfigs,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowScrollSnapOverlays(cls,
+                                  scrollSnapHighlightConfigs: Union['[ScrollSnapHighlightConfig]'],
+                                  ):
+        """
+        :param scrollSnapHighlightConfigs: An array of node identifiers and descriptors for the highlight appearance.
+        :type scrollSnapHighlightConfigs: [ScrollSnapHighlightConfig]
+        """
+        return (
+            cls.build_send_payload("setShowScrollSnapOverlays", {
+                "scrollSnapHighlightConfigs": scrollSnapHighlightConfigs,
+            }),
+            None
+        )
+
+    @classmethod
     def setShowPaintRects(cls,
                           result: Union['bool'],
                           ):
@@ -542,6 +676,21 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
         """
         return (
             cls.build_send_payload("setShowHitTestBorders", {
+                "show": show,
+            }),
+            None
+        )
+
+    @classmethod
+    def setShowWebVitals(cls,
+                         show: Union['bool'],
+                         ):
+        """Request that backend shows an overlay with web vital metrics.
+        :param show: 
+        :type show: bool
+        """
+        return (
+            cls.build_send_payload("setShowWebVitals", {
                 "show": show,
             }),
             None

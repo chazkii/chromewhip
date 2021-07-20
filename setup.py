@@ -60,8 +60,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'aiohttp==3.6.2', 'websockets==7.0', 'beautifulsoup4==4.7.1', 'lxml==4.6.2',
-        'pyyaml==5.1', 'Pillow==7.1.0'
+        'aiohttp==3.7.4', 'websockets==9.1', 'beautifulsoup4==4.7.1', 'lxml==4.6.3',
+        'pyyaml==5.4', 'Pillow==8.2.0'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -69,7 +69,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['Jinja2==2.10.1', 'jsonpatch==1.23'],
+        'dev': ['Jinja2==2.11.3', 'jsonpatch==1.23'],
         'test': ['pytest-asyncio==0.10.0'],
     },
 

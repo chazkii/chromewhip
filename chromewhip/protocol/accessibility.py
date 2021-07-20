@@ -177,11 +177,38 @@ This turns on accessibility for the page, which can impact performance until acc
         )
 
     @classmethod
-    def getFullAXTree(cls):
-        """Fetches the entire accessibility tree
+    def getFullAXTree(cls,
+                      max_depth: Optional['int'] = None,
+                      ):
+        """Fetches the entire accessibility tree for the root Document
+        :param max_depth: The maximum depth at which descendants of the root node should be retrieved.
+If omitted, the full tree is returned.
+        :type max_depth: int
         """
         return (
             cls.build_send_payload("getFullAXTree", {
+                "max_depth": max_depth,
+            }),
+            cls.convert_payload({
+                "nodes": {
+                    "class": [AXNode],
+                    "optional": False
+                },
+            })
+        )
+
+    @classmethod
+    def getChildAXNodes(cls,
+                        id: Union['AXNodeId'],
+                        ):
+        """Fetches a particular accessibility node by AXNodeId.
+Requires `enable()` to have been called previously.
+        :param id: 
+        :type id: AXNodeId
+        """
+        return (
+            cls.build_send_payload("getChildAXNodes", {
+                "id": id,
             }),
             cls.convert_payload({
                 "nodes": {

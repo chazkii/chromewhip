@@ -13,7 +13,7 @@ from chromewhip.helpers import PayloadMixin, BaseEvent, ChromeTypeBase
 
 log = logging.getLogger(__name__)
 
-{%- set py_types = dict(boolean='bool', integer='int', number='float', string='str', any='Any', object='dict') -%}
+{%- set py_types = dict(boolean='bool', integer='int', number='float', string='str', any='Any', object='dict', binary='str') -%}
 
 {# TODO: find a way not to leak id here #}
 {%- macro get_py_type(prop) -%}

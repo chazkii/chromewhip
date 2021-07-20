@@ -252,38 +252,6 @@ execution. Overrides `setPauseOnException` state.
         )
 
     @classmethod
-    def executeWasmEvaluator(cls,
-                             callFrameId: Union['CallFrameId'],
-                             evaluator: Union['str'],
-                             timeout: Optional['Runtime.TimeDelta'] = None,
-                             ):
-        """Execute a Wasm Evaluator module on a given call frame.
-        :param callFrameId: WebAssembly call frame identifier to evaluate on.
-        :type callFrameId: CallFrameId
-        :param evaluator: Code of the evaluator module.
-        :type evaluator: str
-        :param timeout: Terminate execution after timing out (number of milliseconds).
-        :type timeout: Runtime.TimeDelta
-        """
-        return (
-            cls.build_send_payload("executeWasmEvaluator", {
-                "callFrameId": callFrameId,
-                "evaluator": evaluator,
-                "timeout": timeout,
-            }),
-            cls.convert_payload({
-                "result": {
-                    "class": Runtime.RemoteObject,
-                    "optional": False
-                },
-                "exceptionDetails": {
-                    "class": Runtime.ExceptionDetails,
-                    "optional": True
-                },
-            })
-        )
-
-    @classmethod
     def getPossibleBreakpoints(cls,
                                start: Union['Location'],
                                end: Optional['Location'] = None,
@@ -949,7 +917,7 @@ class ResumedEvent(BaseEvent):
 class ScriptFailedToParseEvent(BaseEvent):
 
     js_name = 'Debugger.scriptFailedToParse'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -1024,7 +992,7 @@ class ScriptFailedToParseEvent(BaseEvent):
         self.embedderName = embedderName
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])
@@ -1036,7 +1004,7 @@ class ScriptFailedToParseEvent(BaseEvent):
 class ScriptParsedEvent(BaseEvent):
 
     js_name = 'Debugger.scriptParsed'
-    hashable = ['scriptId', 'executionContextId']
+    hashable = ['executionContextId', 'scriptId']
     is_hashable = True
 
     def __init__(self,
@@ -1119,7 +1087,7 @@ class ScriptParsedEvent(BaseEvent):
         self.embedderName = embedderName
 
     @classmethod
-    def build_hash(cls, scriptId, executionContextId):
+    def build_hash(cls, executionContextId, scriptId):
         kwargs = locals()
         kwargs.pop('cls')
         serialized_id_params = ','.join(['='.join([p, str(v)]) for p, v in kwargs.items()])

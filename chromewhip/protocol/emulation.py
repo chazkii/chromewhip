@@ -65,16 +65,16 @@ class UserAgentBrandVersion(ChromeTypeBase):
         self.version = version
 
 
-# UserAgentMetadata: Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+# UserAgentMetadata: Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hintsMissing optional values will be filled in by the target with what it would normally use.
 class UserAgentMetadata(ChromeTypeBase):
     def __init__(self,
-                 brands: Union['[UserAgentBrandVersion]'],
-                 fullVersion: Union['str'],
                  platform: Union['str'],
                  platformVersion: Union['str'],
                  architecture: Union['str'],
                  model: Union['str'],
                  mobile: Union['bool'],
+                 brands: Optional['[UserAgentBrandVersion]'] = None,
+                 fullVersion: Optional['str'] = None,
                  ):
 
         self.brands = brands
@@ -85,6 +85,9 @@ class UserAgentMetadata(ChromeTypeBase):
         self.model = model
         self.mobile = mobile
 
+
+# DisabledImageType: Enum of image types that can be disabled.
+DisabledImageType = str
 
 class Emulation(PayloadMixin):
     """ This domain emulates different environments for the page.
@@ -538,6 +541,21 @@ on Android.
             cls.build_send_payload("setVisibleSize", {
                 "width": width,
                 "height": height,
+            }),
+            None
+        )
+
+    @classmethod
+    def setDisabledImageTypes(cls,
+                              imageTypes: Union['[DisabledImageType]'],
+                              ):
+        """
+        :param imageTypes: Image types to disable.
+        :type imageTypes: [DisabledImageType]
+        """
+        return (
+            cls.build_send_payload("setDisabledImageTypes", {
+                "imageTypes": imageTypes,
             }),
             None
         )
